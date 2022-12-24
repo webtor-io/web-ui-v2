@@ -1,0 +1,14 @@
+{{ define "head" }}
+  <script src="{{ "browse.js" | asset }}"></script>
+{{ end }}
+{{ define "content" }}
+{{ if .Item }}
+<div id="file">
+  {{ template "file" . }}
+</div>
+<div class="divider h-0"></div>
+{{ end }}
+<div id="list">
+{{ template "list" . }}
+</div>
+{{ end }}

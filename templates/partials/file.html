@@ -1,0 +1,14 @@
+{{ define "file" }}
+<h1 class="text-2xl font-bold">{{ .Item.Name }}</h1>
+<form class="py-3" action="/download" method="post" enctype="multipart/form-data" async-target="#download" async-push-state="false">
+    <input type="hidden" name="resource-id" value="{{ .Resource.ID }}" />
+    <input type="hidden" name="item-id" value="{{ .Item.ID }}" />
+    <input type="hidden" name="_csrf" value="{{ .CSRF }}">
+    <button type="submit" class="btn btn-accent btn-outline">Download [{{ .Item.Size | bitsForHumans }}]</button>
+</form>
+<div id="download"></div>
+{{ if eq .Item.MediaFormat "video" }}
+{{ else if eq .Item.MediaFormat "audio" }}
+{{ else if eq .Item.MediaFormat "image" }}
+{{ end }}
+{{ end }}

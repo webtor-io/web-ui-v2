@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en" data-theme="night">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <script src="{{ "layout.js" | asset }}"></script>
+        <link rel="stylesheet" href="{{ "layout.css" | asset }}" />
+        {{ template "head" . }}
+    </head>
+    <body >
+        <progress id="progress" class="progress fixed progress-accent h-1"></progress>
+        <div id="wrapper" class="flex flex-col w-full px-8 items-center">
+            <div class="min-w-80 w-full max-w-3xl">
+                <div class="text-center py-12 font-baskerville text-7xl">
+                    <a href="/" class="group" async-target="#content"><span class="group-hover:text-primary-focus transition duration-200">web</span><span class="group-hover:text-accent-focus text-accent transition duration-200">tor</span></a>
+                </div>
+                <div id="content">
+                {{ template "content" . }}
+                </div>
+            </div>
+        </div>
+    </body>
+    <script>window.webtor.wrapper.hide()</script>
+</html>

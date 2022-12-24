@@ -1,0 +1,41 @@
+{{ define "list" }}
+<ul class="py-1">
+  {{ range makeBreadcrumbs .Resource .List.ListItem.PathStr }}
+    {{ if .Active }}
+    <li class="inline-block text-primary-focus">/ {{ .Name }}</li>
+    {{ else if $.Args.File }}
+    <li class="inline-block hover:text-primary-focus transition duration-200">/ <a href="/{{ $.Resource.ID }}?pwd={{ .PathStr }}{{ if $.Args.File }}&file={{ $.Args.File }}{{ end }}" async-target="#list" async-layout="async_list">{{ .Name }}</a></li>
+    {{ else }}
+    <li class="inline-block hover:text-primary-focus transition duration-200">/ <a href="/{{ $.Resource.ID }}?pwd={{ .PathStr }}" async-target="#content">{{ .Name }}</a></li>
+    {{ end }}
+  {{ end }}
+</ul>
+<ul>
+  {{ range .List.Items }}
+  {{ if and ($.Args.File) (eq .Type "directory") }}
+  <li class="text-accent py-1 hover:text-accent-focus"><a href="/{{ $.Resource.ID }}?pwd={{ .PathStr }}{{ if $.Args.File }}&file={{ $.Args.File }}{{ end }}" async-target="#list" async-layout="async_list">{{ .Name }}</a></li>
+  {{ else if and (not $.Args.File) (eq .Type "directory") }}
+  <li class="text-accent py-1 hover:text-accent-focus"><a href="/{{ $.Resource.ID }}?pwd={{ .PathStr }}" async-target="#content">{{ .Name }}</a></li>
+  {{ else if and ($.Item) (eq .PathStr $.Item.PathStr) }}
+  <li class="py-1 text-accent-focus">> {{ .Name }}</li>
+  {{ else }}
+  <li class="text-accent py-1 hover:text-accent-focus"><a href="/{{ $.Resource.ID }}?pwd={{ $.List.ListItem.PathStr }}&file={{ .PathStr }}{{ if not (eq $.Args.Page 1) }}&page={{ $.Args.Page }}{{ end }}" async-target="#content">{{ .Name }}</a></li>
+  {{ end }}
+  {{ end }}
+</ul>
+{{ if .List | hasPagination }}
+<div class="btn-group py-5">
+  {{ range makePagination .List .Args.Page .Args.PageSize }}
+    {{ if .Active }}
+    <a class="btn btn-sm" href="/{{ $.Resource.ID }}?pwd={{ $.List.ListItem.PathStr }}&page={{ .Page }}{{ if $.Args.File }}&file={{ $.Args.File }}{{ end }}" async-target="#list" async-layout="async_list">
+    {{ else }}
+    <a class="btn btn-sm btn-disabled">
+    {{ end }}
+      {{ if .Prev }}←{{ end }}
+      {{ if .Next }}→{{ end }}
+      {{ if .Number }}{{ .Page}}{{ end }}
+    </a>
+  {{ end }}
+</div>
+{{ end }}
+{{ end }}
