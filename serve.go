@@ -31,6 +31,7 @@ func configureServe(c *cli.Command) {
 	c.Flags = s.RegisterWebFlags(c.Flags)
 	c.Flags = s.RegisterApiFlags(c.Flags)
 	c.Flags = w.RegisterTemplateHandlerFlags(c.Flags)
+	c.Flags = s.RegisterCommonFlags(c.Flags)
 }
 
 func serve(c *cli.Context) error {

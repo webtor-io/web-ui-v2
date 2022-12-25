@@ -54,10 +54,6 @@ type Web struct {
 	re     multitemplate.Renderer
 }
 
-const (
-	assetsPath string = "./assets/dist"
-)
-
 func (s *Web) Serve() error {
 	addr := fmt.Sprintf("%s:%d", s.host, s.port)
 	ln, err := net.Listen("tcp", addr)
@@ -92,7 +88,7 @@ func (s *Web) Close() {
 func NewWeb(c *cli.Context) *Web {
 	r := gin.Default()
 	store := cookie.NewStore([]byte("secret"))
-	r.Use(sessions.Sessions("mysession", store))
+	r.Use(sessions.Sessions("session", store))
 	r.Use(csrf.Middleware(csrf.Options{
 		Secret: c.String(sessionSecretFlag),
 		ErrorFunc: func(c *gin.Context) {
@@ -101,6 +97,7 @@ func NewWeb(c *cli.Context) *Web {
 		},
 	}))
 	r.UseRawPath = true
+	assetsPath := c.String(AssetsPathFlag)
 	r.Static("/assets", assetsPath)
 	r.StaticFile("/favicon.ico", assetsPath+"/favicon.ico")
 	re := multitemplate.NewRenderer()

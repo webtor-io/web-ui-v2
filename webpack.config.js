@@ -70,9 +70,9 @@ module.exports = (env, options) => {
         plugins: [
             // new CompressionPlugin(),
             new MiniCssExtractPlugin(),
-            new PurgeCSSPlugin({
-                paths: glob.sync('{templates/**/*,assets/src/**/*.js}',  { nodir: true }),
-            }),
+            // new PurgeCSSPlugin({
+            //     paths: glob.sync('{templates/**/*,assets/src/**/*.js}',  { nodir: true }),
+            // }),
         ],
     };
 }

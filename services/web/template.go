@@ -1,7 +1,11 @@
 package web
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"io"
+	"os"
 	"path/filepath"
 	"text/template"
 
@@ -9,6 +13,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/gin-contrib/multitemplate"
+	sv "github.com/webtor-io/web-ui-v2/services"
 )
 
 const (
@@ -28,17 +33,36 @@ func RegisterTemplateHandlerFlags(f []cli.Flag) []cli.Flag {
 
 type TemplateHandler struct {
 	assetsHost string
+	assetsPath string
 }
 
 func NewTemplateHandler(c *cli.Context) *TemplateHandler {
 	return &TemplateHandler{
 		assetsHost: c.String(assetsHostFlag),
+		assetsPath: c.String(sv.AssetsPathFlag),
 	}
+}
+
+func (s *TemplateHandler) MakeAsset(in string) string {
+	h, _ := s.getAssetHash(in)
+	return s.assetsHost + "/assets/" + in + "?" + h
+}
+
+func (s *TemplateHandler) getAssetHash(name string) (string, error) {
+	f, err := os.Open(s.assetsPath + "/" + name)
+	if err != nil {
+		return "", err
+	}
+	h := md5.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
 func (s *TemplateHandler) RegisterTemplate(r multitemplate.Renderer, name string, layouts []string) {
 	funcs := template.FuncMap{
-		"asset":           func(in string) interface{} { return s.assetsHost + "/assets/" + in },
+		"asset":           s.MakeAsset,
 		"makeBreadcrumbs": MakeBreadcrumbs,
 		"hasBreadcrumbs":  HasBreadcrumbs,
 		"hasPagination":   HasPagination,

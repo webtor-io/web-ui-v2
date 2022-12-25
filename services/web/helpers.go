@@ -25,18 +25,6 @@ type Pagination struct {
 	Number bool
 }
 
-// func getAssetHash(name string) (string, error) {
-// 	f, err := os.Open(assetsPath + "/" + name)
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	h := md5.New()
-// 	if _, err := io.Copy(h, f); err != nil {
-// 		return "", err
-// 	}
-// 	return hex.EncodeToString(h.Sum(nil)), nil
-// }
-
 func MakeJobLogURL(j *sv.Job) string {
 	return fmt.Sprintf("/queue/%v/job/%v/log", j.Queue, j.ID)
 }
