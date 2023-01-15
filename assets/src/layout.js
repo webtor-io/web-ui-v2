@@ -5,6 +5,7 @@ async function replacePage(url) {
     document.write(text);
     document.close();
     window.replacing = false;
+    showWrapper();
 }
 if (window.replaced == null) {
     window.replaced = false;
@@ -37,7 +38,9 @@ function hideWrapper() {
 function showWrapper() {
     if (window.replacing) return;
     var w = document.getElementById('wrapper');
-    w.classList.remove('hidden');
+    if (w != null) {
+        w.classList.remove('hidden');
+    }
 }
 window.webtor = {
     progress: {
