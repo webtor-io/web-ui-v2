@@ -4,7 +4,12 @@ function runProgressLog(el) {
     const src = new EventSource(url, {
         withCredentials: true,
     });
+    let hidden = true;
     src.onmessage = (ev) => {
+        if (hidden) {
+            hidden = false;
+            el.classList.remove('hidden');
+        }
         const data = JSON.parse(ev.data);
         if (data.level == 'finish') {
             src.close();

@@ -9,7 +9,7 @@
 </div>
 {{ end }}
 {{ if .Job }}
-<form id="alert" class="progress-alert progress-alert-block mb-10" async-progress-log="{{ .Job | makeJobLogURL }}" async-target="#content">
+<form id="alert" class="hidden progress-alert progress-alert-block mb-10" async-progress-log="{{ .Job | makeJobLogURL }}" async-target="#content">
   <div id="log-target"></div>
   <div id="alert-close-wrapper" class="pt-3 flex justify-end hidden">
     <a id="alert-close" class="close">got it!</a>
