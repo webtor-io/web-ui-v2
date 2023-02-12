@@ -1,6 +1,7 @@
 package download
 
 import (
+	"html/template"
 	"net/http"
 
 	"github.com/gin-contrib/multitemplate"
@@ -43,7 +44,13 @@ func (s *Handler) RegisterRoutes(r *gin.Engine) {
 }
 
 func (s *Handler) RegisterTemplates(r multitemplate.Renderer) {
-	s.RegisterTemplate(r, "download/post", []string{"async"})
+	s.RegisterTemplate(
+		r,
+		"download/post",
+		[]string{"async"},
+		[]string{},
+		template.FuncMap{},
+	)
 }
 
 func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {

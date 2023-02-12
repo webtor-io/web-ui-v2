@@ -12,11 +12,11 @@ Some features to mention:
 - [x] Torrent/magnet upload
 - [x] Torrent listing
 - [x] Direct file download
-- [ ] Direct folder download as ZIP-archive
+- [x] Direct folder download as ZIP-archive
 - [ ] Picture preview
 - [ ] Audio streaming
 - [ ] Video streaming
-- [ ] Authentication with Patreon integration
+- [ ] Authentication with Patreon
 - [ ] Embed support
 - [ ] 🚀Switch webtor.io to web-ui-v2
 

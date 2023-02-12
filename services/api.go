@@ -308,22 +308,20 @@ func (s *Api) Stats(ctx context.Context, resp *ra.ExportResponse) (chan EventDat
 			close(ch)
 			_ = b.Close()
 		}()
-		reader := bufio.NewReader(b)
+		scanner := bufio.NewScanner(b)
+		scanner.Split(bufio.ScanLines)
+
 		t := ""
-		for {
+		for scanner.Scan() {
 			if ctx.Err() != nil {
-				log.WithError(err).Error("context error")
+				log.WithError(ctx.Err()).Error("context error")
 				break
 			}
-			line, err := reader.ReadString('\n')
-			if err != nil {
-				if err == io.EOF {
-					break
-				} else {
-					log.WithError(err).Error("failed to read events")
-					break
-				}
+			if scanner.Err() != nil {
+				log.WithError(scanner.Err()).Error("scanner error")
+				break
 			}
+			line := scanner.Text()
 			if strings.HasPrefix(line, "event: ") {
 				t = strings.TrimSpace(strings.TrimPrefix(line, "event: "))
 				continue

@@ -4,9 +4,9 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
-	"path/filepath"
 	"text/template"
 
 	"github.com/gin-gonic/gin"
@@ -60,23 +60,28 @@ func (s *TemplateHandler) getAssetHash(name string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func (s *TemplateHandler) RegisterTemplate(r multitemplate.Renderer, name string, layouts []string) {
+func (s *TemplateHandler) RegisterTemplate(r multitemplate.Renderer, name string, layouts []string, partials []string, fm template.FuncMap) {
 	funcs := template.FuncMap{
-		"asset":           s.MakeAsset,
-		"makeBreadcrumbs": MakeBreadcrumbs,
-		"hasBreadcrumbs":  HasBreadcrumbs,
-		"hasPagination":   HasPagination,
-		"makePagination":  MakePagination,
-		"makeJobLogURL":   MakeJobLogURL,
-		"bitsForHumans":   BitsForHumans,
-		"log":             Log,
-		"shortErr":        ShortErr,
+		"asset":         s.MakeAsset,
+		"makeJobLogURL": MakeJobLogURL,
+		"bitsForHumans": BitsForHumans,
+		"log":           Log,
+		"shortErr":      ShortErr,
 	}
-	partials, _ := filepath.Glob("templates/partials/*.html")
+	log.Infof("%+v", fm)
+	for k, v := range fm {
+		funcs[k] = v
+	}
+	log.Infof("%+v", name)
+	log.Infof("%+v", funcs)
+	pp := []string{}
+	for _, p := range partials {
+		pp = append(pp, fmt.Sprintf("templates/partials/%v.html", p))
+	}
 	for _, l := range layouts {
 		templates := []string{}
 		templates = append(templates, fmt.Sprintf("templates/layouts/%v.html", l), fmt.Sprintf("templates/%v.html", name))
-		templates = append(templates, partials...)
+		templates = append(templates, pp...)
 		r.AddFromFilesFuncs(fmt.Sprintf("%v_%v", name, l), funcs, templates...)
 	}
 }

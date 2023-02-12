@@ -31,7 +31,7 @@ ENV CGO_ENABLED=0
 ENV GOOS=linux
 
 # build the binary with debug information removed
-RUN  go build -ldflags '-w -s' -a -installsuffix cgo -o server
+RUN go build -ldflags '-w -s' -a -installsuffix cgo -o server
 
 FROM alpine:latest
 

@@ -7,6 +7,7 @@ import (
 	sv "github.com/webtor-io/web-ui-v2/services"
 	j "github.com/webtor-io/web-ui-v2/services/job"
 	w "github.com/webtor-io/web-ui-v2/services/web"
+	"html/template"
 )
 
 type Handler struct {
@@ -33,5 +34,18 @@ func (s *Handler) RegisterRoutes(r *gin.Engine) {
 }
 
 func (s *Handler) RegisterTemplates(r multitemplate.Renderer) {
-	s.RegisterTemplate(r, "resource/get", []string{"standard", "async", "async_list", "async_file"})
+	s.RegisterTemplate(
+		r,
+		"resource/get",
+		[]string{"standard", "async", "async_list", "async_file"},
+		[]string{"list", "download", "file"},
+		template.FuncMap{
+			"makeBreadcrumbs":  MakeBreadcrumbs,
+			"hasBreadcrumbs":   HasBreadcrumbs,
+			"hasPagination":    HasPagination,
+			"makePagination":   MakePagination,
+			"makeFileDownload": MakeFileDownload,
+			"makeDirDownload":  MakeDirDownload,
+		},
+	)
 }

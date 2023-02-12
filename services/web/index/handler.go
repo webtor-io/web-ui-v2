@@ -2,6 +2,7 @@ package index
 
 import (
 	csrf "github.com/utrack/gin-csrf"
+	"html/template"
 	"net/http"
 
 	"github.com/gin-contrib/multitemplate"
@@ -34,7 +35,13 @@ func (s *Handler) RegisterRoutes(r *gin.Engine) {
 }
 
 func (s *Handler) RegisterTemplates(r multitemplate.Renderer) {
-	s.RegisterTemplate(r, "index", []string{"standard", "async"})
+	s.RegisterTemplate(
+		r,
+		"index",
+		[]string{"standard", "async"},
+		[]string{},
+		template.FuncMap{},
+	)
 }
 
 func (s *Handler) index(c *gin.Context) {
