@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"text/template"
@@ -68,12 +67,9 @@ func (s *TemplateHandler) RegisterTemplate(r multitemplate.Renderer, name string
 		"log":           Log,
 		"shortErr":      ShortErr,
 	}
-	log.Infof("%+v", fm)
 	for k, v := range fm {
 		funcs[k] = v
 	}
-	log.Infof("%+v", name)
-	log.Infof("%+v", funcs)
 	pp := []string{}
 	for _, p := range partials {
 		pp = append(pp, fmt.Sprintf("templates/partials/%v.html", p))

@@ -1,4 +1,4 @@
-package download
+package action
 
 import (
 	"html/template"
@@ -40,13 +40,21 @@ func NewHandler(c *cli.Context, jobs *j.Handler) *Handler {
 }
 
 func (s *Handler) RegisterRoutes(r *gin.Engine) {
-	r.POST("/download", s.post)
+	r.POST("/download-file", func(c *gin.Context) {
+		s.post(c, "download")
+	})
+	r.POST("/download-dir", func(c *gin.Context) {
+		s.post(c, "download")
+	})
+	r.POST("/preview-image", func(c *gin.Context) {
+		s.post(c, "preview-image")
+	})
 }
 
 func (s *Handler) RegisterTemplates(r multitemplate.Renderer) {
 	s.RegisterTemplate(
 		r,
-		"download/post",
+		"action/post",
 		[]string{"async"},
 		[]string{},
 		template.FuncMap{},
@@ -69,14 +77,14 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 	}, nil
 }
 
-func (s *Handler) post(c *gin.Context) {
+func (s *Handler) post(c *gin.Context, action string) {
 	var (
 		d    PostData
 		err  error
 		args *PostArgs
 		job  *sv.Job
 	)
-	index := s.MakeTemplate(c, "download/post", &d)
+	index := s.MakeTemplate(c, "action/post", &d)
 	args, err = s.bindPostArgs(c)
 	if err != nil {
 		d.Err = errors.Wrap(err, "wrong args provided")
@@ -84,7 +92,7 @@ func (s *Handler) post(c *gin.Context) {
 		return
 	}
 	d.Args = args
-	job, err = s.jobs.Download(args.Claims, args.ResourceID, args.ItemID)
+	job, err = s.jobs.Action(args.Claims, args.ResourceID, args.ItemID, action)
 	if err != nil {
 		d.Err = errors.Wrap(err, "failed to start downloading")
 		index.R(http.StatusBadRequest)

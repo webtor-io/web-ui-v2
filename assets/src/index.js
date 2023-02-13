@@ -6,5 +6,8 @@ import av from './asyncView';
 av('index', (target) => {
     drop(target);
     alert(target);
-    progressLog(target);
+    const progress = target.querySelector('.progress-alert');
+    if (progress != null) {
+        progressLog(progress);
+    }
 });

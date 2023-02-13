@@ -1,17 +1,20 @@
 package resource
 
 import (
+	"fmt"
+	h "github.com/dustin/go-humanize"
 	ra "github.com/webtor-io/rest-api/services"
 	"strings"
 )
 
-type DownloadItem struct {
+type ButtonItem struct {
 	ID         string
 	CSRF       string
-	Size       int64
 	ItemID     string
 	ResourceID string
 	Name       string
+	Icon       string
+	Endpoint   string
 }
 
 type Breadcrumb struct {
@@ -28,25 +31,39 @@ type Pagination struct {
 	Number bool
 }
 
-func MakeFileDownload(gd *GetData) *DownloadItem {
-	return &DownloadItem{
+func MakeFileDownload(gd *GetData) *ButtonItem {
+	return &ButtonItem{
 		ID:         gd.Item.ID,
 		CSRF:       gd.CSRF,
-		Size:       gd.Item.Size,
 		ItemID:     gd.Item.ID,
 		ResourceID: gd.Resource.ID,
-		Name:       "Download",
+		Name:       fmt.Sprintf("Download [%v]", h.Bytes(uint64(gd.Item.Size))),
+		Icon:       "action",
+		Endpoint:   "/download-file",
 	}
 }
 
-func MakeDirDownload(gd *GetData) *DownloadItem {
-	return &DownloadItem{
+func MakeImage(gd *GetData) *ButtonItem {
+	return &ButtonItem{
+		ID:         gd.Item.ID,
+		CSRF:       gd.CSRF,
+		ItemID:     gd.Item.ID,
+		ResourceID: gd.Resource.ID,
+		Name:       "Preview",
+		Icon:       "preview",
+		Endpoint:   "/preview-image",
+	}
+}
+
+func MakeDirDownload(gd *GetData) *ButtonItem {
+	return &ButtonItem{
 		ID:         gd.List.ID,
 		CSRF:       gd.CSRF,
-		Size:       gd.List.Size,
 		ItemID:     gd.List.ID,
 		ResourceID: gd.Resource.ID,
-		Name:       "Download Directory as ZIP",
+		Name:       fmt.Sprintf("Download Directory as ZIP [%v]", h.Bytes(uint64(gd.List.Size))),
+		Icon:       "action",
+		Endpoint:   "/download-dir",
 	}
 }
 

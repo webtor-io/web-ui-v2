@@ -38,7 +38,7 @@ func (s *Handler) RegisterTemplates(r multitemplate.Renderer) {
 		r,
 		"resource/get",
 		[]string{"standard", "async", "async_list", "async_file"},
-		[]string{"list", "download", "file"},
+		[]string{"list", "button", "icons", "file"},
 		template.FuncMap{
 			"makeBreadcrumbs":  MakeBreadcrumbs,
 			"hasBreadcrumbs":   HasBreadcrumbs,
@@ -46,6 +46,7 @@ func (s *Handler) RegisterTemplates(r multitemplate.Renderer) {
 			"makePagination":   MakePagination,
 			"makeFileDownload": MakeFileDownload,
 			"makeDirDownload":  MakeDirDownload,
+			"makeImage":        MakeImage,
 		},
 	)
 }

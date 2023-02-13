@@ -1,8 +1,12 @@
 {{ define "file" }}
-<h1 class="text-2xl font-bold"># {{ .Item.Name }}</h1>
-{{ template "download" . | makeFileDownload }}
+<h1 class="text-2xl font-bold pb-3"># {{ .Item.Name }}</h1>
+<div class="inline-flex gap-3">
 {{ if eq .Item.MediaFormat "video" }}
 {{ else if eq .Item.MediaFormat "audio" }}
 {{ else if eq .Item.MediaFormat "image" }}
+{{ template "button" . | makeImage }}
 {{ end }}
+{{ template "button" . | makeFileDownload }}
+</div>
+<div id="log-{{ .Item.ID }}" class="mt-3" />
 {{ end }}

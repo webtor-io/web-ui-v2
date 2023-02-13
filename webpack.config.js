@@ -14,7 +14,7 @@ module.exports = (env, options) => {
         entry: {
             index: './assets/src/index.js',
             browse: './assets/src/browse.js',
-            download: './assets/src/download.js',
+            action: './assets/src/action.js',
             layout: './assets/src/layout.js',
         },
         output: {

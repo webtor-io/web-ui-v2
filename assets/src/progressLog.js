@@ -1,4 +1,4 @@
-function runProgressLog(el) {
+export default function(el, func) {
     const url = el.getAttribute('async-progress-log');
     const lt = el.querySelector('#log-target');
     const src = new EventSource(url, {
@@ -26,8 +26,15 @@ function runProgressLog(el) {
             pre.innerText = 'success! redirecting'
             pre.classList.add('done-summary')
             lt.appendChild(pre);
-            el.setAttribute('action', data.location);
+            el.setAttribute('download', data.location);
             el.requestSubmit();
+        }
+        if (data.level == 'rendertag') {
+            src.close();
+            const pre = document.createElement('pre');
+            pre.innerText = 'success! content should be delivered right now!'
+            pre.classList.add('done-summary')
+            lt.appendChild(pre);
         }
         if (data.level == 'download') {
             src.close();
@@ -85,12 +92,8 @@ function runProgressLog(el) {
             lt.appendChild(pre);
             el.querySelector('#alert-close-wrapper').classList.remove('hidden');
         }
+        if (func !== undefined) {
+            func(data);
+        }
     };
-}
-
-export default function(target) {
-    const els = target.querySelectorAll('*[async-progress-log]');
-    for (const el of els) {
-        runProgressLog(el);
-    }
 }

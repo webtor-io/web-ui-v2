@@ -1,6 +1,7 @@
 package services
 
 import (
+	ra "github.com/webtor-io/rest-api/services"
 	"sync"
 	"time"
 
@@ -26,6 +27,7 @@ const (
 	Finish       JobLogItemLevel = "finish"
 	Redirect     JobLogItemLevel = "redirect"
 	Download     JobLogItemLevel = "download"
+	RenderTag    JobLogItemLevel = "rendertag"
 	StatusUpdate JobLogItemLevel = "statusupdate"
 )
 
@@ -39,6 +41,7 @@ var levelMap = map[JobLogItemLevel]log.Level{
 	Download:     log.InfoLevel,
 	Redirect:     log.InfoLevel,
 	StatusUpdate: log.InfoLevel,
+	RenderTag:    log.InfoLevel,
 }
 
 type JobLogItem struct {
@@ -46,6 +49,7 @@ type JobLogItem struct {
 	Message   string          `json:"message,omitempty"`
 	Tag       string          `json:"tag,omitempty"`
 	Location  string          `json:"location,omitempty"`
+	Payload   any             `json:"payload,omitempty"`
 	Timestamp time.Time       `json:"timestamp,omitempty"`
 }
 
@@ -91,11 +95,15 @@ func (s *Job) log(l JobLogItem) {
 	if l.Level == StatusUpdate {
 		message = "statusupdate"
 	}
+	if l.Level == RenderTag {
+		message = "rendertag"
+	}
 	log.WithFields(log.Fields{
 		"ID":       s.ID,
 		"Queue":    s.Queue,
 		"Tag":      l.Tag,
 		"Location": l.Location,
+		"Payload":  l.Payload,
 	}).Log(levelMap[l.Level], message)
 }
 
@@ -153,6 +161,13 @@ func (s *Job) Redirect(url string) {
 	s.log(JobLogItem{
 		Level:    Redirect,
 		Location: url,
+	})
+}
+
+func (s *Job) RenderTag(tag *ra.ExportTag) {
+	s.log(JobLogItem{
+		Level:   RenderTag,
+		Payload: tag,
 	})
 }
 

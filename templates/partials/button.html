@@ -1,0 +1,11 @@
+{{ define "button" }}
+<form class="py-2" action="{{ .Endpoint }}" method="post" enctype="multipart/form-data" async-target="#log-{{ .ID }}" async-push-state="false">
+    <input type="hidden" name="resource-id" value="{{ .ResourceID }}" />
+    <input type="hidden" name="item-id" value="{{ .ItemID }}" />
+    <input type="hidden" name="_csrf" value="{{ .CSRF }}">
+    <button type="submit" class="btn btn-accent btn-outline">
+        {{ template "icons" .Icon }}
+        {{ .Name }}
+    </button>
+</form>
+{{ end }}

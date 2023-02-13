@@ -13,7 +13,7 @@ Some features to mention:
 - [x] Torrent listing
 - [x] Direct file download
 - [x] Direct folder download as ZIP-archive
-- [ ] Picture preview
+- [x] Picture preview
 - [ ] Audio streaming
 - [ ] Video streaming
 - [ ] Authentication with Patreon

@@ -9,7 +9,7 @@ import (
 	s "github.com/webtor-io/web-ui-v2/services"
 	j "github.com/webtor-io/web-ui-v2/services/job"
 	w "github.com/webtor-io/web-ui-v2/services/web"
-	wd "github.com/webtor-io/web-ui-v2/services/web/download"
+	wa "github.com/webtor-io/web-ui-v2/services/web/action"
 	wi "github.com/webtor-io/web-ui-v2/services/web/index"
 	wj "github.com/webtor-io/web-ui-v2/services/web/job"
 	wr "github.com/webtor-io/web-ui-v2/services/web/resource"
@@ -67,9 +67,9 @@ func serve(c *cli.Context) error {
 	indexH := wi.NewHandler(c)
 	web.RegisterHandler(indexH)
 
-	// Setting DowloadHandler
-	downloadH := wd.NewHandler(c, jobs)
-	web.RegisterHandler(downloadH)
+	// Setting ActionHandler
+	actionH := wa.NewHandler(c, jobs)
+	web.RegisterHandler(actionH)
 
 	// Setting Serve
 	serve := cs.NewServe(probe, web)
