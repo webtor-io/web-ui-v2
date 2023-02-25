@@ -3,8 +3,14 @@
 <link rel="stylesheet" href="{{ "player.css" | asset }}" />
 {{ end }}
 {{ define "content" }}
-<audio class="player" srossorigin="anonymous" preload="{{ .Preload }}" {{ if $.Poster }}poster="{{ .Poster }}"{{ end }} controls autoplay>
-    {{ range .Sources }}
+<audio class="player"
+       crossorigin="anonymous"
+       preload="{{ .ExportTag.Preload }}"
+       {{ if .ExportTag.Poster }}poster="{{ .ExportTag.Poster }}" {{ end }}
+       {{ if .MediaProbe }}data-duration="{{ .MediaProbe | getDurationSec }}" {{ end }}
+       controls
+       autoplay>
+    {{ range .ExportTag.Sources }}
     <source src="{{ .Src }}" type="{{ .Type }}">
     {{ end }}
 </audio>

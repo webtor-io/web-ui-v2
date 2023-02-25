@@ -68,13 +68,17 @@ func RegisterHandler(c *cli.Context, r *gin.Engine, re multitemplate.Renderer, j
 		"action/stream_video",
 		[]string{"async"},
 		[]string{},
-		template.FuncMap{},
+		template.FuncMap{
+			"getDurationSec": GetDurationSec,
+		},
 	)
 	h.RegisterTemplate(
 		"action/stream_audio",
 		[]string{"async"},
 		[]string{},
-		template.FuncMap{},
+		template.FuncMap{
+			"getDurationSec": GetDurationSec,
+		},
 	)
 }
 

@@ -1,16 +1,37 @@
 import av from './asyncView';
 import 'mediaelement';
+import './mediaelement-plugins/availableprogress';
 import './player.css';
+
 const {MediaElementPlayer} = global;
+
+function ready() {
+    const event = new CustomEvent('player_ready');
+    window.dispatchEvent(event);
+}
 
 function initPlayer(target) {
     const el = target.querySelector('.player');
+    const duration = el.getAttribute('data-duration') ? parseFloat(el.getAttribute('data-duration')) : -1;
+    const features = [
+        'playpause',
+        'current',
+        'progress',
+        'duration',
+        'tracks',
+        'volume',
+        'fullscreen',
+    ];
+    if (duration > 0) {
+        features.push('availableprogress');
+    }
     const player = new MediaElementPlayer(el, {
         autoRewind: false,
         defaultSeekBackwardInterval: (media) => 15,
         defaultSeekForwardInterval: (media) => 15,
         stretching: 'responsive',
         iconSprite: 'assets/mejs-controls.svg',
+        features,
         hls: {
             autoStartLoad: true,
             startPosition: 0,
@@ -23,8 +44,35 @@ function initPlayer(target) {
             testBandwidth: false,
         },
         async success(media) {
-            self.hlsPlayer = media.hlsPlayer;
+            if (duration > 0) {
+                const oldGetDuration = media.getDuration;
+                media.oldGetDuration = function() {
+                    return oldGetDuration.call(media);
+                }
+                media.getDuration = function() {
+                    if (duration > 0) return duration;
+                    return this.oldGetDuration();
+                }
+                const oldSetCurrentTime = player.setCurrentTime;
+                player.setCurrentTime = function(time, userInteraction = false) {
+                    if (time > media.oldGetDuration()) {
+                        return;
+                    }
+                    return oldSetCurrentTime.call(player, time, userInteraction);
+                }
+            }
+            media.addEventListener('canplay', () => {
+                ready();
+            });
             if (media.hlsPlayer) {
+                media.addEventListener('seeking', () => {
+                    if (media.hlsPlayer.loadLevel > 1) {
+                        media.hlsPlayer.loadLevel = 1;
+                    }
+                });
+                media.addEventListener('seeked', () => {
+                    media.hlsPlayer.loadLevel = -1;
+                });
                 media.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
                     if (media.hlsPlayer.levels.length > 1) {
                         media.hlsPlayer.startLevel = 1;
@@ -53,6 +101,10 @@ function initPlayer(target) {
         },
     });
 }
+
+av('action/preview_image', (target) => {
+    ready();
+});
 
 av('action/stream_video', (target) => {
     initPlayer(target);

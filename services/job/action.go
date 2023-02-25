@@ -15,7 +15,13 @@ import (
 	"time"
 )
 
+type StreamContent struct {
+	ExportTag  *ra.ExportTag
+	MediaProbe *sv.MediaProbe
+}
+
 func (s *Handler) streamContent(j *sv.Job, claims *sv.Claims, resourceID string, itemID string, template string) {
+	sc := &StreamContent{}
 	j.InProgress("retrieving stream url", "retrieving stream")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -25,14 +31,15 @@ func (s *Handler) streamContent(j *sv.Job, claims *sv.Claims, resourceID string,
 		j.Error("failed to retrieve for 30 seconds", "retrieving stream")
 	}
 	j.Done("retrieving stream")
+	sc.ExportTag = resp.ExportItems["stream"].Tag
 	se := resp.ExportItems["stream"]
 	if se.ExportMetaItem.Meta.Cache {
-		<-time.After(300 * time.Millisecond)
-		err = s.renderActionTemplate(j, se, template)
+		err = s.renderActionTemplate(j, sc, template)
 		if err != nil {
 			log.WithError(err).Error("failed to render resource")
 			j.Error("failed to render resource", "retrieving stream")
 		}
+		j.InProgress("waiting player initialization", "player init")
 		return
 	}
 	j.Info("sadly, we don't have this file in cache, we have to warm up before proceed")
@@ -44,13 +51,22 @@ func (s *Handler) streamContent(j *sv.Job, claims *sv.Claims, resourceID string,
 		if err := s.warmUp(j, resp.ExportItems["stream"].URL, resp.ExportItems["torrent_client_stat"].URL, 0, -1, -1, "stream"); err != nil {
 			return
 		}
+		j.InProgress("probing content media info", "probe media")
+		mp, err := s.api.GetMediaProbe(ctx, resp.ExportItems["media_probe"].URL)
+		if err != nil {
+			j.Error("failed to get probe data", "probe media")
+			return
+		}
+		sc.MediaProbe = mp
+		log.Infof("got media probe %+v", mp)
+		j.Done("probe media")
 	}
-	err = s.renderActionTemplate(j, se, template)
+	err = s.renderActionTemplate(j, sc, template)
 	if err != nil {
 		log.WithError(err).Error("failed to render resource")
 		j.Error("failed to render resource", "retrieving stream")
 	}
-
+	j.InProgress("waiting player initialization", "player init")
 }
 
 func (s *Handler) previewImage(j *sv.Job, claims *sv.Claims, resourceID string, itemID string) {
@@ -65,10 +81,10 @@ func (s *Handler) streamVideo(j *sv.Job, claims *sv.Claims, resourceID string, i
 	s.streamContent(j, claims, resourceID, itemID, "stream_video")
 }
 
-func (s *Handler) renderActionTemplate(j *sv.Job, se ra.ExportItem, name string) error {
+func (s *Handler) renderActionTemplate(j *sv.Job, sc *StreamContent, name string) error {
 	var b bytes.Buffer
 	template := "action/" + name + "_async"
-	re, _ := s.re.Instance(template, se.ExportStreamItem.Tag).(render.HTML)
+	re, _ := s.re.Instance(template, sc).(render.HTML)
 	err := re.Template.Execute(&b, re.Data)
 	if err != nil {
 		return err

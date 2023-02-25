@@ -3,11 +3,17 @@
     <link rel="stylesheet" href="{{ "player.css" | asset }}" />
 {{ end }}
 {{ define "content" }}
-<video class="player" srossorigin="anonymous" preload="{{ .Preload }}" {{ if $.Poster }}poster="{{ .Poster }}"{{ end }} controls autoplay>
-    {{ range .Sources }}
+<video class="player"
+       crossorigin="anonymous"
+       preload="{{ .ExportTag.Preload }}"
+       {{ if .ExportTag.Poster }}poster="{{ .ExportTag.Poster }}" {{ end }}
+       {{ if .MediaProbe }}data-duration="{{ .MediaProbe | getDurationSec }}" {{ end }}
+       controls
+       autoplay>
+    {{ range .ExportTag.Sources }}
     <source src="{{ .Src }}" type="{{ .Type }}">
     {{ end }}
-    {{ range .Tracks }}
+    {{ range .ExportTag.Tracks }}
     <track src="{{ .Src }}" srclang="{{ .SrcLang }}" label="{{ .Label }}" kind="{{ .Kind }}">
     {{ end }}
 </video>

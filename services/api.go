@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -89,6 +90,42 @@ type EventData struct {
 	} `json:"pieces"`
 	Seeders  int `json:"seeders"`
 	Leechers int `json:"leechers"`
+}
+
+type MediaProbe struct {
+	Format struct {
+		FormatName string `json:"format_name"`
+		BitRate    string `json:"bit_rate"`
+		Duration   string `json:"duration"`
+		Tags       struct {
+			CompatibleBrands string    `json:"compatible_brands"`
+			Copyright        string    `json:"copyright"`
+			CreationTime     time.Time `json:"creation_time"`
+			Description      string    `json:"description"`
+			Encoder          string    `json:"encoder"`
+			MajorBrand       string    `json:"major_brand"`
+			MinorVersion     string    `json:"minor_version"`
+			Title            string    `json:"title"`
+		} `json:"tags"`
+	} `json:"format"`
+	Streams []struct {
+		CodecName string `json:"codec_name"`
+		CodecType string `json:"codec_type"`
+		Width     int    `json:"width,omitempty"`
+		Height    int    `json:"height,omitempty"`
+		BitRate   string `json:"bit_rate"`
+		Duration  string `json:"duration"`
+		Tags      struct {
+			CreationTime time.Time `json:"creation_time"`
+			HandlerName  string    `json:"handler_name"`
+			Language     string    `json:"language"`
+			VendorId     string    `json:"vendor_id"`
+		} `json:"tags"`
+		Index         int    `json:"index,omitempty"`
+		Channels      int    `json:"channels,omitempty"`
+		ChannelLayout string `json:"channel_layout,omitempty"`
+		SampleRate    string `json:"sample_rate,omitempty"`
+	} `json:"streams"`
 }
 
 type Claims struct {
@@ -299,6 +336,29 @@ func (s *Api) DownloadWithRange(ctx context.Context, u string, start int, end in
 	}
 	b := res.Body
 	return b, nil
+}
+
+func (s *Api) GetMediaProbe(ctx context.Context, u string) (*MediaProbe, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to make new request")
+	}
+	res, err := s.cl.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to do request")
+	}
+	b := res.Body
+	defer b.Close()
+	mb := MediaProbe{}
+	data, err := io.ReadAll(b)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read data")
+	}
+	err = json.Unmarshal(data, &mb)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal data=%v", data)
+	}
+	return &mb, nil
 }
 
 func (s *Api) Stats(ctx context.Context, u string) (chan EventData, error) {

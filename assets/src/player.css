@@ -1,1 +1,15 @@
 @import "mediaelement/build/mediaelementplayer.css";
+
+.mejs__available-progress {
+  left: 0;
+  transform: scaleX(0);
+  transform-origin: 0 0;
+  transition: 0.15s ease-in all;
+  width: 100%;
+  border-radius: 2px;
+  cursor: pointer;
+  display: block;
+  height: 2px;
+  position: absolute;
+  bottom: 0;
+}

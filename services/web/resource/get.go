@@ -152,6 +152,12 @@ func (s *Handler) getBestItem(ctx context.Context, l *ra.ListResponse, args *Get
 			}
 		}
 		for _, v := range l.Items {
+			if v.MediaFormat == ra.Audio && !sampleReg.MatchString(v.Name) {
+				i = &v
+				return
+			}
+		}
+		for _, v := range l.Items {
 			if v.Type == ra.ListTypeFile {
 				i = &v
 				return
