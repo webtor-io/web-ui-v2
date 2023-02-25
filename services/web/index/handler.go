@@ -23,20 +23,13 @@ type Handler struct {
 	*w.ClaimsHandler
 }
 
-func NewHandler(c *cli.Context) *Handler {
-	return &Handler{
-		TemplateHandler: w.NewTemplateHandler(c),
+func RegisterHandler(c *cli.Context, r *gin.Engine, re multitemplate.Renderer) {
+	h := &Handler{
+		TemplateHandler: w.NewTemplateHandler(c, re),
 		ClaimsHandler:   w.NewClaimsHandler(),
 	}
-}
-
-func (s *Handler) RegisterRoutes(r *gin.Engine) {
-	r.GET("/", s.index)
-}
-
-func (s *Handler) RegisterTemplates(r multitemplate.Renderer) {
-	s.RegisterTemplate(
-		r,
+	r.GET("/", h.index)
+	h.RegisterTemplate(
 		"index",
 		[]string{"standard", "async"},
 		[]string{},

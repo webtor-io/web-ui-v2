@@ -14,8 +14,12 @@ Some features to mention:
 - [x] Direct file download
 - [x] Direct folder download as ZIP-archive
 - [x] Picture preview
-- [ ] Audio streaming
-- [ ] Video streaming
+- [x] Audio streaming
+- [x] Video streaming
+  - [x] Base player
+  - [ ] Subtitles support
+  - [ ] OpenSubtitles support
+  - [ ] Chromecast support
 - [ ] Authentication with Patreon
 - [ ] Embed support
 - [ ] 🚀Switch webtor.io to web-ui-v2

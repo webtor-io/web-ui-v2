@@ -274,9 +274,20 @@ func (s *Api) ExportResourceContent(ctx context.Context, c *Claims, infohash str
 	return
 }
 
-func (s *Api) Download(ctx context.Context, resp *ra.ExportResponse) (io.ReadCloser, error) {
-	u := resp.ExportItems["download"].URL
+func (s *Api) Download(ctx context.Context, u string) (io.ReadCloser, error) {
+	return s.DownloadWithRange(ctx, u, 0, -1)
+}
+
+func (s *Api) DownloadWithRange(ctx context.Context, u string, start int, end int) (io.ReadCloser, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
+	if start != 0 || end != -1 {
+		startStr := strconv.Itoa(start)
+		endStr := ""
+		if end != -1 {
+			endStr = strconv.Itoa(end)
+		}
+		req.Header.Set("Range", fmt.Sprintf("bytes=%v-%v", startStr, endStr))
+	}
 	if err != nil {
 		log.WithError(err).Error("failed to make new request")
 		return nil, err
@@ -290,9 +301,7 @@ func (s *Api) Download(ctx context.Context, resp *ra.ExportResponse) (io.ReadClo
 	return b, nil
 }
 
-func (s *Api) Stats(ctx context.Context, resp *ra.ExportResponse) (chan EventData, error) {
-	tcs := resp.ExportItems["torrent_client_stat"]
-	u := tcs.URL
+func (s *Api) Stats(ctx context.Context, u string) (chan EventData, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make new request")

@@ -31,9 +31,9 @@ func (s *ClaimsHandler) getRemoteAddress(r *http.Request) string {
 }
 
 func (s *ClaimsHandler) MakeClaims(c *gin.Context) *sv.Claims {
-	c.ClientIP()
+	sess, _ := c.Cookie("session")
 	claims := &sv.Claims{
-		SessionID:     "1",
+		SessionID:     sess,
 		Role:          "nobody",
 		Rate:          "10M",
 		Domain:        "webtor.io",

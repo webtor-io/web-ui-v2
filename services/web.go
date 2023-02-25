@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -51,7 +50,6 @@ type Web struct {
 	secret string
 	ln     net.Listener
 	r      *gin.Engine
-	re     multitemplate.Renderer
 }
 
 func (s *Web) Serve() error {
@@ -65,16 +63,6 @@ func (s *Web) Serve() error {
 	return http.Serve(s.ln, s.r)
 }
 
-type Handler interface {
-	RegisterRoutes(r *gin.Engine)
-	RegisterTemplates(r multitemplate.Renderer)
-}
-
-func (s *Web) RegisterHandler(h Handler) {
-	h.RegisterRoutes(s.r)
-	h.RegisterTemplates(s.re)
-}
-
 func (s *Web) Close() {
 	log.Info("closing Web")
 	defer func() {
@@ -85,9 +73,8 @@ func (s *Web) Close() {
 	}
 }
 
-func NewWeb(c *cli.Context) *Web {
-	r := gin.Default()
-	store := cookie.NewStore([]byte("secret"))
+func NewWeb(c *cli.Context, r *gin.Engine) *Web {
+	store := cookie.NewStore([]byte(sessionSecretFlag))
 	r.Use(sessions.Sessions("session", store))
 	r.Use(csrf.Middleware(csrf.Options{
 		Secret: c.String(sessionSecretFlag),
@@ -100,13 +87,10 @@ func NewWeb(c *cli.Context) *Web {
 	assetsPath := c.String(AssetsPathFlag)
 	r.Static("/assets", assetsPath)
 	r.StaticFile("/favicon.ico", assetsPath+"/favicon.ico")
-	re := multitemplate.NewRenderer()
-	r.HTMLRender = re
 
 	return &Web{
 		host: c.String(webHostFlag),
 		port: c.Int(webPortFlag),
 		r:    r,
-		re:   re,
 	}
 }

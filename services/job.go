@@ -1,7 +1,6 @@
 package services
 
 import (
-	ra "github.com/webtor-io/rest-api/services"
 	"sync"
 	"time"
 
@@ -19,29 +18,29 @@ type Job struct {
 type JobLogItemLevel string
 
 const (
-	Info         JobLogItemLevel = "info"
-	Error        JobLogItemLevel = "error"
-	Warn         JobLogItemLevel = "warn"
-	Done         JobLogItemLevel = "done"
-	InProgress   JobLogItemLevel = "inprogress"
-	Finish       JobLogItemLevel = "finish"
-	Redirect     JobLogItemLevel = "redirect"
-	Download     JobLogItemLevel = "download"
-	RenderTag    JobLogItemLevel = "rendertag"
-	StatusUpdate JobLogItemLevel = "statusupdate"
+	Info           JobLogItemLevel = "info"
+	Error          JobLogItemLevel = "error"
+	Warn           JobLogItemLevel = "warn"
+	Done           JobLogItemLevel = "done"
+	InProgress     JobLogItemLevel = "inprogress"
+	Finish         JobLogItemLevel = "finish"
+	Redirect       JobLogItemLevel = "redirect"
+	Download       JobLogItemLevel = "download"
+	RenderTemplate JobLogItemLevel = "rendertemplate"
+	StatusUpdate   JobLogItemLevel = "statusupdate"
 )
 
 var levelMap = map[JobLogItemLevel]log.Level{
-	Info:         log.InfoLevel,
-	Error:        log.ErrorLevel,
-	Warn:         log.WarnLevel,
-	Done:         log.InfoLevel,
-	InProgress:   log.InfoLevel,
-	Finish:       log.InfoLevel,
-	Download:     log.InfoLevel,
-	Redirect:     log.InfoLevel,
-	StatusUpdate: log.InfoLevel,
-	RenderTag:    log.InfoLevel,
+	Info:           log.InfoLevel,
+	Error:          log.ErrorLevel,
+	Warn:           log.WarnLevel,
+	Done:           log.InfoLevel,
+	InProgress:     log.InfoLevel,
+	Finish:         log.InfoLevel,
+	Download:       log.InfoLevel,
+	Redirect:       log.InfoLevel,
+	StatusUpdate:   log.InfoLevel,
+	RenderTemplate: log.InfoLevel,
 }
 
 type JobLogItem struct {
@@ -49,7 +48,8 @@ type JobLogItem struct {
 	Message   string          `json:"message,omitempty"`
 	Tag       string          `json:"tag,omitempty"`
 	Location  string          `json:"location,omitempty"`
-	Payload   any             `json:"payload,omitempty"`
+	Template  string          `json:"template,omitempty"`
+	Body      string          `json:"body,omitempty"`
 	Timestamp time.Time       `json:"timestamp,omitempty"`
 }
 
@@ -95,15 +95,16 @@ func (s *Job) log(l JobLogItem) {
 	if l.Level == StatusUpdate {
 		message = "statusupdate"
 	}
-	if l.Level == RenderTag {
-		message = "rendertag"
+	if l.Level == RenderTemplate {
+		message = "rendertemplate"
 	}
 	log.WithFields(log.Fields{
 		"ID":       s.ID,
 		"Queue":    s.Queue,
 		"Tag":      l.Tag,
 		"Location": l.Location,
-		"Payload":  l.Payload,
+		"Template": l.Template,
+		"Body":     l.Body,
 	}).Log(levelMap[l.Level], message)
 }
 
@@ -146,7 +147,8 @@ func (s *Job) Done(tag string) {
 }
 func (s *Job) Finish() {
 	s.log(JobLogItem{
-		Level: Finish,
+		Level:   Finish,
+		Message: "success!",
 	})
 }
 
@@ -164,10 +166,18 @@ func (s *Job) Redirect(url string) {
 	})
 }
 
-func (s *Job) RenderTag(tag *ra.ExportTag) {
+func (s *Job) RenderTemplate(name string, body string) {
 	s.log(JobLogItem{
-		Level:   RenderTag,
-		Payload: tag,
+		Level:    RenderTemplate,
+		Template: name,
+		Body:     body,
+	})
+}
+
+func (s *Job) FinishWithMessage(m string) {
+	s.log(JobLogItem{
+		Level:   Finish,
+		Message: m,
 	})
 }
 

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/gin-contrib/multitemplate"
+	"github.com/gin-gonic/gin"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -45,31 +47,34 @@ func serve(c *cli.Context) error {
 	// Setting Api
 	api := s.NewApi(c, cl)
 
+	// Setting template renderer
+	re := multitemplate.NewRenderer()
+
 	// Setting JobQueues
 	queues := s.NewJobQueues()
 
 	// Setting JobHandler
-	jobs := j.NewHandler(api, queues)
+	jobs := j.NewHandler(re, api, queues)
+
+	// Setting Gin
+	r := gin.Default()
+	r.HTMLRender = re
 
 	// Setting Web
-	web := s.NewWeb(c)
+	web := s.NewWeb(c, r)
 	defer web.Close()
 
 	// Setting ResourceHandler
-	resourceH := wr.NewHandler(c, api, jobs)
-	web.RegisterHandler(resourceH)
+	wr.RegisterHandler(c, r, re, api, jobs)
 
 	// Setting JobHandler
-	jobH := wj.NewHandler(queues)
-	web.RegisterHandler(jobH)
+	wj.RegisterHandler(r, queues)
 
 	// Setting IndexHandler
-	indexH := wi.NewHandler(c)
-	web.RegisterHandler(indexH)
+	wi.RegisterHandler(c, r, re)
 
 	// Setting ActionHandler
-	actionH := wa.NewHandler(c, jobs)
-	web.RegisterHandler(actionH)
+	wa.RegisterHandler(c, r, re, jobs)
 
 	// Setting Serve
 	serve := cs.NewServe(probe, web)

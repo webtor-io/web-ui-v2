@@ -31,40 +31,55 @@ type Pagination struct {
 	Number bool
 }
 
-func MakeFileDownload(gd *GetData) *ButtonItem {
+func MakeButton(gd *GetData, name string, icon string, endpoint string) *ButtonItem {
 	return &ButtonItem{
 		ID:         gd.Item.ID,
 		CSRF:       gd.CSRF,
 		ItemID:     gd.Item.ID,
 		ResourceID: gd.Resource.ID,
-		Name:       fmt.Sprintf("Download [%v]", h.Bytes(uint64(gd.Item.Size))),
-		Icon:       "action",
-		Endpoint:   "/download-file",
+		Name:       name,
+		Icon:       icon,
+		Endpoint:   endpoint,
 	}
+}
+
+func MakeFileDownload(gd *GetData) *ButtonItem {
+	return MakeButton(gd,
+		fmt.Sprintf("Download [%v]", h.Bytes(uint64(gd.Item.Size))),
+		"action",
+		"/download-file",
+	)
 }
 
 func MakeImage(gd *GetData) *ButtonItem {
-	return &ButtonItem{
-		ID:         gd.Item.ID,
-		CSRF:       gd.CSRF,
-		ItemID:     gd.Item.ID,
-		ResourceID: gd.Resource.ID,
-		Name:       "Preview",
-		Icon:       "preview",
-		Endpoint:   "/preview-image",
-	}
+	return MakeButton(gd,
+		"Preview",
+		"preview",
+		"/preview-image",
+	)
+}
+
+func MakeAudio(gd *GetData) *ButtonItem {
+	return MakeButton(gd,
+		"Stream",
+		"stream",
+		"/stream-audio",
+	)
+}
+func MakeVideo(gd *GetData) *ButtonItem {
+	return MakeButton(gd,
+		"Stream",
+		"stream",
+		"/stream-video",
+	)
 }
 
 func MakeDirDownload(gd *GetData) *ButtonItem {
-	return &ButtonItem{
-		ID:         gd.List.ID,
-		CSRF:       gd.CSRF,
-		ItemID:     gd.List.ID,
-		ResourceID: gd.Resource.ID,
-		Name:       fmt.Sprintf("Download Directory as ZIP [%v]", h.Bytes(uint64(gd.List.Size))),
-		Icon:       "action",
-		Endpoint:   "/download-dir",
-	}
+	return MakeButton(gd,
+		fmt.Sprintf("Download Directory as ZIP [%v]", h.Bytes(uint64(gd.List.Size))),
+		"action",
+		"/download-dir",
+	)
 }
 
 func HasBreadcrumbs(lr *ra.ListResponse) bool {
@@ -79,13 +94,13 @@ func HasBreadcrumbs(lr *ra.ListResponse) bool {
 }
 
 func MakeBreadcrumbs(r ra.ResourceResponse, pathStr string) []Breadcrumb {
-	res := []Breadcrumb{}
+	var res []Breadcrumb
 	res = append(res, Breadcrumb{
 		Name:    r.Name,
 		PathStr: "/",
 	})
 	if pathStr != "/" {
-		t := []string{}
+		var t []string
 		path := strings.Split(strings.Trim(pathStr, "/"), "/")
 		for _, p := range path {
 			t = append(t, p)
@@ -104,7 +119,7 @@ func HasPagination(lr *ra.ListResponse) bool {
 }
 
 func MakePagination(lr *ra.ListResponse, page uint, pageSize uint) []Pagination {
-	res := []Pagination{}
+	var res []Pagination
 	pages := uint(lr.Count)/pageSize + 1
 	prev := page - 1
 	if prev < 1 {

@@ -31,30 +31,47 @@ type Handler struct {
 	jobs *j.Handler
 }
 
-func NewHandler(c *cli.Context, jobs *j.Handler) *Handler {
-	return &Handler{
-		TemplateHandler: w.NewTemplateHandler(c),
+func RegisterHandler(c *cli.Context, r *gin.Engine, re multitemplate.Renderer, jobs *j.Handler) {
+	h := &Handler{
+		TemplateHandler: w.NewTemplateHandler(c, re),
 		ClaimsHandler:   w.NewClaimsHandler(),
 		jobs:            jobs,
 	}
-}
-
-func (s *Handler) RegisterRoutes(r *gin.Engine) {
 	r.POST("/download-file", func(c *gin.Context) {
-		s.post(c, "download")
+		h.post(c, "download")
 	})
 	r.POST("/download-dir", func(c *gin.Context) {
-		s.post(c, "download")
+		h.post(c, "download")
 	})
 	r.POST("/preview-image", func(c *gin.Context) {
-		s.post(c, "preview-image")
+		h.post(c, "preview-image")
 	})
-}
-
-func (s *Handler) RegisterTemplates(r multitemplate.Renderer) {
-	s.RegisterTemplate(
-		r,
+	r.POST("/stream-audio", func(c *gin.Context) {
+		h.post(c, "stream-audio")
+	})
+	r.POST("/stream-video", func(c *gin.Context) {
+		h.post(c, "stream-video")
+	})
+	h.RegisterTemplate(
 		"action/post",
+		[]string{"async"},
+		[]string{},
+		template.FuncMap{},
+	)
+	h.RegisterTemplate(
+		"action/preview_image",
+		[]string{"async"},
+		[]string{},
+		template.FuncMap{},
+	)
+	h.RegisterTemplate(
+		"action/stream_video",
+		[]string{"async"},
+		[]string{},
+		template.FuncMap{},
+	)
+	h.RegisterTemplate(
+		"action/stream_audio",
 		[]string{"async"},
 		[]string{},
 		template.FuncMap{},

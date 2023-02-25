@@ -6,20 +6,14 @@ av('action/post', (target) => {
     alert(target);
     const progress = target.querySelector('form');
     progressLog(progress, function(ev) {
-        if (ev.level == 'rendertag') {
-            const p = ev.payload;
-            const el = document.createElement(p.tag);
-            if (p.tag == 'img') {
-                el.setAttribute('src', p.src);
-                el.setAttribute('alt', p.alt);
-            }
+        if (ev.level == 'rendertemplate') {
+            const el = document.createElement('div');
             el.classList.add('hidden');
             el.classList.add('mb-5')
             target.appendChild(el);
-            el.onload = function() {
-                progress.classList.add('hidden');
-                el.classList.remove('hidden');
-            }
+            ev.render(el);
+            progress.classList.add('hidden');
+            el.classList.remove('hidden');
         }
     });
 });

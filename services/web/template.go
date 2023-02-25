@@ -33,12 +33,14 @@ func RegisterTemplateHandlerFlags(f []cli.Flag) []cli.Flag {
 type TemplateHandler struct {
 	assetsHost string
 	assetsPath string
+	re         multitemplate.Renderer
 }
 
-func NewTemplateHandler(c *cli.Context) *TemplateHandler {
+func NewTemplateHandler(c *cli.Context, re multitemplate.Renderer) *TemplateHandler {
 	return &TemplateHandler{
 		assetsHost: c.String(assetsHostFlag),
 		assetsPath: c.String(sv.AssetsPathFlag),
+		re:         re,
 	}
 }
 
@@ -59,7 +61,7 @@ func (s *TemplateHandler) getAssetHash(name string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func (s *TemplateHandler) RegisterTemplate(r multitemplate.Renderer, name string, layouts []string, partials []string, fm template.FuncMap) {
+func (s *TemplateHandler) RegisterTemplate(name string, layouts []string, partials []string, fm template.FuncMap) {
 	funcs := template.FuncMap{
 		"asset":         s.MakeAsset,
 		"makeJobLogURL": MakeJobLogURL,
@@ -78,7 +80,7 @@ func (s *TemplateHandler) RegisterTemplate(r multitemplate.Renderer, name string
 		templates := []string{}
 		templates = append(templates, fmt.Sprintf("templates/layouts/%v.html", l), fmt.Sprintf("templates/%v.html", name))
 		templates = append(templates, pp...)
-		r.AddFromFilesFuncs(fmt.Sprintf("%v_%v", name, l), funcs, templates...)
+		s.re.AddFromFilesFuncs(fmt.Sprintf("%v_%v", name, l), funcs, templates...)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	csrf "github.com/utrack/gin-csrf"
 	"net/http"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -12,6 +13,10 @@ import (
 	ra "github.com/webtor-io/rest-api/services"
 	sv "github.com/webtor-io/web-ui-v2/services"
 	sw "github.com/webtor-io/web-ui-v2/services/web"
+)
+
+var (
+	sampleReg = regexp.MustCompile("/sample/i")
 )
 
 const (
@@ -134,11 +139,18 @@ func (s *Handler) getBestItem(ctx context.Context, l *ra.ListResponse, args *Get
 			return
 		}
 		if len(l.Items) > 0 {
+
 			i = &l.Items[0]
 			return
 		}
 	}
 	if args.Page == 1 {
+		for _, v := range l.Items {
+			if v.MediaFormat == ra.Video && !sampleReg.MatchString(v.Name) {
+				i = &v
+				return
+			}
+		}
 		for _, v := range l.Items {
 			if v.Type == ra.ListTypeFile {
 				i = &v

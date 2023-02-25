@@ -3,6 +3,7 @@ const glob = require('glob')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const { PurgeCSSPlugin } = require('purgecss-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 // const CompressionPlugin = require('compression-webpack-plugin');
 
 module.exports = (env, options) => {
@@ -15,6 +16,7 @@ module.exports = (env, options) => {
             index: './assets/src/index.js',
             browse: './assets/src/browse.js',
             action: './assets/src/action.js',
+            player: './assets/src/player.js',
             layout: './assets/src/layout.js',
         },
         output: {
@@ -73,6 +75,11 @@ module.exports = (env, options) => {
             // new PurgeCSSPlugin({
             //     paths: glob.sync('{templates/**/*,assets/src/**/*.js}',  { nodir: true }),
             // }),
+            new CopyPlugin({
+                patterns: [
+                    { from: 'node_modules/mediaelement/build/mejs-controls.svg', to: 'mejs-controls.svg' },
+                ],
+            }),
         ],
     };
 }

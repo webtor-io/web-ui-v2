@@ -1,0 +1,11 @@
+{{ define "head" }}
+<script src="{{ "player.js" | asset }}"></script>
+<link rel="stylesheet" href="{{ "player.css" | asset }}" />
+{{ end }}
+{{ define "content" }}
+<audio class="player" srossorigin="anonymous" preload="{{ .Preload }}" {{ if $.Poster }}poster="{{ .Poster }}"{{ end }} controls autoplay>
+    {{ range .Sources }}
+    <source src="{{ .Src }}" type="{{ .Type }}">
+    {{ end }}
+</audio>
+{{ end }}

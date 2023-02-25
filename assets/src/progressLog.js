@@ -1,3 +1,4 @@
+import loadAsyncView from "./loadAsyncView";
 export default function(el, func) {
     const url = el.getAttribute('async-progress-log');
     const lt = el.querySelector('#log-target');
@@ -14,7 +15,7 @@ export default function(el, func) {
         if (data.level == 'finish') {
             src.close();
             const pre = document.createElement('pre');
-            pre.innerText = 'success!'
+            pre.innerText = data.message;
             pre.classList.add('done-summary')
             lt.appendChild(pre);
             el.querySelector('#alert-close-wrapper').classList.remove('hidden');
@@ -29,12 +30,10 @@ export default function(el, func) {
             el.setAttribute('download', data.location);
             el.requestSubmit();
         }
-        if (data.level == 'rendertag') {
-            src.close();
-            const pre = document.createElement('pre');
-            pre.innerText = 'success! content should be delivered right now!'
-            pre.classList.add('done-summary')
-            lt.appendChild(pre);
+        if (data.level == 'rendertemplate') {
+            data.render = (el) => {
+                loadAsyncView(el, data.body, data.template);
+            }
         }
         if (data.level == 'download') {
             src.close();

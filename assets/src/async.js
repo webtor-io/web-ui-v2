@@ -1,47 +1,4 @@
-const invokedScripts = {};
-const loadedViews = {};
-function getScriptName(script) {
-    const src = script.getAttribute('src');
-    if (src) {
-        return src;
-    }
-    return;
-}
-// https://stackoverflow.com/a/69190644
-function executeScriptElements(containerElement) {
-    const scriptElements = containerElement.querySelectorAll('script');
-  
-    Array.from(scriptElements).forEach((scriptElement) => {
-        const name = getScriptName(scriptElement);
-        if (name) {
-            if (invokedScripts[name]) {
-                return;
-            } else {
-                invokedScripts[name] = true;
-            }
-        }
-    
-        const clonedElement = document.createElement('script');
-  
-        Array.from(scriptElement.attributes).forEach((attribute) => {
-            clonedElement.setAttribute(attribute.name, attribute.value);
-        });
-      
-        clonedElement.text = scriptElement.text;
-  
-        scriptElement.parentNode.replaceChild(clonedElement, scriptElement);
-    });
-}
-
-window.addEventListener('DOMContentLoaded', (event) => {
-    const scripts = document.querySelectorAll('script');
-    for (const s of scripts) {
-        const name = getScriptName(s);
-        if (!name) continue;
-        invokedScripts[name] = true;
-    }
-});
-
+import loadAsyncView from "./loadAsyncView";
 async function asyncFetch(url, selector, targetSelector, layout, fetchParams, params) {
     let target = document.querySelector(targetSelector);
     if (!target) {
@@ -57,26 +14,9 @@ async function asyncFetch(url, selector, targetSelector, layout, fetchParams, pa
     if (params.before) params.before();
     const res = await fetch(url, fetchParams);
     const text = await res.text();
-    target.innerHTML = text;
-    executeScriptElements(target);
     if (params.after) params.after();
     const template = res.headers.get('X-Template');
-    const detail = {
-        target,
-        layout,
-    };
-    const event = new CustomEvent('async', { detail });
-    window.dispatchEvent(event);
-    if (template) {
-        const event = new CustomEvent('async:'+template, { detail });
-        window.dispatchEvent(event);
-        if (!loadedViews[template]) {
-            window.addEventListener(`async:${template}_loaded`, async function(e) {
-                loadedViews[template] = true;
-                window.dispatchEvent(event);
-            });
-        }
-    }
+    loadAsyncView(target, text, template, layout);
     return res;
 }
 function async(selector, params = {}, scope = null) {
