@@ -29,7 +29,8 @@ func (s *Handler) streamContent(j *sv.Job, claims *sv.Claims, resourceID string,
 	resp, err := s.api.ExportResourceContent(ctx, claims, resourceID, itemID)
 	if err != nil {
 		log.WithError(err).Error("failed to export resource")
-		j.Error("failed to retrieve for 60 seconds", "retrieving stream")
+		j.Error("failed to retrieve for 60 seconds", "retrieving stream").Close()
+		return
 	}
 	j.Done("retrieving stream")
 	sc.ExportTag = resp.ExportItems["stream"].Tag
@@ -45,7 +46,7 @@ func (s *Handler) streamContent(j *sv.Job, claims *sv.Claims, resourceID string,
 			j.InProgress("probing content media info", "probe media")
 			mp, err := s.api.GetMediaProbe(ctx, resp.ExportItems["media_probe"].URL)
 			if err != nil {
-				j.Error("failed to get probe data", "probe media")
+				j.Error("failed to get probe data", "probe media").Close()
 				return
 			}
 			sc.MediaProbe = mp
@@ -57,7 +58,7 @@ func (s *Handler) streamContent(j *sv.Job, claims *sv.Claims, resourceID string,
 		j.InProgress("loading OpenSubtitles", "opensubtitles")
 		subs, err := s.api.GetOpenSubtitles(ctx, resp.ExportItems["subtitles"].URL)
 		if err != nil {
-			j.Error("failed to get OpenSubtitles", "opensubtitles")
+			j.Error("failed to get OpenSubtitles", "opensubtitles").Close()
 			return
 		}
 		sc.OpenSubtitles = subs
@@ -66,9 +67,9 @@ func (s *Handler) streamContent(j *sv.Job, claims *sv.Claims, resourceID string,
 	err = s.renderActionTemplate(j, sc, template)
 	if err != nil {
 		log.WithError(err).Error("failed to render resource")
-		j.Error("failed to render resource", "retrieving stream")
+		j.Error("failed to render resource", "retrieving stream").Close()
 	}
-	j.InProgress("waiting player initialization", "player init")
+	j.InProgress("waiting player initialization", "player init").Close()
 }
 
 func (s *Handler) previewImage(j *sv.Job, claims *sv.Claims, resourceID string, itemID string) {
@@ -102,7 +103,7 @@ func (s *Handler) download(j *sv.Job, claims *sv.Claims, resourceID string, item
 	resp, err := s.api.ExportResourceContent(ctx, claims, resourceID, itemID)
 	if err != nil {
 		log.WithError(err).Error("failed to export resource")
-		j.Error("failed to retrieve for 30 seconds", "retrieving download link")
+		j.Error("failed to retrieve for 30 seconds", "retrieving download link").Close()
 	}
 	j.Done("retrieving download link")
 	de := resp.ExportItems["download"]
@@ -112,7 +113,7 @@ func (s *Handler) download(j *sv.Job, claims *sv.Claims, resourceID string, item
 			return
 		}
 	}
-	j.Download(url)
+	j.Download(url).Close()
 }
 
 func (s *Handler) warmUp(j *sv.Job, m string, u string, su string, size int, limitStart int, limitEnd int, tagSuff string) error {
@@ -137,7 +138,7 @@ func (s *Handler) warmUp(j *sv.Job, m string, u string, su string, size int, lim
 	b, err := s.api.DownloadWithRange(ctx2, u, 0, limitStart)
 	if err != nil {
 		log.WithError(err).Error("failed start download")
-		j.Error("failed to start download", tag)
+		j.Error("failed to start download", tag).Close()
 		return err
 	}
 	defer b.Close()
@@ -159,14 +160,14 @@ func (s *Handler) warmUp(j *sv.Job, m string, u string, su string, size int, lim
 		b2, err := s.api.DownloadWithRange(ctx2, u, size-limitEnd, -1)
 		if err != nil {
 			log.WithError(err).Error("failed start download")
-			j.Error("failed to start download", tag)
+			j.Error("failed to start download", tag).Close()
 			return err
 		}
 		defer b2.Close()
 		_, err = io.Copy(io.Discard, b2)
 	}
 	if err != nil {
-		j.Error("failed to download within 5 minutes", tag)
+		j.Error("failed to download within 5 minutes", tag).Close()
 		log.WithError(err).Error("failed to download bytes within 5 minutes")
 		return err
 	}

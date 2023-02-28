@@ -12,6 +12,9 @@ export default function(el, func) {
             el.classList.remove('hidden');
         }
         const data = JSON.parse(ev.data);
+        if (data.level == 'close') {
+            src.close();
+        }
         if (data.level == 'finish') {
             src.close();
             const pre = document.createElement('pre');

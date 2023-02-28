@@ -14,6 +14,7 @@ type Job struct {
 	l         []JobLogItem
 	run       func(j *Job)
 	observers []chan JobLogItem
+	closed    bool
 }
 
 type JobLogItemLevel string
@@ -29,6 +30,7 @@ const (
 	Download       JobLogItemLevel = "download"
 	RenderTemplate JobLogItemLevel = "rendertemplate"
 	StatusUpdate   JobLogItemLevel = "statusupdate"
+	Close          JobLogItemLevel = "close"
 )
 
 var levelMap = map[JobLogItemLevel]log.Level{
@@ -42,6 +44,7 @@ var levelMap = map[JobLogItemLevel]log.Level{
 	Redirect:       log.InfoLevel,
 	StatusUpdate:   log.InfoLevel,
 	RenderTemplate: log.InfoLevel,
+	Close:          log.InfoLevel,
 }
 
 type JobLogItem struct {
@@ -82,6 +85,9 @@ func (s *Job) log(l JobLogItem) {
 	s.l = append(s.l, l)
 	for _, o := range s.observers {
 		o <- l
+		if l.Level == Close {
+			close(o)
+		}
 	}
 	message := l.Message
 	if l.Level == Done {
@@ -109,76 +115,96 @@ func (s *Job) log(l JobLogItem) {
 	}).Log(levelMap[l.Level], message)
 }
 
-func (s *Job) Info(message string) {
+func (s *Job) Info(message string) *Job {
 	s.log(JobLogItem{
 		Level:   Info,
 		Message: message,
 	})
+	return s
 }
 
-func (s *Job) Error(message string, tag string) {
+func (s *Job) Error(message string, tag string) *Job {
 	s.log(JobLogItem{
 		Level:   Error,
 		Message: message,
 		Tag:     tag,
 	})
+	return s
 }
 
-func (s *Job) InProgress(message string, tag string) {
+func (s *Job) InProgress(message string, tag string) *Job {
 	s.log(JobLogItem{
 		Level:   InProgress,
 		Message: message,
 		Tag:     tag,
 	})
+	return s
 }
 
-func (s *Job) StatusUpdate(message string, tag string) {
+func (s *Job) StatusUpdate(message string, tag string) *Job {
 	s.log(JobLogItem{
 		Level:   StatusUpdate,
 		Message: message,
 		Tag:     tag,
 	})
+	return s
 }
 
-func (s *Job) Done(tag string) {
+func (s *Job) Done(tag string) *Job {
 	s.log(JobLogItem{
 		Level: Done,
 		Tag:   tag,
 	})
+	return s
 }
-func (s *Job) Finish() {
+func (s *Job) Finish() *Job {
 	s.log(JobLogItem{
 		Level:   Finish,
 		Message: "success!",
 	})
+	return s
 }
 
-func (s *Job) Download(url string) {
+func (s *Job) Download(url string) *Job {
 	s.log(JobLogItem{
 		Level:    Download,
 		Location: url,
 	})
+	return s
 }
 
-func (s *Job) Redirect(url string) {
+func (s *Job) Redirect(url string) *Job {
 	s.log(JobLogItem{
 		Level:    Redirect,
 		Location: url,
 	})
+	return s
 }
 
-func (s *Job) RenderTemplate(name string, body string) {
+func (s *Job) RenderTemplate(name string, body string) *Job {
 	s.log(JobLogItem{
 		Level:    RenderTemplate,
 		Template: name,
 		Body:     body,
 	})
+	return s
 }
 
-func (s *Job) FinishWithMessage(m string) {
+func (s *Job) FinishWithMessage(m string) *Job {
 	s.log(JobLogItem{
 		Level:   Finish,
 		Message: m,
+	})
+	return s
+}
+
+func (s *Job) Close() {
+	if s.closed {
+		return
+	}
+	s.closed = true
+	s.log(JobLogItem{
+		Level: Close,
 	})
 }
 
@@ -206,6 +232,7 @@ func (s *Jobs) Enqueue(ctx context.Context, id string, r func(j *Job)) *Job {
 	go func() {
 		j.Run()
 		<-ctx.Done()
+		j.Close()
 		s.mux.Lock()
 		defer s.mux.Unlock()
 		delete(s.jobs, id)

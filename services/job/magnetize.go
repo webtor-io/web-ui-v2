@@ -33,7 +33,7 @@ func (s *Handler) Magnetize(claims *sv.Claims, query string) (job *sv.Job, err e
 			j.Error("failed to magnetize, there were no peers for 30 seconds, try another magnet", "magnetizing")
 		} else {
 			j.Done("magnetizing")
-			j.Redirect("/" + resp.ID)
+			j.Redirect("/" + resp.ID).Close()
 		}
 	})
 	return
