@@ -92,6 +92,15 @@ type EventData struct {
 	Leechers int `json:"leechers"`
 }
 
+type ExtSubtitle struct {
+	Srclang string `json:"srclang"`
+	Label   string `json:"label"`
+	Src     string `json:"src"`
+	Format  string `json:"format"`
+	Id      string `json:"id"`
+	Hash    string `json:"hash"`
+}
+
 type MediaProbe struct {
 	Format struct {
 		FormatName string `json:"format_name"`
@@ -338,6 +347,38 @@ func (s *Api) DownloadWithRange(ctx context.Context, u string, start int, end in
 	return b, nil
 }
 
+func (s *Api) GetOpenSubtitles(ctx context.Context, u string) ([]ra.ExportTrack, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to make new request")
+	}
+	res, err := s.cl.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to do request")
+	}
+	b := res.Body
+	defer b.Close()
+	var esubs []ExtSubtitle
+	var subs []ra.ExportTrack
+	data, err := io.ReadAll(b)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read data")
+	}
+	err = json.Unmarshal(data, &esubs)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal data=%v", data)
+	}
+	for _, esub := range esubs {
+		subs = append(subs, ra.ExportTrack{
+			Src:     s.makeSubtitleURL(u, esub),
+			Kind:    "subtitles",
+			SrcLang: esub.Srclang,
+			Label:   esub.Label,
+		})
+	}
+	return subs, nil
+}
+
 func (s *Api) GetMediaProbe(ctx context.Context, u string) (*MediaProbe, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
 	if err != nil {
@@ -409,4 +450,19 @@ func (s *Api) Stats(ctx context.Context, u string) (chan EventData, error) {
 		}
 	}()
 	return ch, nil
+}
+
+func (s *Api) makeSubtitleURL(u string, esub ExtSubtitle) string {
+	src, _ := url.Parse(u)
+	path := ""
+	pathParts := strings.Split(src.Path, "/")
+	pathParts = pathParts[:len(pathParts)-1]
+	path = strings.Join(pathParts, "/") + esub.Src
+	if esub.Format == "srt" {
+		nameParts := strings.Split(esub.Src, "/")
+		name := strings.Join(nameParts[len(nameParts)-1:], "/")
+		path += "~vtt/" + strings.TrimSuffix(name, ".srt") + ".vtt"
+	}
+	src.Path = path
+	return src.String()
 }

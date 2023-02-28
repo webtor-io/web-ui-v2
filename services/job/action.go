@@ -16,50 +16,52 @@ import (
 )
 
 type StreamContent struct {
-	ExportTag  *ra.ExportTag
-	MediaProbe *sv.MediaProbe
+	ExportTag     *ra.ExportTag
+	MediaProbe    *sv.MediaProbe
+	OpenSubtitles []ra.ExportTrack
 }
 
 func (s *Handler) streamContent(j *sv.Job, claims *sv.Claims, resourceID string, itemID string, template string) {
 	sc := &StreamContent{}
 	j.InProgress("retrieving stream url", "retrieving stream")
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	resp, err := s.api.ExportResourceContent(ctx, claims, resourceID, itemID)
 	if err != nil {
 		log.WithError(err).Error("failed to export resource")
-		j.Error("failed to retrieve for 30 seconds", "retrieving stream")
+		j.Error("failed to retrieve for 60 seconds", "retrieving stream")
 	}
 	j.Done("retrieving stream")
 	sc.ExportTag = resp.ExportItems["stream"].Tag
 	se := resp.ExportItems["stream"]
-	if se.ExportMetaItem.Meta.Cache {
-		err = s.renderActionTemplate(j, sc, template)
-		if err != nil {
-			log.WithError(err).Error("failed to render resource")
-			j.Error("failed to render resource", "retrieving stream")
-		}
-		j.InProgress("waiting player initialization", "player init")
-		return
-	}
-	j.Info("sadly, we don't have this file in cache, we have to warm up before proceed")
-	if err := s.warmUp(j, resp.ExportItems["download"].URL, resp.ExportItems["torrent_client_stat"].URL, int(resp.Source.Size), 1_000_000, 500_000, "file"); err != nil {
-		return
-	}
-	if se.Meta.Transcode {
-		j.Info("content must be transcoded, we have to warm up transcoder")
-		if err := s.warmUp(j, resp.ExportItems["stream"].URL, resp.ExportItems["torrent_client_stat"].URL, 0, -1, -1, "stream"); err != nil {
+	if !se.ExportMetaItem.Meta.Cache {
+		if err := s.warmUp(j, "warming up torrent client", resp.ExportItems["download"].URL, resp.ExportItems["torrent_client_stat"].URL, int(resp.Source.Size), 1_000_000, 500_000, "file"); err != nil {
 			return
 		}
-		j.InProgress("probing content media info", "probe media")
-		mp, err := s.api.GetMediaProbe(ctx, resp.ExportItems["media_probe"].URL)
+		if se.Meta.Transcode {
+			if err := s.warmUp(j, "warming up transcoder", resp.ExportItems["stream"].URL, resp.ExportItems["torrent_client_stat"].URL, 0, -1, -1, "stream"); err != nil {
+				return
+			}
+			j.InProgress("probing content media info", "probe media")
+			mp, err := s.api.GetMediaProbe(ctx, resp.ExportItems["media_probe"].URL)
+			if err != nil {
+				j.Error("failed to get probe data", "probe media")
+				return
+			}
+			sc.MediaProbe = mp
+			log.Infof("got media probe %+v", mp)
+			j.Done("probe media")
+		}
+	}
+	if resp.Source.MediaFormat == ra.Video {
+		j.InProgress("loading OpenSubtitles", "opensubtitles")
+		subs, err := s.api.GetOpenSubtitles(ctx, resp.ExportItems["subtitles"].URL)
 		if err != nil {
-			j.Error("failed to get probe data", "probe media")
+			j.Error("failed to get OpenSubtitles", "opensubtitles")
 			return
 		}
-		sc.MediaProbe = mp
-		log.Infof("got media probe %+v", mp)
-		j.Done("probe media")
+		sc.OpenSubtitles = subs
+		j.Done("opensubtitles")
 	}
 	err = s.renderActionTemplate(j, sc, template)
 	if err != nil {
@@ -105,18 +107,15 @@ func (s *Handler) download(j *sv.Job, claims *sv.Claims, resourceID string, item
 	j.Done("retrieving download link")
 	de := resp.ExportItems["download"]
 	url := de.URL
-	if de.ExportMetaItem.Meta.Cache {
-		j.Download(url)
-		return
-	}
-	j.Info("sadly, we don't have this file in cache, we have to warm up before proceed")
-	if err := s.warmUp(j, resp.ExportItems["download"].URL, resp.ExportItems["torrent_client_stat"].URL, int(resp.Source.Size), 1_000_000, 0, ""); err != nil {
-		return
+	if !de.ExportMetaItem.Meta.Cache {
+		if err := s.warmUp(j, "warming up torrent client", resp.ExportItems["download"].URL, resp.ExportItems["torrent_client_stat"].URL, int(resp.Source.Size), 1_000_000, 0, ""); err != nil {
+			return
+		}
 	}
 	j.Download(url)
 }
 
-func (s *Handler) warmUp(j *sv.Job, u string, su string, size int, limitStart int, limitEnd int, tagSuff string) error {
+func (s *Handler) warmUp(j *sv.Job, m string, u string, su string, size int, limitStart int, limitEnd int, tagSuff string) error {
 	tag := "download"
 	if tagSuff != "" {
 		tag += "-" + tagSuff
@@ -128,9 +127,9 @@ func (s *Handler) warmUp(j *sv.Job, u string, su string, size int, limitStart in
 		limitEnd = size - limitStart
 	}
 	if size > 0 {
-		j.InProgress(fmt.Sprintf("try to download %v", humanize.Bytes(uint64(limitStart+limitEnd))), tag)
+		j.InProgress(fmt.Sprintf("%v, downloading %v", m, humanize.Bytes(uint64(limitStart+limitEnd))), tag)
 	} else {
-		j.InProgress("try to retrieve file", tag)
+		j.InProgress(m, tag)
 	}
 	ctx2, cancel2 := context.WithTimeout(context.Background(), time.Minute*5)
 	defer cancel2()
@@ -176,9 +175,9 @@ func (s *Handler) warmUp(j *sv.Job, u string, su string, size int, limitStart in
 	return nil
 }
 
-func (s *Handler) Action(claims *sv.Claims, resourceID string, itemID string, action string) (job *sv.Job, err error) {
+func (s *Handler) Action(ctx context.Context, claims *sv.Claims, resourceID string, itemID string, action string) (job *sv.Job, err error) {
 	id := fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+claims.Role+"/"+claims.SessionID)))
-	job = s.q.GetOrCreate(action).Enqueue(id, func(j *sv.Job) {
+	job = s.q.GetOrCreate(action).Enqueue(ctx, id, func(j *sv.Job) {
 		switch action {
 		case "download":
 			s.download(j, claims, resourceID, itemID)

@@ -6,9 +6,13 @@
 <div id="file">
   {{ template "file" . }}
 </div>
+{{ end }}
+{{ if and .Item .List }}
 <div class="divider h-0"></div>
 {{ end }}
+{{ if .List }}
 <div id="list">
 {{ template "list" . }}
 </div>
+{{ end }}
 {{ end }}

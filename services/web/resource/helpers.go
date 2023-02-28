@@ -43,6 +43,18 @@ func MakeButton(gd *GetData, name string, icon string, endpoint string) *ButtonI
 	}
 }
 
+func MakeDirButton(gd *GetData, name string, icon string, endpoint string) *ButtonItem {
+	return &ButtonItem{
+		ID:         gd.List.ID,
+		CSRF:       gd.CSRF,
+		ItemID:     gd.List.ID,
+		ResourceID: gd.Resource.ID,
+		Name:       name,
+		Icon:       icon,
+		Endpoint:   endpoint,
+	}
+}
+
 func MakeFileDownload(gd *GetData) *ButtonItem {
 	return MakeButton(gd,
 		fmt.Sprintf("Download [%v]", h.Bytes(uint64(gd.Item.Size))),
@@ -75,7 +87,7 @@ func MakeVideo(gd *GetData) *ButtonItem {
 }
 
 func MakeDirDownload(gd *GetData) *ButtonItem {
-	return MakeButton(gd,
+	return MakeDirButton(gd,
 		fmt.Sprintf("Download Directory as ZIP [%v]", h.Bytes(uint64(gd.List.Size))),
 		"action",
 		"/download-dir",

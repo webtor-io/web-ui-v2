@@ -21,10 +21,11 @@ func (s *Handler) Magnetize(claims *sv.Claims, query string) (job *sv.Job, err e
 	if !strings.HasPrefix(query, "magnet:") {
 		query = "magnet:?xt=urn:btih:" + id
 	}
-	job = s.q.GetOrCreate("magnetize").Enqueue(id, func(j *sv.Job) {
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Minute)
+	job = s.q.GetOrCreate("magnetize").Enqueue(ctx, id, func(j *sv.Job) {
 		j.Info("sadly, we don't have torrent, so we have to magnetize it from peers")
 		j.InProgress("magnetizing", "magnetizing")
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 		resp, err := s.api.StoreResource(ctx, claims, []byte(query))
 		if err != nil || resp == nil {

@@ -16,5 +16,8 @@
     {{ range .ExportTag.Tracks }}
     <track src="{{ .Src }}" srclang="{{ .SrcLang }}" label="{{ .Label }}" kind="{{ .Kind }}">
     {{ end }}
+    {{ range .OpenSubtitles }}
+    <track src="{{ .Src }}" srclang="{{ .SrcLang }}" label="{{ .Label }}" kind="{{ .Kind }}" data-provider="OpenSubtitles">
+    {{ end }}
 </video>
 {{ end }}

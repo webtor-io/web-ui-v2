@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -194,7 +195,7 @@ func NewJobs(queue string) *Jobs {
 	}
 }
 
-func (s *Jobs) Enqueue(id string, r func(j *Job)) *Job {
+func (s *Jobs) Enqueue(ctx context.Context, id string, r func(j *Job)) *Job {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	if _, ok := s.jobs[id]; ok {
@@ -204,7 +205,7 @@ func (s *Jobs) Enqueue(id string, r func(j *Job)) *Job {
 	s.jobs[id] = j
 	go func() {
 		j.Run()
-		<-time.After(time.Minute)
+		<-ctx.Done()
 		s.mux.Lock()
 		defer s.mux.Unlock()
 		delete(s.jobs, id)

@@ -1,8 +1,10 @@
 package action
 
 import (
+	"context"
 	"html/template"
 	"net/http"
+	"time"
 
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
@@ -113,7 +115,8 @@ func (s *Handler) post(c *gin.Context, action string) {
 		return
 	}
 	d.Args = args
-	job, err = s.jobs.Action(args.Claims, args.ResourceID, args.ItemID, action)
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Minute)
+	job, err = s.jobs.Action(ctx, args.Claims, args.ResourceID, args.ItemID, action)
 	if err != nil {
 		d.Err = errors.Wrap(err, "failed to start downloading")
 		index.R(http.StatusBadRequest)
