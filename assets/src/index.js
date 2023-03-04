@@ -1,9 +1,9 @@
-import drop from './index/drop';
-import alert from './alert';
-import progressLog from './progressLog';
-import av from './asyncView';
+import drop from './lib/drop';
+import alert from './lib/alert';
+import progressLog from './lib/progressLog';
+import av from './lib/asyncView';
 
-av('index', (target) => {
+av('index_async', (target) => {
     drop(target);
     alert(target);
     const progress = target.querySelector('.progress-alert');

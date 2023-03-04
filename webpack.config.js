@@ -14,7 +14,6 @@ module.exports = (env, options) => {
         // },
         entry: {
             index: './assets/src/index.js',
-            browse: './assets/src/browse.js',
             action: './assets/src/action.js',
             player: './assets/src/player.js',
             layout: './assets/src/layout.js',

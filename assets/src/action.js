@@ -1,8 +1,8 @@
-import progressLog from './progressLog';
-import alert from './alert';
-import av from './asyncView';
+import progressLog from './lib/progressLog';
+import alert from './lib/alert';
+import av from './lib/asyncView';
 
-av('action/post', (target) => {
+av('action/post_async', (target) => {
     alert(target);
     const progress = target.querySelector('form');
     const el = document.createElement('div');

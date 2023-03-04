@@ -53,8 +53,8 @@ window.webtor = {
     }
 }
 
-import './style.css';
-import async from './async';
+import './styles/style.css';
+import async from './lib/async';
 
 window.addEventListener('DOMContentLoaded', () => {
     showWrapper();

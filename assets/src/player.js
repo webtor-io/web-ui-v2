@@ -1,7 +1,7 @@
-import av from './asyncView';
+import av from './lib/asyncView';
 import 'mediaelement';
 import './mediaelement-plugins/availableprogress';
-import './player.css';
+import './styles/player.css';
 
 const {MediaElementPlayer} = global;
 
@@ -100,16 +100,23 @@ function initPlayer(target) {
             }
         },
     });
+    target.player = player;
 }
 
-av('action/preview_image', (target) => {
+function destroyPlayer(target) {
+    if (target.player) {
+        target.player.remove();
+    }
+}
+
+av('action/preview_image_async', (target) => {
     ready();
 });
 
-av('action/stream_video', (target) => {
-    initPlayer(target);
-});
-
-av('action/stream_audio', (target) => {
-    initPlayer(target);
-});
+for (const format of ['audio', 'video']) {
+    av('action/stream_'+format + '_async', (target) => {
+        initPlayer(target);
+    }, (target) => {
+        destroyPlayer(target);
+    });
+}
