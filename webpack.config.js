@@ -1,22 +1,20 @@
 const path = require('path');
-const glob = require('glob')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const { PurgeCSSPlugin } = require('purgecss-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
-// const CompressionPlugin = require('compression-webpack-plugin');
 
 module.exports = (env, options) => {
     const devMode = options.mode !== 'production';
+    const devEntries = devMode ? {
+        "dev/browse": './assets/src/dev/browse.js'
+    } : {};
     return {
-        // experiments: {
-        //     topLevelAwait: true,
-        // },
         entry: {
             index: './assets/src/index.js',
             action: './assets/src/action.js',
             player: './assets/src/player.js',
             layout: './assets/src/layout.js',
+            ...devEntries,
         },
         output: {
             filename: '[name].js',
@@ -29,11 +27,6 @@ module.exports = (env, options) => {
                 publicPath: '/assets',
             },
             watchFiles: ['templates/*.html', 'assets/src/*'],
-            // proxy: {
-            //     '*': {
-            //         target: 'http://localhost:8080'
-            //     }
-            // },
         },
         optimization: {
             minimizer: [
@@ -69,11 +62,7 @@ module.exports = (env, options) => {
             ]
         },
         plugins: [
-            // new CompressionPlugin(),
             new MiniCssExtractPlugin(),
-            // new PurgeCSSPlugin({
-            //     paths: glob.sync('{templates/**/*,assets/src/**/*.js}',  { nodir: true }),
-            // }),
             new CopyPlugin({
                 patterns: [
                     { from: 'node_modules/mediaelement/build/mejs-controls.svg', to: 'mejs-controls.svg' },

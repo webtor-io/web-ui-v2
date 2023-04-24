@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"strings"
 
 	h "github.com/dustin/go-humanize"
@@ -24,6 +25,10 @@ func ShortErr(err error) string {
 
 func BitsForHumans(b int64) string {
 	return h.Bytes(uint64(b))
+}
+
+func Dev() bool {
+	return gin.Mode() == "debug"
 }
 
 type ErrorData struct {

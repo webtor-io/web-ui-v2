@@ -1,4 +1,7 @@
 {{ define "head" }}
+{{ if dev }}
+<script src="{{ "dev/browse.js" | asset }}"></script>
+{{ end }}
 {{ end }}
 {{ define "content" }}
 {{ if .Item }}

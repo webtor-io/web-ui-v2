@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-contrib/sessions/redis"
 	csrf "github.com/utrack/gin-csrf"
 	"net"
 	"net/http"
@@ -19,6 +20,8 @@ const (
 	webHostFlag       = "host"
 	webPortFlag       = "port"
 	sessionSecretFlag = "secret"
+	redisHostFlag     = "redis-host"
+	redisPortFlag     = "redis-port"
 )
 
 func RegisterWebFlags(f []cli.Flag) []cli.Flag {
@@ -40,6 +43,16 @@ func RegisterWebFlags(f []cli.Flag) []cli.Flag {
 			Usage:  "session secret",
 			Value:  "secret123",
 			EnvVar: "SESSION_SECRET",
+		},
+		cli.StringFlag{
+			Name:   redisHostFlag,
+			Usage:  "redis host",
+			EnvVar: "REDIS_MASTER_SERVICE_HOST, REDIS_SERVICE_HOST",
+		},
+		cli.IntFlag{
+			Name:   redisPortFlag,
+			Usage:  "redis port",
+			EnvVar: "REDIS_MASTER_SERVICE_PORT, REDIS_SERVICE_PORT",
 		},
 	)
 }
@@ -74,7 +87,14 @@ func (s *Web) Close() {
 }
 
 func NewWeb(c *cli.Context, r *gin.Engine) *Web {
-	store := cookie.NewStore([]byte(sessionSecretFlag))
+	var store sessions.Store
+	if c.String(redisHostFlag) != "" && c.Int(redisPortFlag) != 0 {
+		url := fmt.Sprintf("%v:%v", c.String(redisHostFlag), c.Int(redisPortFlag))
+		store, _ = redis.NewStore(10, "tcp", url, "", []byte(sessionSecretFlag))
+		log.Infof("using redis store %v", url)
+	} else {
+		store = cookie.NewStore([]byte(sessionSecretFlag))
+	}
 	r.Use(sessions.Sessions("session", store))
 	r.Use(csrf.Middleware(csrf.Options{
 		Secret: c.String(sessionSecretFlag),

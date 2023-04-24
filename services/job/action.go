@@ -6,30 +6,37 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"github.com/dustin/go-humanize"
+	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
 	log "github.com/sirupsen/logrus"
+	csrf "github.com/utrack/gin-csrf"
 	ra "github.com/webtor-io/rest-api/services"
 	sv "github.com/webtor-io/web-ui-v2/services"
+	m "github.com/webtor-io/web-ui-v2/services/models"
+	"github.com/webtor-io/web-ui-v2/services/web"
 	"io"
 	"strings"
 	"time"
 )
 
 type StreamContent struct {
-	ExportTag     *ra.ExportTag
-	MediaProbe    *sv.MediaProbe
-	OpenSubtitles []ra.ExportTrack
+	web.CSRFData
+	ExportTag           *ra.ExportTag
+	MediaProbe          *sv.MediaProbe
+	OpenSubtitles       []sv.OpenSubtitleTrack
+	VideoStreamUserData *m.VideoStreamUserData
 }
 
-func (s *Handler) streamContent(j *sv.Job, claims *sv.Claims, resourceID string, itemID string, template string) {
+func (s *Handler) streamContent(j *sv.Job, c *gin.Context, claims *sv.Claims, resourceID string, itemID string, template string) {
 	sc := &StreamContent{}
+	sc.CSRF = csrf.GetToken(c)
 	j.InProgress("retrieving stream url", "retrieving stream")
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	resp, err := s.api.ExportResourceContent(ctx, claims, resourceID, itemID)
 	if err != nil {
 		log.WithError(err).Error("failed to export resource")
-		j.Error("failed to retrieve for 60 seconds", "retrieving stream").Close()
+		j.Error("failed to retrieve for 5 minutes", "retrieving stream").Close()
 		return
 	}
 	j.Done("retrieving stream")
@@ -55,6 +62,9 @@ func (s *Handler) streamContent(j *sv.Job, claims *sv.Claims, resourceID string,
 		}
 	}
 	if resp.Source.MediaFormat == ra.Video {
+		vsud := m.NewVideoStreamUserData(resourceID, itemID)
+		vsud.FetchSessionData(c)
+		sc.VideoStreamUserData = vsud
 		j.InProgress("loading OpenSubtitles", "opensubtitles")
 		subs, err := s.api.GetOpenSubtitles(ctx, resp.ExportItems["subtitles"].URL)
 		if err != nil {
@@ -72,16 +82,16 @@ func (s *Handler) streamContent(j *sv.Job, claims *sv.Claims, resourceID string,
 	j.InProgress("waiting player initialization", "player init").Close()
 }
 
-func (s *Handler) previewImage(j *sv.Job, claims *sv.Claims, resourceID string, itemID string) {
-	s.streamContent(j, claims, resourceID, itemID, "preview_image")
+func (s *Handler) previewImage(j *sv.Job, c *gin.Context, claims *sv.Claims, resourceID string, itemID string) {
+	s.streamContent(j, c, claims, resourceID, itemID, "preview_image")
 }
 
-func (s *Handler) streamAudio(j *sv.Job, claims *sv.Claims, resourceID string, itemID string) {
-	s.streamContent(j, claims, resourceID, itemID, "stream_audio")
+func (s *Handler) streamAudio(j *sv.Job, c *gin.Context, claims *sv.Claims, resourceID string, itemID string) {
+	s.streamContent(j, c, claims, resourceID, itemID, "stream_audio")
 }
 
-func (s *Handler) streamVideo(j *sv.Job, claims *sv.Claims, resourceID string, itemID string) {
-	s.streamContent(j, claims, resourceID, itemID, "stream_video")
+func (s *Handler) streamVideo(j *sv.Job, c *gin.Context, claims *sv.Claims, resourceID string, itemID string) {
+	s.streamContent(j, c, claims, resourceID, itemID, "stream_video")
 }
 
 func (s *Handler) renderActionTemplate(j *sv.Job, sc *StreamContent, name string) error {
@@ -176,7 +186,7 @@ func (s *Handler) warmUp(j *sv.Job, m string, u string, su string, size int, lim
 	return nil
 }
 
-func (s *Handler) Action(ctx context.Context, claims *sv.Claims, resourceID string, itemID string, action string) (job *sv.Job, err error) {
+func (s *Handler) Action(ctx context.Context, c *gin.Context, claims *sv.Claims, resourceID string, itemID string, action string) (job *sv.Job, err error) {
 	id := fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+claims.Role+"/"+claims.SessionID)))
 	job = s.q.GetOrCreate(action).Enqueue(ctx, id, func(j *sv.Job) {
 		switch action {
@@ -184,13 +194,13 @@ func (s *Handler) Action(ctx context.Context, claims *sv.Claims, resourceID stri
 			s.download(j, claims, resourceID, itemID)
 			break
 		case "preview-image":
-			s.previewImage(j, claims, resourceID, itemID)
+			s.previewImage(j, c, claims, resourceID, itemID)
 			break
 		case "stream-audio":
-			s.streamAudio(j, claims, resourceID, itemID)
+			s.streamAudio(j, c, claims, resourceID, itemID)
 			break
 		case "stream-video":
-			s.streamVideo(j, claims, resourceID, itemID)
+			s.streamVideo(j, c, claims, resourceID, itemID)
 			break
 		}
 	})

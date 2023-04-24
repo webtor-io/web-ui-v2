@@ -3,23 +3,33 @@ module github.com/webtor-io/web-ui-v2
 go 1.19
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/dustin/go-humanize v1.0.0
+	github.com/gin-contrib/multitemplate v0.0.0-20220829131020-8c2a8441bc2b
+	github.com/gin-contrib/sessions v0.0.5
+	github.com/gin-gonic/gin v1.8.1
+	github.com/pkg/errors v0.9.1
+	github.com/sirupsen/logrus v1.9.0
+	github.com/urfave/cli v1.22.10
+	github.com/utrack/gin-csrf v0.0.0-20190424104817-40fb8d2c8fca
+	github.com/webtor-io/common-services v0.0.0-20220521124118-dfcf9bfc576e
+	github.com/webtor-io/rest-api v0.0.0-20221211191754-6ec8fd63e634
+)
+
+require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20211005130812-5bb3c17173e5 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/anacrolix/missinggo v1.3.0 // indirect
 	github.com/anacrolix/missinggo/v2 v2.7.1 // indirect
 	github.com/anacrolix/torrent v1.47.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.157 // indirect
+	github.com/boj/redistore v0.0.0-20180917114910-cd5dcc76aeff // indirect
 	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dchest/uniuri v0.0.0-20160212164326-8902c56451e9 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
-	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
-	github.com/gin-contrib/multitemplate v0.0.0-20220829131020-8c2a8441bc2b // indirect
-	github.com/gin-contrib/sessions v0.0.5 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/gin-gonic/gin v1.8.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
@@ -35,6 +45,7 @@ require (
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -54,12 +65,10 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/common v0.38.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
@@ -68,20 +77,13 @@ require (
 	github.com/swaggo/swag v1.8.8 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
-	github.com/urfave/cli v1.22.10 // indirect
-	github.com/utrack/gin-csrf v0.0.0-20190424104817-40fb8d2c8fca // indirect
 	github.com/vmihailenco/bufpool v0.1.11 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser v0.1.2 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	github.com/webtor-io/common-services v0.0.0-20220521124118-dfcf9bfc576e // indirect
 	github.com/webtor-io/lazymap v0.0.0-20221030185154-1799721becef // indirect
 	github.com/webtor-io/magnet2torrent v0.0.0-20220312143110-bc1a7e4bcbba // indirect
-	github.com/webtor-io/rest-api v0.0.0-20221211191754-6ec8fd63e634 // indirect
 	github.com/webtor-io/torrent-store v0.0.0-20220312145903-14c004567eea // indirect
-	go.opentelemetry.io/otel v1.10.0 // indirect
-	go.opentelemetry.io/otel/metric v0.31.0 // indirect
-	go.opentelemetry.io/otel/trace v1.10.0 // indirect
 	golang.org/x/crypto v0.4.0 // indirect
 	golang.org/x/net v0.4.0 // indirect
 	golang.org/x/oauth2 v0.3.0 // indirect

@@ -17,8 +17,9 @@ Some features to mention:
 - [x] Audio streaming
 - [x] Video streaming
   - [x] Base player
-  - [ ] Subtitles support
-  - [ ] OpenSubtitles support
+  - [x] Subtitles support
+  - [x] OpenSubtitles support
+  - [ ] Subtitle uploading support
   - [ ] Chromecast support
 - [ ] Authentication with Patreon
 - [ ] Embed support

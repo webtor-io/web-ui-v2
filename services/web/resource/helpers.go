@@ -13,7 +13,7 @@ type ButtonItem struct {
 	ItemID     string
 	ResourceID string
 	Name       string
-	Icon       string
+	Action     string
 	Endpoint   string
 }
 
@@ -38,19 +38,19 @@ func MakeButton(gd *GetData, name string, icon string, endpoint string) *ButtonI
 		ItemID:     gd.Item.ID,
 		ResourceID: gd.Resource.ID,
 		Name:       name,
-		Icon:       icon,
+		Action:     icon,
 		Endpoint:   endpoint,
 	}
 }
 
-func MakeDirButton(gd *GetData, name string, icon string, endpoint string) *ButtonItem {
+func MakeDirButton(gd *GetData, name string, action string, endpoint string) *ButtonItem {
 	return &ButtonItem{
 		ID:         gd.List.ID,
 		CSRF:       gd.CSRF,
 		ItemID:     gd.List.ID,
 		ResourceID: gd.Resource.ID,
 		Name:       name,
-		Icon:       icon,
+		Action:     action,
 		Endpoint:   endpoint,
 	}
 }
@@ -58,7 +58,7 @@ func MakeDirButton(gd *GetData, name string, icon string, endpoint string) *Butt
 func MakeFileDownload(gd *GetData) *ButtonItem {
 	return MakeButton(gd,
 		fmt.Sprintf("Download [%v]", h.Bytes(uint64(gd.Item.Size))),
-		"action",
+		"download",
 		"/download-file",
 	)
 }
@@ -89,7 +89,7 @@ func MakeVideo(gd *GetData) *ButtonItem {
 func MakeDirDownload(gd *GetData) *ButtonItem {
 	return MakeDirButton(gd,
 		fmt.Sprintf("Download Directory as ZIP [%v]", h.Bytes(uint64(gd.List.Size))),
-		"action",
+		"download",
 		"/download-dir",
 	)
 }

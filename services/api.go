@@ -129,6 +129,7 @@ type MediaProbe struct {
 			HandlerName  string    `json:"handler_name"`
 			Language     string    `json:"language"`
 			VendorId     string    `json:"vendor_id"`
+			Title        string    `json:"title"`
 		} `json:"tags"`
 		Index         int    `json:"index,omitempty"`
 		Channels      int    `json:"channels,omitempty"`
@@ -347,7 +348,12 @@ func (s *Api) DownloadWithRange(ctx context.Context, u string, start int, end in
 	return b, nil
 }
 
-func (s *Api) GetOpenSubtitles(ctx context.Context, u string) ([]ra.ExportTrack, error) {
+type OpenSubtitleTrack struct {
+	ID string
+	*ra.ExportTrack
+}
+
+func (s *Api) GetOpenSubtitles(ctx context.Context, u string) ([]OpenSubtitleTrack, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make new request")
@@ -359,7 +365,7 @@ func (s *Api) GetOpenSubtitles(ctx context.Context, u string) ([]ra.ExportTrack,
 	b := res.Body
 	defer b.Close()
 	var esubs []ExtSubtitle
-	var subs []ra.ExportTrack
+	var subs []OpenSubtitleTrack
 	data, err := io.ReadAll(b)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read data")
@@ -369,11 +375,14 @@ func (s *Api) GetOpenSubtitles(ctx context.Context, u string) ([]ra.ExportTrack,
 		return nil, errors.Wrapf(err, "failed to unmarshal data=%v", data)
 	}
 	for _, esub := range esubs {
-		subs = append(subs, ra.ExportTrack{
-			Src:     s.makeSubtitleURL(u, esub),
-			Kind:    "subtitles",
-			SrcLang: esub.Srclang,
-			Label:   esub.Label,
+		subs = append(subs, OpenSubtitleTrack{
+			ExportTrack: &ra.ExportTrack{
+				Src:     s.makeSubtitleURL(u, esub),
+				Kind:    "subtitles",
+				SrcLang: esub.Srclang,
+				Label:   esub.Label,
+			},
+			ID: esub.Id,
 		})
 	}
 	return subs, nil

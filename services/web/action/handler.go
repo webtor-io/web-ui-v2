@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	m "github.com/webtor-io/web-ui-v2/services/models"
 	"html/template"
 	"net/http"
 	"time"
@@ -19,6 +20,12 @@ type PostArgs struct {
 	ResourceID string
 	ItemID     string
 	Claims     *sv.Claims
+}
+
+type TrackPutArgs struct {
+	ID         string `json:"id"`
+	ResourceID string `json:"resourceID"`
+	ItemID     string `json:"itemID"`
 }
 
 type PostData struct {
@@ -54,6 +61,30 @@ func RegisterHandler(c *cli.Context, r *gin.Engine, re multitemplate.Renderer, j
 	r.POST("/stream-video", func(c *gin.Context) {
 		h.post(c, "stream-video")
 	})
+	r.PUT("/stream-video/subtitle", func(c *gin.Context) {
+		a := TrackPutArgs{}
+		if err := c.BindJSON(&a); err != nil {
+			c.Error(err)
+			return
+		}
+		vsud := m.NewVideoStreamUserData(a.ResourceID, a.ItemID)
+		vsud.SubtitleID = a.ID
+		if err := vsud.UpdateSessionData(c); err != nil {
+			c.Error(err)
+		}
+	})
+	r.PUT("/stream-video/audio", func(c *gin.Context) {
+		a := TrackPutArgs{}
+		if err := c.BindJSON(&a); err != nil {
+			c.Error(err)
+			return
+		}
+		vsud := m.NewVideoStreamUserData(a.ResourceID, a.ItemID)
+		vsud.AudioID = a.ID
+		if err := vsud.UpdateSessionData(c); err != nil {
+			c.Error(err)
+		}
+	})
 	h.RegisterTemplate(
 		"action/post",
 		[]string{"async"},
@@ -72,6 +103,8 @@ func RegisterHandler(c *cli.Context, r *gin.Engine, re multitemplate.Renderer, j
 		[]string{},
 		template.FuncMap{
 			"getDurationSec": GetDurationSec,
+			"getAudioTracks": GetAudioTracks,
+			"getSubtitles":   GetSubtitles,
 		},
 	)
 	h.RegisterTemplate(
@@ -107,21 +140,21 @@ func (s *Handler) post(c *gin.Context, action string) {
 		args *PostArgs
 		job  *sv.Job
 	)
-	index := s.MakeTemplate(c, "action/post", &d)
+	post := s.MakeTemplate(c, "action/post", &d)
 	args, err = s.bindPostArgs(c)
 	if err != nil {
 		d.Err = errors.Wrap(err, "wrong args provided")
-		index.R(http.StatusBadRequest)
+		post.R(http.StatusBadRequest)
 		return
 	}
 	d.Args = args
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Minute)
-	job, err = s.jobs.Action(ctx, args.Claims, args.ResourceID, args.ItemID, action)
+	job, err = s.jobs.Action(ctx, c, args.Claims, args.ResourceID, args.ItemID, action)
 	if err != nil {
 		d.Err = errors.Wrap(err, "failed to start downloading")
-		index.R(http.StatusBadRequest)
+		post.R(http.StatusBadRequest)
 		return
 	}
 	d.Job = job
-	index.R(http.StatusOK)
+	post.R(http.StatusOK)
 }

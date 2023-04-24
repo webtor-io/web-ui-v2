@@ -68,6 +68,7 @@ func (s *TemplateHandler) RegisterTemplate(name string, layouts []string, partia
 		"bitsForHumans": BitsForHumans,
 		"log":           Log,
 		"shortErr":      ShortErr,
+		"dev":           Dev,
 	}
 	for k, v := range fm {
 		funcs[k] = v
