@@ -1,0 +1,66 @@
+{{ define "main" }}
+{{ with .Data }}
+<div class="relative">
+    <video class="player"
+           crossorigin="anonymous"
+           preload="{{ .ExportTag.Preload }}"
+           {{ if .ExportTag.Poster }}poster="{{ .ExportTag.Poster }}" {{ end }}
+           {{ if .MediaProbe }}data-duration="{{ .MediaProbe | getDurationSec }}" {{ end }}
+           controls
+           autoplay>
+        {{ range .ExportTag.Sources }}
+        <source src="{{ .Src }}" type="{{ .Type }}">
+        {{ end }}
+        {{ range getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles }}
+        {{ if ne .Provider "MediaProbe" }}
+        {{ if ne .ID "none" }}
+        <track src="{{ .Src }}" id="{{ .ID }}" srclang="{{ .SrcLang }}" label="{{ .Label }}" kind="{{ .Kind }}" {{ if .Default }}default="default"{{ end }}>
+        {{ end }}
+        {{ end }}
+        {{ end }}
+    </video>
+    <input type="checkbox" id="subtitles-checkbox" class="modal-toggle" />
+    <div class="modal absolute w-full h-full" id="subtitles" data-csrf="{{ $.CSRF }}" data-resource-id="{{ .VideoStreamUserData.ResourceID }}" data-item-id="{{ .VideoStreamUserData.ItemID }}">
+        <div class="modal-box w-11/12 max-w-5xl">
+            <div class="flex" id="embedded">
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg">Audio</h3>
+                    <ul class="flex flex-wrap">
+                        {{ range getAudioTracks .VideoStreamUserData .MediaProbe }}
+                        <li data-id="{{ .ID }}" data-mp-id="{{ .MPID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="audio cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}" onclick="setAudio(this)">{{ .Label }}</li>
+                        {{ end }}
+                    </ul>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg">Subtitles</h3>
+                    <ul class="flex flex-wrap">
+                        {{ range getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles }}
+                        {{ if ne .Provider "OpenSubtitles" }}
+                        <li data-id="{{ .ID }}" data-mp-id="{{ .MPID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="subtitle cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}" onclick="setSubtitle(this)">{{ .Label }}</li>
+                        {{ end }}
+                        {{ end }}
+                    </ul>
+                </div>
+            </div>
+            <div class="flex hidden" id="opensubtitles">
+                <div class="flex-1">
+                    <h3 class="font-bold text-lg">OpenSubtitles</h3>
+                    <ul class="flex flex-wrap">
+                        {{ range getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles }}
+                        {{ if eq .Provider "OpenSubtitles" }}
+                        <li data-id="{{ .ID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="subtitle cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}" onclick="setSubtitle(this)">{{ .Label }}</li>
+                        {{ end }}
+                        {{ end }}
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-action">
+                <label class="btn btn-accent btn-outline" onclick="toggleOpenSubtitles(this)">OpenSubtitles</label>
+                <label for="subtitles-checkbox" class="btn btn-accent btn-outline">Close</label>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
+<script async src="{{ "action/player.js" | asset }}"></script>
+{{ end }}

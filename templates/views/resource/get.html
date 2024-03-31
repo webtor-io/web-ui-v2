@@ -1,0 +1,19 @@
+{{ define "main" }}
+{{ with .Data }}
+{{ if .Item }}
+<div id="file" async-layout="{{`{{ template "file" . }}`}}">
+  {{ template "file" $ }}
+</div>
+{{ end }}
+{{ if and .Item .List }}
+<div class="divider h-0"></div>
+{{ end }}
+{{ if .List }}
+<div id="list" async-layout="{{`{{ template "list" . }}`}}">
+{{ template "list" $ }}
+</div>
+{{ end }}
+{{ end }}
+<script async src="{{ "resource/get.js" | asset }}"></script>
+{{ if dev }}<script async src="{{ "resource/get.js" | devAsset }}"></script>{{ end }}
+{{ end }}

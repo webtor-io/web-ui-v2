@@ -2,8 +2,10 @@ package web
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
+	"reflect"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 
 	h "github.com/dustin/go-humanize"
 	log "github.com/sirupsen/logrus"
@@ -31,11 +33,10 @@ func Dev() bool {
 	return gin.Mode() == "debug"
 }
 
-type ErrorData struct {
-	Err error
-}
-type CSRFData struct {
-	CSRF string
+func Has(obj any, fieldName string) bool {
+	value := reflect.Indirect(reflect.ValueOf(obj))
+	field := value.FieldByName(fieldName)
+	return field.IsValid() && !field.IsNil()
 }
 
 type JobData struct {

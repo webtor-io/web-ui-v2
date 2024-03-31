@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	csrf "github.com/utrack/gin-csrf"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -76,13 +75,12 @@ func (s *Handler) postQuery(ctx context.Context, args *PostArgs) (res *ra.Resour
 }
 
 type PostData struct {
-	sw.ErrorData
-	sw.CSRFData
 	sw.JobData
 	Args *PostArgs
 }
 
 func (s *Handler) post(c *gin.Context) {
+	indexTpl := s.tm.MakeTemplate("index")
 	var (
 		d    PostData
 		err  error
@@ -90,13 +88,10 @@ func (s *Handler) post(c *gin.Context) {
 		job  *sv.Job
 		res  *ra.ResourceResponse
 	)
-	d.CSRF = csrf.GetToken(c)
-	index := s.MakeTemplate(c, "index", &d)
 	args, err = s.bindPostArgs(c)
 	d.Args = args
 	if err != nil {
-		d.Err = errors.Wrap(err, "wrong args provided")
-		index.R(http.StatusBadRequest)
+		indexTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)
 		return
 	}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
@@ -104,16 +99,14 @@ func (s *Handler) post(c *gin.Context) {
 	if args.File != nil {
 		res, err = s.postFile(ctx, args)
 		if err != nil {
-			d.Err = errors.Wrap(err, "failed to upload file")
-			index.R(http.StatusInternalServerError)
+			indexTpl.HTMLWithErr(errors.Wrap(err, "failed to upload file"), http.StatusInternalServerError, c, d)
 			return
 		}
 	}
 	if res == nil && args.Query != "" {
 		res, err = s.postQuery(ctx, args)
 		if err != nil {
-			d.Err = errors.Wrap(err, "failed to process query")
-			index.R(http.StatusInternalServerError)
+			indexTpl.HTMLWithErr(errors.Wrap(err, "failed to process query"), http.StatusInternalServerError, c, d)
 			return
 		}
 	}
@@ -124,12 +117,11 @@ func (s *Handler) post(c *gin.Context) {
 	if res == nil && args.Query != "" {
 		job, err = s.jobs.Magnetize(args.Claims, args.Query)
 		if err != nil {
-			d.Err = errors.Wrap(err, "failed to start magnetizing")
-			index.R(http.StatusInternalServerError)
+			indexTpl.HTMLWithErr(errors.Wrap(err, "failed to start magnetizing"), http.StatusInternalServerError, c, d)
 			return
 		}
 		d.Job = job
-		index.R(http.StatusAccepted)
+		indexTpl.HTML(http.StatusAccepted, c, d)
 		return
 	}
 }

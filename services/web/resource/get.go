@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	csrf "github.com/utrack/gin-csrf"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -12,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 	ra "github.com/webtor-io/rest-api/services"
 	sv "github.com/webtor-io/web-ui-v2/services"
-	sw "github.com/webtor-io/web-ui-v2/services/web"
 )
 
 var (
@@ -68,8 +66,6 @@ func (s *Handler) getList(ctx context.Context, args *GetArgs) (l *ra.ListRespons
 }
 
 type GetData struct {
-	sw.ErrorData
-	sw.CSRFData
 	Args     *GetArgs
 	Resource *ra.ResourceResponse
 	List     *ra.ListResponse
@@ -77,41 +73,36 @@ type GetData struct {
 }
 
 func (s *Handler) get(c *gin.Context) {
+	indexTpl := s.tm.MakeTemplate("index")
+	getTpl := s.tm.MakeTemplate("resource/get")
 	var (
-		d    GetData
 		args *GetArgs
 		res  *ra.ResourceResponse
 		list *ra.ListResponse
 		err  error
 	)
-	d.CSRF = csrf.GetToken(c)
-	index := s.MakeTemplate(c, "index", &d)
-	get := s.MakeTemplate(c, "resource/get", &d)
+	d := &GetData{}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 	args, err = s.bindGetArgs(c)
 	d.Args = args
 	if err != nil {
-		d.Err = errors.Wrap(err, "wrong args provided")
-		index.R(http.StatusBadRequest)
+		indexTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)
 		return
 	}
 	res, err = s.api.GetResource(ctx, args.Claims, args.ID)
 	if err != nil {
-		d.Err = errors.Wrap(err, "failed to get resource")
-		index.R(http.StatusInternalServerError)
+		indexTpl.HTMLWithErr(errors.Wrap(err, "failed to get resource"), http.StatusInternalServerError, c, d)
 		return
 	}
 	d.Resource = res
 	if res == nil {
-		d.Err = errors.Wrap(err, "resource not found")
-		index.R(http.StatusNotFound)
+		indexTpl.HTMLWithErr(errors.Wrap(err, "resource not found"), http.StatusNotFound, c, d)
 		return
 	}
 	list, err = s.getList(ctx, args)
 	if err != nil {
-		d.Err = errors.Wrap(err, "failed to list resource")
-		index.R(http.StatusInternalServerError)
+		indexTpl.HTMLWithErr(errors.Wrap(err, "failed to list resource"), http.StatusInternalServerError, c, d)
 		return
 	}
 	if len(list.Items) > 1 {
@@ -119,11 +110,10 @@ func (s *Handler) get(c *gin.Context) {
 	}
 	d.Item, err = s.getBestItem(ctx, list, args)
 	if err != nil {
-		d.Err = errors.Wrap(err, "failed to get item")
-		index.R(http.StatusInternalServerError)
+		indexTpl.HTMLWithErr(errors.Wrap(err, "failed to get item"), http.StatusInternalServerError, c, d)
 		return
 	}
-	get.R(http.StatusOK)
+	getTpl.HTML(http.StatusOK, c, d)
 }
 
 func (s *Handler) getBestItem(ctx context.Context, l *ra.ListResponse, args *GetArgs) (i *ra.ListItem, err error) {

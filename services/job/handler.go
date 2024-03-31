@@ -1,20 +1,20 @@
 package job
 
 import (
-	"github.com/gin-contrib/multitemplate"
 	sv "github.com/webtor-io/web-ui-v2/services"
+	w "github.com/webtor-io/web-ui-v2/services/web"
 )
 
 type Handler struct {
 	api *sv.Api
 	q   *sv.JobQueues
-	re  multitemplate.Renderer
+	tm  *w.TemplateManager
 }
 
-func NewHandler(re multitemplate.Renderer, api *sv.Api, queues *sv.JobQueues) *Handler {
+func NewHandler(tm *w.TemplateManager, api *sv.Api, queues *sv.JobQueues) *Handler {
 	return &Handler{
 		api: api,
 		q:   queues,
-		re:  re,
+		tm:  tm,
 	}
 }

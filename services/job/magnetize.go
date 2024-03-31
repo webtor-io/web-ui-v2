@@ -7,7 +7,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	log "github.com/sirupsen/logrus"
 	sv "github.com/webtor-io/web-ui-v2/services"
 )
 
@@ -29,8 +28,7 @@ func (s *Handler) Magnetize(claims *sv.Claims, query string) (job *sv.Job, err e
 		defer cancel()
 		resp, err := s.api.StoreResource(ctx, claims, []byte(query))
 		if err != nil || resp == nil {
-			log.WithError(err).Errorf("failed to magnetize magnet=%v", query)
-			j.Error("failed to magnetize, there were no peers for 30 seconds, try another magnet", "magnetizing")
+			j.Error(err, "failed to magnetize, there were no peers for 30 seconds, try another magnet", "magnetizing")
 		} else {
 			j.Done("magnetizing")
 			j.Redirect("/" + resp.ID).Close()

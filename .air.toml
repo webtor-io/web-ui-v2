@@ -4,7 +4,7 @@ tmp_dir = "tmp"
 
 [build]
   args_bin = ['s', '--assets-host', 'http://localhost:8082']
-  bin = "./tmp/main"
+  bin = ";SUPERTOKENS_DEBUG=1 GIN_MODE=debug ./tmp/main"
   cmd = "go build -o ./tmp/main ."
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata", "node_modules"]

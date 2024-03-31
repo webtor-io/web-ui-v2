@@ -1,0 +1,18 @@
+{{ define "main" }}
+{{ $MediaProbe := .Data.MediaProbe}}
+{{ with .Data.ExportTag }}
+<audio class="player"
+       crossorigin="anonymous"
+       preload="{{ .Preload }}"
+       {{ if .Poster }}poster="{{ .Poster }}" {{ end }}
+       {{ if $MediaProbe }}data-duration="{{ $MediaProbe | getDurationSec }}" {{ end }}
+       controls
+       autoplay>
+    {{ range .Sources }}
+    <source src="{{ .Src }}" type="{{ .Type }}">
+    {{ end }}
+</audio>
+{{ end }}
+<script async src="{{ "action/player.js" | asset }}"></script>
+<link rel="stylesheet" href="{{ "player.css" | asset }}" />
+{{ end }}

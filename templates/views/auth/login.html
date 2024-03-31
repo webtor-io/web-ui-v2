@@ -1,0 +1,17 @@
+{{ define "main" }}
+<form onsubmit="submitLoginForm(this, event)">
+    <div class="form-control">
+        <div class="input-group">
+            <input type="email" name="email" class="input input-bordered w-full" placeholder="Your Email" />
+            <button type="submit" class="btn btn-accent btn-outline">Send Magic Link</button>
+        </div>
+    </div>
+</form>
+<form class="hidden progress-alert progress-alert-block mt-5 closeable">
+    <div class="log-target"></div>
+    <div class="pt-3 flex justify-end hidden alert-close-wrapper">
+        <a class="close closeable-close">got it!</a>
+    </div>
+</form>
+<script async src="{{ "auth/login.js" | asset }}"></script>
+{{ end }}

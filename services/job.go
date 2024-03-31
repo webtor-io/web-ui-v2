@@ -8,13 +8,43 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type JobObserver struct {
+	C      chan JobLogItem
+	mux    sync.Mutex
+	closed bool
+}
+
+func (s *JobObserver) Close() {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	if !s.closed {
+		s.closed = true
+		close(s.C)
+	}
+}
+
+func (s *JobObserver) Push(v JobLogItem) {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	if !s.closed {
+		s.C <- v
+	}
+}
+
+func NewJobObserver() *JobObserver {
+	return &JobObserver{
+		C: make(chan JobLogItem, 100),
+	}
+}
+
 type Job struct {
 	ID        string
 	Queue     string
 	l         []JobLogItem
 	run       func(j *Job)
-	observers []chan JobLogItem
+	observers []*JobObserver
 	closed    bool
+	mux       sync.Mutex
 }
 
 type JobLogItemLevel string
@@ -63,7 +93,7 @@ func NewJob(id string, queue string, run func(j *Job)) *Job {
 		Queue:     queue,
 		run:       run,
 		l:         []JobLogItem{},
-		observers: []chan JobLogItem{},
+		observers: []*JobObserver{},
 	}
 }
 
@@ -71,22 +101,22 @@ func (s *Job) Run() {
 	s.run(s)
 }
 
-func (s *Job) ObserveLog() chan JobLogItem {
-	c := make(chan JobLogItem, 100)
-	s.observers = append(s.observers, c)
+func (s *Job) ObserveLog() *JobObserver {
+	o := NewJobObserver()
+	s.observers = append(s.observers, o)
 	for _, i := range s.l {
-		c <- i
+		o.Push(i)
 	}
-	return c
+	return o
 }
 
 func (s *Job) log(l JobLogItem) {
 	l.Timestamp = time.Now()
 	s.l = append(s.l, l)
 	for _, o := range s.observers {
-		o <- l
+		o.Push(l)
 		if l.Level == Close {
-			close(o)
+			o.Close()
 		}
 	}
 	message := l.Message
@@ -123,7 +153,18 @@ func (s *Job) Info(message string) *Job {
 	return s
 }
 
-func (s *Job) Error(message string, tag string) *Job {
+func (s *Job) Warn(err error, message string, tag string) *Job {
+	log.WithError(err).Error("got job warning")
+	s.log(JobLogItem{
+		Level:   Warn,
+		Message: message,
+		Tag:     tag,
+	})
+	return s
+}
+
+func (s *Job) Error(err error, message string, tag string) *Job {
+	log.WithError(err).Error("got job error")
 	s.log(JobLogItem{
 		Level:   Error,
 		Message: message,
@@ -199,6 +240,8 @@ func (s *Job) FinishWithMessage(m string) *Job {
 }
 
 func (s *Job) Close() {
+	s.mux.Lock()
+	defer s.mux.Unlock()
 	if s.closed {
 		return
 	}
@@ -244,7 +287,8 @@ func (s *Jobs) Log(id string) chan JobLogItem {
 	c := make(chan JobLogItem, 100)
 	if _, ok := s.jobs[id]; ok {
 		go func() {
-			for i := range s.jobs[id].ObserveLog() {
+			o := s.jobs[id].ObserveLog()
+			for i := range o.C {
 				c <- i
 			}
 			close(c)

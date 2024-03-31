@@ -1,0 +1,17 @@
+{{ define "main" }}
+{{ if .Err }}
+<div class="progress-alert progress-alert-oneline mb-10 closeable">
+    <pre>{{ .Err | log | shortErr }}</pre>
+    <a class="close closeable-close">ok</a>
+</div>
+{{ end }}
+{{ if has .Data "Job" }}
+<form class="hidden progress-alert progress-alert-block mb-10 closeable" async-progress-log="{{ .Data.Job | makeJobLogURL }}" async-target="main">
+  <div class="log-target"></div>
+  <div class="pt-3 flex justify-end hidden alert-close-wrapper">
+    <a class="close closeable-close">got it!</a>
+  </div>
+</form>
+{{ end }}
+<script async src="{{ "action.js" | asset }}"></script>
+{{ end }}

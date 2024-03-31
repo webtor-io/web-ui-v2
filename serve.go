@@ -1,9 +1,11 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
-	"net/http"
+	"github.com/webtor-io/web-ui-v2/services/web/auth"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -14,6 +16,7 @@ import (
 	wa "github.com/webtor-io/web-ui-v2/services/web/action"
 	wi "github.com/webtor-io/web-ui-v2/services/web/index"
 	wj "github.com/webtor-io/web-ui-v2/services/web/job"
+	p "github.com/webtor-io/web-ui-v2/services/web/profile"
 	wr "github.com/webtor-io/web-ui-v2/services/web/resource"
 )
 
@@ -34,11 +37,15 @@ func configureServe(c *cli.Command) {
 	c.Flags = s.RegisterApiFlags(c.Flags)
 	c.Flags = w.RegisterTemplateHandlerFlags(c.Flags)
 	c.Flags = s.RegisterCommonFlags(c.Flags)
+	c.Flags = s.RegisterAuthFlags(c.Flags)
 }
 
 func serve(c *cli.Context) error {
+
+	servers := []cs.Servable{}
 	// Setting Probe
 	probe := cs.NewProbe(c)
+	servers = append(servers, probe)
 	defer probe.Close()
 
 	// Setting HTTP Client
@@ -50,11 +57,14 @@ func serve(c *cli.Context) error {
 	// Setting template renderer
 	re := multitemplate.NewRenderer()
 
+	// Setting TemplateManager
+	tm := w.NewMyTemplateManager(c, re)
+
 	// Setting JobQueues
 	queues := s.NewJobQueues()
 
 	// Setting JobHandler
-	jobs := j.NewHandler(re, api, queues)
+	jobs := j.NewHandler(tm, api, queues)
 
 	// Setting Gin
 	r := gin.Default()
@@ -62,22 +72,40 @@ func serve(c *cli.Context) error {
 
 	// Setting Web
 	web := s.NewWeb(c, r)
+	servers = append(servers, web)
 	defer web.Close()
 
+	// Setting Auth
+	a := s.NewAuth(c)
+
+	if a != nil {
+		err := a.Init()
+		if err != nil {
+			return err
+		}
+		auth.RegisterHandler(c, r, tm)
+	}
+
 	// Setting ResourceHandler
-	wr.RegisterHandler(c, r, re, api, jobs)
+	wr.RegisterHandler(c, r, tm, api, jobs)
 
 	// Setting JobHandler
 	wj.RegisterHandler(r, queues)
 
 	// Setting IndexHandler
-	wi.RegisterHandler(c, r, re)
+	wi.RegisterHandler(c, r, tm)
 
 	// Setting ActionHandler
-	wa.RegisterHandler(c, r, re, jobs)
+	wa.RegisterHandler(c, r, tm, jobs)
+
+	// Setting ProfileHandler
+	p.RegisterHandler(c, r, tm)
+
+	// Render templates
+	tm.Init()
 
 	// Setting Serve
-	serve := cs.NewServe(probe, web)
+	serve := cs.NewServe(servers...)
 
 	// And SERVE!
 	err := serve.Serve()

@@ -3,7 +3,7 @@ FROM alpine:latest as certs
 # getting certs
 RUN apk update && apk upgrade && apk add --no-cache ca-certificates
 
-FROM node:16 as build_assets
+FROM node:20 as build_assets
 
 WORKDIR /app
 
@@ -35,6 +35,9 @@ RUN go build -ldflags '-w -s' -a -installsuffix cgo -o server
 
 FROM alpine:latest
 
+# set work dir
+WORKDIR /app
+
 # copy our static linked library
 COPY --from=build /app/server .
 # copy templates
@@ -47,6 +50,8 @@ COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 # tell we are exposing our service on ports 8080 8081
 EXPOSE 8080 8081
+
+ENV GIN_MODE=release
 
 # run it!
 CMD ["./server", "serve"]

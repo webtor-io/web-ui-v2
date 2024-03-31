@@ -1,24 +1,37 @@
 const path = require('path');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
-module.exports = (env, options) => {
+const fs = require('fs');
+
+function getEntries(path, prefix = '') {
+    return new Promise((resolve) => {
+        fs.readdir(path, { recursive: true }, (err, files) => {
+            const entries = {};
+            for (const f of files) {
+                if (f.endsWith('.js')) entries[prefix + f.replace('.js', '')] = path + '/' + f;
+            }
+            resolve(entries);
+        });
+    })
+}
+
+module.exports = async (env, options) => {
+    const entries = await getEntries('./assets/src/js/app');
     const devMode = options.mode !== 'production';
-    const devEntries = devMode ? {
-        "dev/browse": './assets/src/dev/browse.js'
-    } : {};
+    const devEntries = devMode ? await getEntries('./assets/src/js/dev', 'dev/') : {};
     return {
         entry: {
-            index: './assets/src/index.js',
-            action: './assets/src/action.js',
-            player: './assets/src/player.js',
-            layout: './assets/src/layout.js',
+            ...entries,
             ...devEntries,
         },
+        devtool: 'source-map',
         output: {
             filename: '[name].js',
+            chunkFilename: '[name].[chunkhash].js',
             path: path.resolve(__dirname, 'assets', 'dist'),
+            clean: true,
         },
         devServer: {
             port: 8082,
@@ -29,8 +42,10 @@ module.exports = (env, options) => {
             watchFiles: ['templates/*.html', 'assets/src/*'],
         },
         optimization: {
+            // splitChunks: {},
+            minimize: true,
             minimizer: [
-                `...`,
+                new TerserPlugin({ parallel: true }),
                 new CssMinimizerPlugin({
                     minimizerOptions: {
                         preset: [
@@ -48,13 +63,13 @@ module.exports = (env, options) => {
                 {
                     test: /\.js$/,
                     include: path.resolve(__dirname, 'assets', 'src'),
-                    loader: 'babel-loader',
+                    loader: 'babel-loader'
                 },
                 {
                     test: /\.css$/i,
                     include: path.resolve(__dirname, 'assets', 'src'),
                     use: [
-                        devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
+                        'style-loader',
                         'css-loader',
                         'postcss-loader'
                     ],
@@ -62,7 +77,6 @@ module.exports = (env, options) => {
             ]
         },
         plugins: [
-            new MiniCssExtractPlugin(),
             new CopyPlugin({
                 patterns: [
                     { from: 'node_modules/mediaelement/build/mejs-controls.svg', to: 'mejs-controls.svg' },

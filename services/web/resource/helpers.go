@@ -2,9 +2,11 @@ package resource
 
 import (
 	"fmt"
+	"strings"
+
 	h "github.com/dustin/go-humanize"
 	ra "github.com/webtor-io/rest-api/services"
-	"strings"
+	w "github.com/webtor-io/web-ui-v2/services/web"
 )
 
 type ButtonItem struct {
@@ -31,63 +33,63 @@ type Pagination struct {
 	Number bool
 }
 
-func MakeButton(gd *GetData, name string, icon string, endpoint string) *ButtonItem {
+func MakeButton(ctx *w.Context, gd *GetData, name string, icon string, endpoint string) *ButtonItem {
 	return &ButtonItem{
 		ID:         gd.Item.ID,
-		CSRF:       gd.CSRF,
 		ItemID:     gd.Item.ID,
 		ResourceID: gd.Resource.ID,
 		Name:       name,
 		Action:     icon,
 		Endpoint:   endpoint,
+		CSRF:       ctx.CSRF,
 	}
 }
 
-func MakeDirButton(gd *GetData, name string, action string, endpoint string) *ButtonItem {
+func MakeDirButton(ctx *w.Context, gd *GetData, name string, action string, endpoint string) *ButtonItem {
 	return &ButtonItem{
 		ID:         gd.List.ID,
-		CSRF:       gd.CSRF,
 		ItemID:     gd.List.ID,
 		ResourceID: gd.Resource.ID,
 		Name:       name,
 		Action:     action,
 		Endpoint:   endpoint,
+		CSRF:       ctx.CSRF,
 	}
 }
 
-func MakeFileDownload(gd *GetData) *ButtonItem {
-	return MakeButton(gd,
+func MakeFileDownload(ctx *w.Context, gd *GetData) *ButtonItem {
+	return MakeButton(ctx, gd,
 		fmt.Sprintf("Download [%v]", h.Bytes(uint64(gd.Item.Size))),
 		"download",
 		"/download-file",
 	)
 }
 
-func MakeImage(gd *GetData) *ButtonItem {
-	return MakeButton(gd,
+func MakeImage(ctx *w.Context, gd *GetData) *ButtonItem {
+	return MakeButton(ctx, gd,
 		"Preview",
 		"preview",
 		"/preview-image",
 	)
 }
 
-func MakeAudio(gd *GetData) *ButtonItem {
-	return MakeButton(gd,
+func MakeAudio(ctx *w.Context, gd *GetData) *ButtonItem {
+	return MakeButton(ctx, gd,
 		"Stream",
 		"stream",
 		"/stream-audio",
 	)
 }
-func MakeVideo(gd *GetData) *ButtonItem {
-	return MakeButton(gd,
+func MakeVideo(ctx *w.Context, gd *GetData) *ButtonItem {
+	return MakeButton(ctx, gd,
 		"Stream",
 		"stream",
 		"/stream-video",
 	)
 }
 
-func MakeDirDownload(gd *GetData) *ButtonItem {
-	return MakeDirButton(gd,
+func MakeDirDownload(ctx *w.Context, gd *GetData) *ButtonItem {
+	return MakeDirButton(ctx, gd,
 		fmt.Sprintf("Download Directory as ZIP [%v]", h.Bytes(uint64(gd.List.Size))),
 		"download",
 		"/download-dir",

@@ -21,7 +21,11 @@ Some features to mention:
   - [x] OpenSubtitles support
   - [ ] Subtitle uploading support
   - [ ] Chromecast support
-- [ ] Authentication with Patreon
+  - [ ] Subtitle size control
+- [x] Authentication
+  - [x] Passwordless authentication
+  - [ ] Patreon account linking
+- [ ] Ads integration
 - [ ] Embed support
 - [ ] 🚀Switch webtor.io to web-ui-v2
 

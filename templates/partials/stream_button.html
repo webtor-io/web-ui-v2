@@ -1,0 +1,11 @@
+{{ define "stream_button" }}
+{{ with .Data }}
+{{ if eq .Item.MediaFormat "video" }}
+{{ template "button" makeVideo $ . }}
+{{ else if eq .Item.MediaFormat "audio" }}
+{{ template "button" makeAudio $ . }}
+{{ else if eq .Item.MediaFormat "image" }}
+{{ template "button" makeImage $ . }}
+{{ end }}
+{{ end }}
+{{ end }}

@@ -2,12 +2,14 @@ package services
 
 import (
 	"fmt"
+	"net"
+	"net/http"
+	"strings"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/sessions/redis"
 	csrf "github.com/utrack/gin-csrf"
-	"net"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -99,6 +101,10 @@ func NewWeb(c *cli.Context, r *gin.Engine) *Web {
 	r.Use(csrf.Middleware(csrf.Options{
 		Secret: c.String(sessionSecretFlag),
 		ErrorFunc: func(c *gin.Context) {
+			if strings.HasPrefix(c.Request.URL.Path, "/auth/dashboard") {
+				c.Next()
+				return
+			}
 			c.String(400, "CSRF token mismatch")
 			c.Abort()
 		},

@@ -2,12 +2,12 @@ package action
 
 import (
 	"context"
-	m "github.com/webtor-io/web-ui-v2/services/models"
 	"html/template"
 	"net/http"
 	"time"
 
-	"github.com/gin-contrib/multitemplate"
+	m "github.com/webtor-io/web-ui-v2/services/models"
+
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
@@ -29,22 +29,21 @@ type TrackPutArgs struct {
 }
 
 type PostData struct {
-	w.ErrorData
 	Job  *sv.Job
 	Args *PostArgs
 }
 
 type Handler struct {
-	*w.TemplateHandler
 	*w.ClaimsHandler
 	jobs *j.Handler
+	tm   *w.TemplateManager
 }
 
-func RegisterHandler(c *cli.Context, r *gin.Engine, re multitemplate.Renderer, jobs *j.Handler) {
+func RegisterHandler(c *cli.Context, r *gin.Engine, tm *w.TemplateManager, jobs *j.Handler) {
 	h := &Handler{
-		TemplateHandler: w.NewTemplateHandler(c, re),
-		ClaimsHandler:   w.NewClaimsHandler(),
-		jobs:            jobs,
+		tm:            tm,
+		ClaimsHandler: w.NewClaimsHandler(),
+		jobs:          jobs,
 	}
 	r.POST("/download-file", func(c *gin.Context) {
 		h.post(c, "download")
@@ -85,36 +84,12 @@ func RegisterHandler(c *cli.Context, r *gin.Engine, re multitemplate.Renderer, j
 			c.Error(err)
 		}
 	})
-	h.RegisterTemplate(
-		"action/post",
-		[]string{"async"},
-		[]string{},
-		template.FuncMap{},
-	)
-	h.RegisterTemplate(
-		"action/preview_image",
-		[]string{"async"},
-		[]string{},
-		template.FuncMap{},
-	)
-	h.RegisterTemplate(
-		"action/stream_video",
-		[]string{"async"},
-		[]string{},
-		template.FuncMap{
-			"getDurationSec": GetDurationSec,
-			"getAudioTracks": GetAudioTracks,
-			"getSubtitles":   GetSubtitles,
-		},
-	)
-	h.RegisterTemplate(
-		"action/stream_audio",
-		[]string{"async"},
-		[]string{},
-		template.FuncMap{
-			"getDurationSec": GetDurationSec,
-		},
-	)
+
+	h.tm.RegisterViewsWithFuncs("action/*", template.FuncMap{
+		"getDurationSec": GetDurationSec,
+		"getAudioTracks": GetAudioTracks,
+		"getSubtitles":   GetSubtitles,
+	})
 }
 
 func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
@@ -140,21 +115,19 @@ func (s *Handler) post(c *gin.Context, action string) {
 		args *PostArgs
 		job  *sv.Job
 	)
-	post := s.MakeTemplate(c, "action/post", &d)
+	postTpl := s.tm.MakeTemplate("action/post")
 	args, err = s.bindPostArgs(c)
 	if err != nil {
-		d.Err = errors.Wrap(err, "wrong args provided")
-		post.R(http.StatusBadRequest)
+		postTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)
 		return
 	}
 	d.Args = args
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Minute)
 	job, err = s.jobs.Action(ctx, c, args.Claims, args.ResourceID, args.ItemID, action)
 	if err != nil {
-		d.Err = errors.Wrap(err, "failed to start downloading")
-		post.R(http.StatusBadRequest)
+		postTpl.HTMLWithErr(errors.Wrap(err, "failed to start downloading"), http.StatusBadRequest, c, d)
 		return
 	}
 	d.Job = job
-	post.R(http.StatusOK)
+	postTpl.HTML(http.StatusOK, c, d)
 }

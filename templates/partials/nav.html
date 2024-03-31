@@ -1,0 +1,15 @@
+{{ define "nav" }}
+<div class="navbar sticky top-0">
+    <div class="flex-1">
+    </div>
+    <div class="flex-none">
+        {{ if useAuth }}
+        {{ if .User.Email }}
+        <a class="btn btn-link" href="/profile" class="group" async-target="main">{{ .User.Email }}</a>
+        {{ else }}
+        <a class="btn btn-link" href="/login" class="group" async-target="main">login</a>
+        {{ end }} 
+        {{ end }}
+    </div>
+</div>
+{{ end }}

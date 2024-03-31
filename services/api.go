@@ -372,7 +372,7 @@ func (s *Api) GetOpenSubtitles(ctx context.Context, u string) ([]OpenSubtitleTra
 	}
 	err = json.Unmarshal(data, &esubs)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal data=%v", data)
+		return nil, errors.Wrapf(err, "failed to unmarshal data=%v", string(data))
 	}
 	for _, esub := range esubs {
 		subs = append(subs, OpenSubtitleTrack{
@@ -406,7 +406,7 @@ func (s *Api) GetMediaProbe(ctx context.Context, u string) (*MediaProbe, error) 
 	}
 	err = json.Unmarshal(data, &mb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to unmarshal data=%v", data)
+		return nil, errors.Wrapf(err, "failed to unmarshal data=%v", string(data))
 	}
 	return &mb, nil
 }

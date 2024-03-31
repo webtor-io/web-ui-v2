@@ -1,113 +1,290 @@
 package web
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
-	"io"
+	"errors"
+	"html/template"
 	"os"
-	"text/template"
+	"path/filepath"
+	"strings"
+	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/urfave/cli"
+	"github.com/gin-gonic/gin/render"
 
 	"github.com/gin-contrib/multitemplate"
-	sv "github.com/webtor-io/web-ui-v2/services"
 )
 
-const (
-	assetsHostFlag = "assets-host"
-)
-
-func RegisterTemplateHandlerFlags(f []cli.Flag) []cli.Flag {
-	return append(f,
-		cli.StringFlag{
-			Name:   assetsHostFlag,
-			Usage:  "assets host",
-			Value:  "",
-			EnvVar: "WEB_ASSETS_HOST",
-		},
-	)
+type View struct {
+	Name         string
+	Path         string
+	LayoutPath   string
+	Layout       string
+	LayoutBody   string
+	Partials     []string
+	Funcs        template.FuncMap
+	once         sync.Once
+	err          error
+	re           multitemplate.Renderer
+	templateName string
 }
 
-type TemplateHandler struct {
-	assetsHost string
-	assetsPath string
-	re         multitemplate.Renderer
+func (s *View) makeTemplate() (t *template.Template, err error) {
+	templates := []string{}
+	if s.LayoutBody == "" {
+		templates = append(templates, s.LayoutPath)
+		t = template.New(filepath.Base(s.LayoutPath))
+	} else {
+		t, err = template.New(s.Name).Parse(s.LayoutBody)
+		if err != nil {
+			return nil, err
+		}
+	}
+	templates = append(templates, s.Path)
+	templates = append(templates, s.Partials...)
+	return t.Funcs(s.Funcs).ParseFiles(templates...)
 }
 
-func NewTemplateHandler(c *cli.Context, re multitemplate.Renderer) *TemplateHandler {
-	return &TemplateHandler{
-		assetsHost: c.String(assetsHostFlag),
-		assetsPath: c.String(sv.AssetsPathFlag),
-		re:         re,
+func (s *View) makeTemplateName() string {
+	name := s.Name
+	if s.LayoutBody != "" {
+		hash := md5.Sum([]byte(s.LayoutBody))
+		hashStr := hex.EncodeToString(hash[:])
+		name += "_" + hashStr
+
+	} else if s.Layout != "main" {
+		name += "_" + s.Layout
+	}
+	return name
+}
+
+func (s *View) Render() (string, error) {
+	s.once.Do(func() {
+		t, err := s.makeTemplate()
+		if err != nil {
+			return
+		}
+		s.templateName = s.makeTemplateName()
+		s.re.Add(s.templateName, t)
+	})
+	return s.templateName, s.err
+}
+
+type TemplateManager struct {
+	re             multitemplate.Renderer
+	funcs          template.FuncMap
+	contextWrapper func(c *gin.Context, obj any, err error) any
+	layouts        []string
+	partials       []string
+	views          []*View
+	mux            sync.Mutex
+}
+
+func NewTemplateManager(re multitemplate.Renderer, funcs template.FuncMap, contextWrapper func(c *gin.Context, obj any, err error) any) *TemplateManager {
+	return &TemplateManager{
+		re:             re,
+		funcs:          funcs,
+		contextWrapper: contextWrapper,
 	}
 }
 
-func (s *TemplateHandler) MakeAsset(in string) string {
-	h, _ := s.getAssetHash(in)
-	return s.assetsHost + "/assets/" + in + "?" + h
+func fileNameWithoutExt(fileName string) string {
+	return strings.TrimSuffix(fileName, filepath.Ext(fileName))
 }
 
-func (s *TemplateHandler) getAssetHash(name string) (string, error) {
-	f, err := os.Open(s.assetsPath + "/" + name)
+func (s *TemplateManager) RegisterViews(pattern string) error {
+	return s.RegisterViewsWithFuncs(pattern, template.FuncMap{})
+}
+
+func (s *TemplateManager) GetLayouts() ([]string, error) {
+	if s.layouts != nil {
+		return s.layouts, nil
+	}
+	layouts, err := filepath.Glob("templates/layouts/*")
+	if err != nil {
+		return nil, err
+	}
+	s.layouts = layouts
+	return layouts, nil
+}
+
+func (s *TemplateManager) GetPartials() ([]string, error) {
+	if s.partials != nil {
+		return s.partials, nil
+	}
+	partials, err := filepath.Glob("templates/partials/*")
+	if err != nil {
+		return nil, err
+	}
+	s.partials = partials
+	return partials, nil
+}
+
+func (s *TemplateManager) makeView(view string, layout string, partials []string, funcs template.FuncMap) *View {
+	lName := fileNameWithoutExt(filepath.Base(layout))
+	vName := fileNameWithoutExt(strings.TrimPrefix(view, "templates/views/"))
+	return &View{
+		re:         s.re,
+		Name:       vName,
+		Path:       view,
+		LayoutPath: layout,
+		Layout:     lName,
+		Partials:   partials,
+		Funcs:      funcs,
+	}
+}
+
+func (s *TemplateManager) makeViewWithCustomLayout(mv *View, layout string) *View {
+	cv := s.makeView(mv.Path, mv.LayoutPath, mv.Partials, mv.Funcs)
+	cv.LayoutBody = layout
+	return cv
+}
+
+func (s *TemplateManager) RegisterViewsWithFuncs(pattern string, f template.FuncMap) error {
+	for k, v := range f {
+		s.funcs[k] = v
+	}
+	views, err := filepath.Glob("templates/views/" + pattern)
+	if err != nil {
+		return err
+	}
+	layouts, err := s.GetLayouts()
+	if err != nil {
+		return err
+	}
+	partials, err := s.GetPartials()
+	if err != nil {
+		return err
+	}
+	for _, v := range views {
+		for _, l := range layouts {
+			f, _ := os.Stat(v)
+			if !f.IsDir() {
+				s.views = append(s.views, s.makeView(v, l, partials, s.funcs))
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s *TemplateManager) Init() error {
+	for _, v := range s.views {
+		_, err := s.renderView(v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *TemplateManager) RenderViewByName(name string) (string, error) {
+	for _, v := range s.views {
+		if v.Name == name {
+			return s.renderView(v)
+		}
+	}
+	return "", errors.New("view not found")
+}
+
+func (s *TemplateManager) RenderViewByNameWithCustomLayout(name string, layout string) (string, error) {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	var cv, mv *View
+	for _, v := range s.views {
+		if v.Name == name && v.LayoutBody == layout {
+			cv = v
+		}
+		if v.Name == name && v.LayoutBody == "" {
+			mv = v
+		}
+	}
+	if cv != nil {
+		return s.renderView(cv)
+	}
+	if mv != nil {
+		cv = s.makeViewWithCustomLayout(mv, layout)
+		s.views = append(s.views, cv)
+		return s.renderView(cv)
+	}
+	return "", errors.New("view not found")
+}
+
+func (s *TemplateManager) renderView(v *View) (string, error) {
+	name, err := v.Render()
 	if err != nil {
 		return "", err
 	}
-	h := md5.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(h.Sum(nil)), nil
-}
-
-func (s *TemplateHandler) RegisterTemplate(name string, layouts []string, partials []string, fm template.FuncMap) {
-	funcs := template.FuncMap{
-		"asset":         s.MakeAsset,
-		"makeJobLogURL": MakeJobLogURL,
-		"bitsForHumans": BitsForHumans,
-		"log":           Log,
-		"shortErr":      ShortErr,
-		"dev":           Dev,
-	}
-	for k, v := range fm {
-		funcs[k] = v
-	}
-	pp := []string{}
-	for _, p := range partials {
-		pp = append(pp, fmt.Sprintf("templates/partials/%v.html", p))
-	}
-	for _, l := range layouts {
-		templates := []string{}
-		templates = append(templates, fmt.Sprintf("templates/layouts/%v.html", l), fmt.Sprintf("templates/%v.html", name))
-		templates = append(templates, pp...)
-		s.re.AddFromFilesFuncs(fmt.Sprintf("%v_%v", name, l), funcs, templates...)
-	}
+	return name, nil
 }
 
 type Template struct {
-	name string
-	c    *gin.Context
-	d    any
+	name       string
+	layoutBody string
+	tm         *TemplateManager
 }
 
-func (s *Template) R(code int) {
-	name := s.name + "_standard"
-	if s.c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
-		if s.c.GetHeader("X-Layout") != "" {
-			name = s.name + "_" + s.c.GetHeader("X-Layout")
-		} else {
-			name = s.name + "_async"
+func (s *Template) HTML(code int, context *gin.Context, obj any) {
+	s.HTMLWithErr(nil, code, context, obj)
+}
+
+func (s *Template) HTMLWithErr(err error, code int, context *gin.Context, obj any) {
+	var name string
+	var rerr error
+	if context.GetHeader("X-Requested-With") == "XMLHttpRequest" {
+		if context.GetHeader("X-Layout") != "" {
+			name, rerr = s.tm.RenderViewByNameWithCustomLayout(s.name, context.GetHeader("X-Layout"))
+			if rerr != nil {
+				panic(rerr)
+			}
 		}
-		s.c.Header("X-Template", name)
+	} else {
+		name, rerr = s.tm.RenderViewByName(s.name)
+		if rerr != nil {
+			panic(rerr)
+		}
 	}
-	s.c.HTML(code, name, s.d)
+	context.Header("X-Template", name)
+	context.HTML(code, name, s.tm.contextWrapper(context, obj, err))
 }
 
-func (s *TemplateHandler) MakeTemplate(c *gin.Context, name string, d any) *Template {
+func (s *Template) ToString(c *gin.Context, obj any) (res string, err error) {
+	var b bytes.Buffer
+	var v string
+	if s.layoutBody == "" {
+		v, err = s.tm.RenderViewByName(s.name)
+		if err != nil {
+			return
+		}
+	} else {
+		v, err = s.tm.RenderViewByNameWithCustomLayout(s.name, s.layoutBody)
+		if err != nil {
+			return
+		}
+	}
+	re, _ := s.tm.re.Instance(v, s.tm.contextWrapper(c, obj, nil)).(render.HTML)
+	err = re.Template.Execute(&b, re.Data)
+	if err != nil {
+		return
+	}
+	res = b.String()
+	return
+
+}
+
+func (s *TemplateManager) MakeTemplate(name string) *Template {
 	return &Template{
 		name: name,
-		c:    c,
-		d:    d,
+		tm:   s,
+	}
+}
+
+func (s *TemplateManager) MakeTemplateWithLayout(name string, layoutBody string) *Template {
+	return &Template{
+		name:       name,
+		layoutBody: layoutBody,
+		tm:         s,
 	}
 }
