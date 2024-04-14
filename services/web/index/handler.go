@@ -11,14 +11,12 @@ import (
 type IndexData struct{}
 
 type Handler struct {
-	*w.ClaimsHandler
 	tm *w.TemplateManager
 }
 
 func RegisterHandler(c *cli.Context, r *gin.Engine, tm *w.TemplateManager) {
 	h := &Handler{
-		ClaimsHandler: w.NewClaimsHandler(),
-		tm:            tm,
+		tm: tm,
 	}
 	r.GET("/", h.index)
 

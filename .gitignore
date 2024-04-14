@@ -21,3 +21,5 @@ web-ui-v2
 node_modules
 
 assets/dist/*
+
+.env

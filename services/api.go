@@ -6,13 +6,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 
@@ -140,7 +141,7 @@ type MediaProbe struct {
 
 type Claims struct {
 	jwt.StandardClaims
-	Rate          string `json:"rate"`
+	Rate          string `json:"rate,omitempty"`
 	Role          string `json:"role"`
 	SessionID     string `json:"sessionID"`
 	Domain        string `json:"domain"`

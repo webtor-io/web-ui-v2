@@ -41,10 +41,14 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 	if file == nil && query == "" {
 		return nil, errors.Errorf("no resource provided")
 	}
+	claims, err := s.MakeClaims(c)
+	if err != nil {
+		return nil, err
+	}
 	return &PostArgs{
 		File:   file,
 		Query:  query,
-		Claims: s.MakeClaims(c),
+		Claims: claims,
 		ID:     id,
 	}, nil
 }

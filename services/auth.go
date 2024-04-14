@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"github.com/supertokens/supertokens-golang/ingredients/emaildelivery"
 	"github.com/supertokens/supertokens-golang/recipe/dashboard"
 	"github.com/supertokens/supertokens-golang/recipe/passwordless"
@@ -16,8 +17,8 @@ import (
 )
 
 const (
-	supertokensHostFlag = "supetokens-host"
-	supertokensPortFlag = "supetokens-port"
+	supertokensHostFlag = "supertokens-host"
+	supertokensPortFlag = "supertokens-port"
 )
 
 func RegisterAuthFlags(f []cli.Flag) []cli.Flag {
@@ -132,4 +133,22 @@ func (s *Auth) Init() error {
 			userroles.Init(nil),
 		},
 	})
+}
+
+type User struct {
+	ID    string
+	Email string
+}
+
+func GetUserFromContext(c *gin.Context) *User {
+	u := &User{}
+	if sessionContainer := session.GetSessionFromRequestContext(c.Request.Context()); sessionContainer != nil {
+		userID := sessionContainer.GetUserID()
+		userInfo, err := passwordless.GetUserByID(userID)
+		if err == nil && userInfo != nil {
+			u.ID = userInfo.ID
+			u.Email = *userInfo.Email
+		}
+	}
+	return u
 }

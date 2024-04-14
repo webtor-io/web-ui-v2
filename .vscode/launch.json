@@ -5,13 +5,31 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Package",
+            "name": "Launch App Server",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceRoot}",
             "args": ["serve", "--assets-host", "http://localhost:8082"],
-            "envFile": "${userHome}/.env"
+            "envFile": "${workspaceRoot}/.env"
+        },
+        {
+            "name": "Launch Webpack Dev Server",
+            "cwd": "${workspaceRoot}",
+            "request": "launch",
+            "type": "node",
+            "runtimeExecutable": "npm",
+            "runtimeVersion": "20",
+            "runtimeArgs": [
+                "run", "webpack-dev-server"
+            ],
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch App Server and Webpack Dev Server",
+            "configurations": ["Launch Webpack Dev Server", "Launch App Server"],
+            "stopAll": true
         }
     ]
 }

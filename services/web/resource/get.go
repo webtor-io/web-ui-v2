@@ -43,13 +43,17 @@ func (s *Handler) bindGetArgs(c *gin.Context) (*GetArgs, error) {
 			page = uint(p)
 		}
 	}
+	claims, err := s.MakeClaims(c)
+	if err != nil {
+		return nil, err
+	}
 	return &GetArgs{
 		ID:       id,
 		Page:     page,
 		PageSize: pageSize,
 		PWD:      c.Query("pwd"),
 		File:     c.Query("file"),
-		Claims:   s.MakeClaims(c),
+		Claims:   claims,
 	}, nil
 }
 

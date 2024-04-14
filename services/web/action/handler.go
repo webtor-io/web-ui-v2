@@ -39,10 +39,10 @@ type Handler struct {
 	tm   *w.TemplateManager
 }
 
-func RegisterHandler(c *cli.Context, r *gin.Engine, tm *w.TemplateManager, jobs *j.Handler) {
+func RegisterHandler(c *cli.Context, r *gin.Engine, tm *w.TemplateManager, jobs *j.Handler, uc *sv.UserClaims) {
 	h := &Handler{
 		tm:            tm,
-		ClaimsHandler: w.NewClaimsHandler(),
+		ClaimsHandler: w.NewClaimsHandler(uc),
 		jobs:          jobs,
 	}
 	r.POST("/download-file", func(c *gin.Context) {
@@ -101,10 +101,14 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 	if !ok {
 		return nil, errors.Errorf("no item id provided")
 	}
+	claims, err := s.MakeClaims(c)
+	if err != nil {
+		return nil, err
+	}
 	return &PostArgs{
 		ResourceID: rID[0],
 		ItemID:     iID[0],
-		Claims:     s.MakeClaims(c),
+		Claims:     claims,
 	}, nil
 }
 

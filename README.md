@@ -24,7 +24,7 @@ Some features to mention:
   - [ ] Subtitle size control
 - [x] Authentication
   - [x] Passwordless authentication
-  - [ ] Patreon account linking
+  - [x] Patreon account linking
 - [ ] Ads integration
 - [ ] Embed support
 - [ ] 🚀Switch webtor.io to web-ui-v2

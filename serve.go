@@ -38,6 +38,8 @@ func configureServe(c *cli.Command) {
 	c.Flags = w.RegisterTemplateHandlerFlags(c.Flags)
 	c.Flags = s.RegisterCommonFlags(c.Flags)
 	c.Flags = s.RegisterAuthFlags(c.Flags)
+	c.Flags = s.RegisterClaimsProviderClientFlags(c.Flags)
+	c.Flags = s.RegisterClaimsFlags(c.Flags)
 }
 
 func serve(c *cli.Context) error {
@@ -66,6 +68,13 @@ func serve(c *cli.Context) error {
 	// Setting JobHandler
 	jobs := j.NewHandler(tm, api, queues)
 
+	// Setting ClaimsProviderClient
+	cpCl := s.NewClaimsProviderClient(c)
+	defer cpCl.Close()
+
+	// Setting UserClaims
+	claims := s.NewUserClaims(c, cpCl)
+
 	// Setting Gin
 	r := gin.Default()
 	r.HTMLRender = re
@@ -87,7 +96,7 @@ func serve(c *cli.Context) error {
 	}
 
 	// Setting ResourceHandler
-	wr.RegisterHandler(c, r, tm, api, jobs)
+	wr.RegisterHandler(c, r, tm, api, jobs, claims)
 
 	// Setting JobHandler
 	wj.RegisterHandler(r, queues)
@@ -96,7 +105,7 @@ func serve(c *cli.Context) error {
 	wi.RegisterHandler(c, r, tm)
 
 	// Setting ActionHandler
-	wa.RegisterHandler(c, r, tm, jobs)
+	wa.RegisterHandler(c, r, tm, jobs, claims)
 
 	// Setting ProfileHandler
 	p.RegisterHandler(c, r, tm)

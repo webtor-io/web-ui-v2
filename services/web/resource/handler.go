@@ -17,9 +17,9 @@ type Handler struct {
 	tm   *w.TemplateManager
 }
 
-func RegisterHandler(c *cli.Context, r *gin.Engine, tm *w.TemplateManager, api *sv.Api, jobs *j.Handler) {
+func RegisterHandler(c *cli.Context, r *gin.Engine, tm *w.TemplateManager, api *sv.Api, jobs *j.Handler, uc *sv.UserClaims) {
 	h := &Handler{
-		ClaimsHandler: w.NewClaimsHandler(),
+		ClaimsHandler: w.NewClaimsHandler(uc),
 		api:           api,
 		jobs:          jobs,
 		tm:            tm,

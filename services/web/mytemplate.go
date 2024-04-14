@@ -9,10 +9,9 @@ import (
 
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
-	"github.com/supertokens/supertokens-golang/recipe/passwordless"
-	"github.com/supertokens/supertokens-golang/recipe/session"
 	"github.com/urfave/cli"
 	csrf "github.com/utrack/gin-csrf"
+	"github.com/webtor-io/web-ui-v2/services"
 )
 
 func NewMyTemplateManager(c *cli.Context, re multitemplate.Renderer) *TemplateManager {
@@ -91,28 +90,15 @@ func (s *Helper) getAssetHash(name string) (string, error) {
 	return hex.EncodeToString(h.Sum(nil)), nil
 }
 
-type User struct {
-	ID    string
-	Email string
-}
-
 type Context struct {
 	Data any
 	CSRF string
 	Err  error
-	User *User
+	User *services.User
 }
 
 func NewContext(c *gin.Context, obj any, err error) any {
-	u := &User{}
-	if sessionContainer := session.GetSessionFromRequestContext(c.Request.Context()); sessionContainer != nil {
-		userID := sessionContainer.GetUserID()
-		userInfo, err := passwordless.GetUserByID(userID)
-		if err == nil && userInfo != nil {
-			u.ID = userInfo.ID
-			u.Email = *userInfo.Email
-		}
-	}
+	u := services.GetUserFromContext(c)
 	return &Context{
 		Data: obj,
 		CSRF: csrf.GetToken(c),
