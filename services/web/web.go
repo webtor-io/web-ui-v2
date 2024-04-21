@@ -1,4 +1,4 @@
-package services
+package web
 
 import (
 	"fmt"
@@ -16,17 +16,19 @@ import (
 	"github.com/urfave/cli"
 
 	log "github.com/sirupsen/logrus"
+
+	"github.com/webtor-io/web-ui-v2/services"
 )
 
 const (
 	webHostFlag       = "host"
 	webPortFlag       = "port"
 	sessionSecretFlag = "secret"
-	redisHostFlag     = "redis-host"
-	redisPortFlag     = "redis-port"
+	assetsPathFlag    = "assets-path"
+	assetsHostFlag    = "assets-host"
 )
 
-func RegisterWebFlags(f []cli.Flag) []cli.Flag {
+func RegisterFlags(f []cli.Flag) []cli.Flag {
 	return append(f,
 		cli.StringFlag{
 			Name:   webHostFlag,
@@ -46,15 +48,18 @@ func RegisterWebFlags(f []cli.Flag) []cli.Flag {
 			Value:  "secret123",
 			EnvVar: "SESSION_SECRET",
 		},
+
 		cli.StringFlag{
-			Name:   redisHostFlag,
-			Usage:  "redis host",
-			EnvVar: "REDIS_MASTER_SERVICE_HOST, REDIS_SERVICE_HOST",
+			Name:   assetsPathFlag,
+			Usage:  "assets path",
+			Value:  "./assets/dist",
+			EnvVar: "ASSETS_PATH",
 		},
-		cli.IntFlag{
-			Name:   redisPortFlag,
-			Usage:  "redis port",
-			EnvVar: "REDIS_MASTER_SERVICE_PORT, REDIS_SERVICE_PORT",
+		cli.StringFlag{
+			Name:   assetsHostFlag,
+			Usage:  "assets host",
+			Value:  "",
+			EnvVar: "WEB_ASSETS_HOST",
 		},
 	)
 }
@@ -88,10 +93,10 @@ func (s *Web) Close() {
 	}
 }
 
-func NewWeb(c *cli.Context, r *gin.Engine) *Web {
+func New(c *cli.Context, r *gin.Engine) *Web {
 	var store sessions.Store
-	if c.String(redisHostFlag) != "" && c.Int(redisPortFlag) != 0 {
-		url := fmt.Sprintf("%v:%v", c.String(redisHostFlag), c.Int(redisPortFlag))
+	if c.String(services.RedisHostFlag) != "" && c.Int(services.RedisPortFlag) != 0 {
+		url := fmt.Sprintf("%v:%v", c.String(services.RedisHostFlag), c.Int(services.RedisPortFlag))
 		store, _ = redis.NewStore(10, "tcp", url, "", []byte(sessionSecretFlag))
 		log.Infof("using redis store %v", url)
 	} else {
@@ -110,7 +115,7 @@ func NewWeb(c *cli.Context, r *gin.Engine) *Web {
 		},
 	}))
 	r.UseRawPath = true
-	assetsPath := c.String(AssetsPathFlag)
+	assetsPath := c.String(assetsPathFlag)
 	r.Static("/assets", assetsPath)
 	r.StaticFile("/favicon.ico", assetsPath+"/favicon.ico")
 

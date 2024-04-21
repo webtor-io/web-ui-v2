@@ -1,4 +1,4 @@
-package web
+package template
 
 import (
 	"bytes"
@@ -17,6 +17,8 @@ import (
 	"github.com/gin-contrib/multitemplate"
 )
 
+type FuncMap = template.FuncMap
+
 type View struct {
 	Name         string
 	Path         string
@@ -24,7 +26,7 @@ type View struct {
 	Layout       string
 	LayoutBody   string
 	Partials     []string
-	Funcs        template.FuncMap
+	Funcs        FuncMap
 	once         sync.Once
 	err          error
 	re           multitemplate.Renderer
@@ -72,21 +74,28 @@ func (s *View) Render() (string, error) {
 	return s.templateName, s.err
 }
 
-type TemplateManager struct {
+type Manager struct {
 	re             multitemplate.Renderer
-	funcs          template.FuncMap
+	funcs          FuncMap
 	contextWrapper func(c *gin.Context, obj any, err error) any
 	layouts        []string
 	partials       []string
 	views          []*View
 	mux            sync.Mutex
+	args           Args
 }
 
-func NewTemplateManager(re multitemplate.Renderer, funcs template.FuncMap, contextWrapper func(c *gin.Context, obj any, err error) any) *TemplateManager {
-	return &TemplateManager{
+type Args interface {
+	GetFuncs() FuncMap
+	WrapContext(c *gin.Context, obj any, err error) any
+}
+
+func NewManager(re multitemplate.Renderer, args Args) *Manager {
+	return &Manager{
 		re:             re,
-		funcs:          funcs,
-		contextWrapper: contextWrapper,
+		args:           args,
+		funcs:          args.GetFuncs(),
+		contextWrapper: args.WrapContext,
 	}
 }
 
@@ -94,11 +103,11 @@ func fileNameWithoutExt(fileName string) string {
 	return strings.TrimSuffix(fileName, filepath.Ext(fileName))
 }
 
-func (s *TemplateManager) RegisterViews(pattern string) error {
-	return s.RegisterViewsWithFuncs(pattern, template.FuncMap{})
+func (s *Manager) RegisterViews(pattern string) error {
+	return s.RegisterViewsWithFuncs(pattern, FuncMap{})
 }
 
-func (s *TemplateManager) GetLayouts() ([]string, error) {
+func (s *Manager) GetLayouts() ([]string, error) {
 	if s.layouts != nil {
 		return s.layouts, nil
 	}
@@ -110,7 +119,7 @@ func (s *TemplateManager) GetLayouts() ([]string, error) {
 	return layouts, nil
 }
 
-func (s *TemplateManager) GetPartials() ([]string, error) {
+func (s *Manager) GetPartials() ([]string, error) {
 	if s.partials != nil {
 		return s.partials, nil
 	}
@@ -122,7 +131,7 @@ func (s *TemplateManager) GetPartials() ([]string, error) {
 	return partials, nil
 }
 
-func (s *TemplateManager) makeView(view string, layout string, partials []string, funcs template.FuncMap) *View {
+func (s *Manager) makeView(view string, layout string, partials []string, funcs FuncMap) *View {
 	lName := fileNameWithoutExt(filepath.Base(layout))
 	vName := fileNameWithoutExt(strings.TrimPrefix(view, "templates/views/"))
 	return &View{
@@ -136,13 +145,13 @@ func (s *TemplateManager) makeView(view string, layout string, partials []string
 	}
 }
 
-func (s *TemplateManager) makeViewWithCustomLayout(mv *View, layout string) *View {
+func (s *Manager) makeViewWithCustomLayout(mv *View, layout string) *View {
 	cv := s.makeView(mv.Path, mv.LayoutPath, mv.Partials, mv.Funcs)
 	cv.LayoutBody = layout
 	return cv
 }
 
-func (s *TemplateManager) RegisterViewsWithFuncs(pattern string, f template.FuncMap) error {
+func (s *Manager) RegisterViewsWithFuncs(pattern string, f FuncMap) error {
 	for k, v := range f {
 		s.funcs[k] = v
 	}
@@ -170,7 +179,7 @@ func (s *TemplateManager) RegisterViewsWithFuncs(pattern string, f template.Func
 	return nil
 }
 
-func (s *TemplateManager) Init() error {
+func (s *Manager) Init() error {
 	for _, v := range s.views {
 		_, err := s.renderView(v)
 		if err != nil {
@@ -180,7 +189,7 @@ func (s *TemplateManager) Init() error {
 	return nil
 }
 
-func (s *TemplateManager) RenderViewByName(name string) (string, error) {
+func (s *Manager) RenderViewByName(name string) (string, error) {
 	for _, v := range s.views {
 		if v.Name == name {
 			return s.renderView(v)
@@ -189,7 +198,7 @@ func (s *TemplateManager) RenderViewByName(name string) (string, error) {
 	return "", errors.New("view not found")
 }
 
-func (s *TemplateManager) RenderViewByNameWithCustomLayout(name string, layout string) (string, error) {
+func (s *Manager) RenderViewByNameWithCustomLayout(name string, layout string) (string, error) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	var cv, mv *View
@@ -212,7 +221,7 @@ func (s *TemplateManager) RenderViewByNameWithCustomLayout(name string, layout s
 	return "", errors.New("view not found")
 }
 
-func (s *TemplateManager) renderView(v *View) (string, error) {
+func (s *Manager) renderView(v *View) (string, error) {
 	name, err := v.Render()
 	if err != nil {
 		return "", err
@@ -223,7 +232,7 @@ func (s *TemplateManager) renderView(v *View) (string, error) {
 type Template struct {
 	name       string
 	layoutBody string
-	tm         *TemplateManager
+	tm         *Manager
 }
 
 func (s *Template) HTML(code int, context *gin.Context, obj any) {
@@ -274,14 +283,14 @@ func (s *Template) ToString(c *gin.Context, obj any) (res string, err error) {
 
 }
 
-func (s *TemplateManager) MakeTemplate(name string) *Template {
+func (s *Manager) MakeTemplate(name string) *Template {
 	return &Template{
 		name: name,
 		tm:   s,
 	}
 }
 
-func (s *TemplateManager) MakeTemplateWithLayout(name string, layoutBody string) *Template {
+func (s *Manager) MakeTemplateWithLayout(name string, layoutBody string) *Template {
 	return &Template{
 		name:       name,
 		layoutBody: layoutBody,

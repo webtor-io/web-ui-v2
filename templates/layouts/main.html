@@ -8,12 +8,14 @@
         <script>window._CSRF = "{{ .CSRF }}";</script>
         <script>window._domain = "{{ domain }}";</script>
         <script async src="{{ "layout.js" | asset }}"></script>
+        {{- if useAuth }}
+        <script>window._sessionExpired = {{ .User.Expired }};</script>
+        <script async src="{{ "auth.js" | asset }}"></script>
+        {{- end }}
+        {{- template "head" . }}
     </head>
     <body style="background-color: rgb(15, 23, 42);">
         <script>document.body.style.display = 'none';</script>
-        {{ if useAuth }}
-        <script async src="{{ "auth.js" | asset }}"></script>
-        {{ end }}
         <progress id="progress" class="progress fixed progress-accent h-1"></progress>
         <nav async-get="/" async-layout="{{`{{ template "nav" . }}`}}">{{ template "nav" . }}</nav>
         <div id="wrapper" class="flex flex-col w-full px-8 items-center">

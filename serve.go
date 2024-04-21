@@ -5,15 +5,19 @@ import (
 
 	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
-	"github.com/webtor-io/web-ui-v2/services/web/auth"
+	"github.com/webtor-io/web-ui-v2/services/api"
+	"github.com/webtor-io/web-ui-v2/services/auth"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 	cs "github.com/webtor-io/common-services"
-	s "github.com/webtor-io/web-ui-v2/services"
-	j "github.com/webtor-io/web-ui-v2/services/job"
+	"github.com/webtor-io/web-ui-v2/services"
+	"github.com/webtor-io/web-ui-v2/services/claims"
+	"github.com/webtor-io/web-ui-v2/services/job"
+	"github.com/webtor-io/web-ui-v2/services/template"
 	w "github.com/webtor-io/web-ui-v2/services/web"
 	wa "github.com/webtor-io/web-ui-v2/services/web/action"
+	wau "github.com/webtor-io/web-ui-v2/services/web/auth"
 	wi "github.com/webtor-io/web-ui-v2/services/web/index"
 	wj "github.com/webtor-io/web-ui-v2/services/web/job"
 	p "github.com/webtor-io/web-ui-v2/services/web/profile"
@@ -33,13 +37,12 @@ func makeServeCMD() cli.Command {
 
 func configureServe(c *cli.Command) {
 	c.Flags = cs.RegisterProbeFlags(c.Flags)
-	c.Flags = s.RegisterWebFlags(c.Flags)
-	c.Flags = s.RegisterApiFlags(c.Flags)
-	c.Flags = w.RegisterTemplateHandlerFlags(c.Flags)
-	c.Flags = s.RegisterCommonFlags(c.Flags)
-	c.Flags = s.RegisterAuthFlags(c.Flags)
-	c.Flags = s.RegisterClaimsProviderClientFlags(c.Flags)
-	c.Flags = s.RegisterClaimsFlags(c.Flags)
+	c.Flags = api.RegisterFlags(c.Flags)
+	c.Flags = w.RegisterFlags(c.Flags)
+	c.Flags = services.RegisterFlags(c.Flags)
+	c.Flags = auth.RegisterFlags(c.Flags)
+	c.Flags = claims.RegisterFlags(c.Flags)
+	c.Flags = claims.RegisterClientFlags(c.Flags)
 }
 
 func serve(c *cli.Context) error {
@@ -50,62 +53,72 @@ func serve(c *cli.Context) error {
 	servers = append(servers, probe)
 	defer probe.Close()
 
-	// Setting HTTP Client
-	cl := http.DefaultClient
-
-	// Setting Api
-	api := s.NewApi(c, cl)
-
 	// Setting template renderer
 	re := multitemplate.NewRenderer()
-
-	// Setting TemplateManager
-	tm := w.NewMyTemplateManager(c, re)
-
-	// Setting JobQueues
-	queues := s.NewJobQueues()
-
-	// Setting JobHandler
-	jobs := j.NewHandler(tm, api, queues)
-
-	// Setting ClaimsProviderClient
-	cpCl := s.NewClaimsProviderClient(c)
-	defer cpCl.Close()
-
-	// Setting UserClaims
-	claims := s.NewUserClaims(c, cpCl)
 
 	// Setting Gin
 	r := gin.Default()
 	r.HTMLRender = re
 
 	// Setting Web
-	web := s.NewWeb(c, r)
+	web := w.New(c, r)
 	servers = append(servers, web)
 	defer web.Close()
 
+	// Setting HTTP Client
+	cl := http.DefaultClient
+
+	// Setting Api
+	api := api.New(c, cl)
+
+	// Setting Helper
+	helper := w.NewHelper(c)
+
+	// Setting TemplateManager
+	tm := template.NewManager(re, helper)
+
+	// Setting JobQueues
+	queues := job.NewQueues()
+
+	// Setting JobHandler
+	jobs := wj.New(queues, tm, api)
+
+	jobs.RegisterHandler(r)
+
 	// Setting Auth
-	a := s.NewAuth(c)
+	a := auth.New(c)
 
 	if a != nil {
 		err := a.Init()
 		if err != nil {
 			return err
 		}
-		auth.RegisterHandler(c, r, tm)
+		a.RegisterHandler(r)
+		wau.RegisterHandler(c, r, tm)
 	}
 
-	// Setting ResourceHandler
-	wr.RegisterHandler(c, r, tm, api, jobs, claims)
+	// Setting Claims Client
+	cpCl := claims.NewClient(c)
+	defer cpCl.Close()
 
-	// Setting JobHandler
-	wj.RegisterHandler(r, queues)
+	// Setting UserClaims
+	uc := claims.New(c, cpCl)
+	if uc != nil {
+		// Setting UserClaimsHandler
+		uc.RegisterHandler(c, r)
+	}
+
+	// Setting ApiClaimsHandler
+	api.RegisterHandler(c, r)
+
+	// Setting ResourceHandler
+	wr.RegisterHandler(c, r, tm, api, jobs)
 
 	// Setting IndexHandler
 	wi.RegisterHandler(c, r, tm)
 
 	// Setting ActionHandler
-	wa.RegisterHandler(c, r, tm, jobs, claims)
+	wa.RegisterHandler(c, r, tm, jobs)
 
 	// Setting ProfileHandler
 	p.RegisterHandler(c, r, tm)

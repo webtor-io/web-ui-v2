@@ -5,16 +5,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli"
-	w "github.com/webtor-io/web-ui-v2/services/web"
+	"github.com/webtor-io/web-ui-v2/services/template"
 )
 
 type IndexData struct{}
 
 type Handler struct {
-	tm *w.TemplateManager
+	tm *template.Manager
 }
 
-func RegisterHandler(c *cli.Context, r *gin.Engine, tm *w.TemplateManager) {
+func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager) {
 	h := &Handler{
 		tm: tm,
 	}

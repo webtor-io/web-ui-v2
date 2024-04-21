@@ -1,28 +1,24 @@
 package resource
 
 import (
-	"html/template"
-
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli"
-	sv "github.com/webtor-io/web-ui-v2/services"
-	j "github.com/webtor-io/web-ui-v2/services/job"
-	w "github.com/webtor-io/web-ui-v2/services/web"
+	"github.com/webtor-io/web-ui-v2/services/api"
+	"github.com/webtor-io/web-ui-v2/services/template"
+	j "github.com/webtor-io/web-ui-v2/services/web/job"
 )
 
 type Handler struct {
-	*w.ClaimsHandler
-	api  *sv.Api
+	api  *api.Api
 	jobs *j.Handler
-	tm   *w.TemplateManager
+	tm   *template.Manager
 }
 
-func RegisterHandler(c *cli.Context, r *gin.Engine, tm *w.TemplateManager, api *sv.Api, jobs *j.Handler, uc *sv.UserClaims) {
+func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager, api *api.Api, jobs *j.Handler) {
 	h := &Handler{
-		ClaimsHandler: w.NewClaimsHandler(uc),
-		api:           api,
-		jobs:          jobs,
-		tm:            tm,
+		api:  api,
+		jobs: jobs,
+		tm:   tm,
 	}
 	r.POST("/", h.post)
 	r.GET("/:resource_id", h.get)

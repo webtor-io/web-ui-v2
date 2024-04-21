@@ -1,18 +1,22 @@
-package services
+package api
 
 import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
@@ -22,6 +26,10 @@ import (
 	ra "github.com/webtor-io/rest-api/services"
 
 	"github.com/dgrijalva/jwt-go"
+
+	"github.com/webtor-io/web-ui-v2/services"
+	"github.com/webtor-io/web-ui-v2/services/auth"
+	"github.com/webtor-io/web-ui-v2/services/claims"
 )
 
 const (
@@ -34,7 +42,7 @@ const (
 	rapidApiHostFlag = "rapidapi-host"
 )
 
-func RegisterApiFlags(f []cli.Flag) []cli.Flag {
+func RegisterFlags(f []cli.Flag) []cli.Flag {
 	return append(f,
 		cli.StringFlag{
 			Name:   apiHostFlag,
@@ -142,7 +150,7 @@ type MediaProbe struct {
 type Claims struct {
 	jwt.StandardClaims
 	Rate          string `json:"rate,omitempty"`
-	Role          string `json:"role"`
+	Role          string `json:"role,omitempty"`
 	SessionID     string `json:"sessionID"`
 	Domain        string `json:"domain"`
 	Agent         string `json:"agent"`
@@ -153,6 +161,7 @@ type Api struct {
 	url            string
 	prepareRequest func(r *http.Request, c *Claims) (*http.Request, error)
 	cl             *http.Client
+	domain         string
 }
 
 type ListResourceContentOutputType string
@@ -191,7 +200,7 @@ func (s *ListResourceContentArgs) ToQuery() url.Values {
 	return q
 }
 
-func NewApi(c *cli.Context, cl *http.Client) *Api {
+func New(c *cli.Context, cl *http.Client) *Api {
 	host := c.String(apiHostFlag)
 	port := c.Int(apiPortFlag)
 	secure := c.Bool(apiSecureFlag)
@@ -228,10 +237,12 @@ func NewApi(c *cli.Context, cl *http.Client) *Api {
 		}
 	}
 	log.Infof("api endpoint %v", u)
+	url, _ := url.Parse(c.String(services.DomainFlag))
 	return &Api{
 		url:            u,
 		cl:             cl,
 		prepareRequest: prepareRequest,
+		domain:         url.Host,
 	}
 }
 
@@ -475,4 +486,64 @@ func (s *Api) makeSubtitleURL(u string, esub ExtSubtitle) string {
 	}
 	src.Path = path
 	return src.String()
+}
+
+func getRemoteAddress(r *http.Request) string {
+	forwarded := r.Header.Get("X-FORWARDED-FOR")
+	if forwarded != "" {
+		return strings.Split(forwarded, ",")[0]
+	}
+	ip, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr))
+	if err != nil {
+		return ""
+	}
+	return ip
+}
+
+type ApiClaimsContext struct{}
+
+func (s *Api) MakeClaimsFromContext(c *gin.Context) (*Claims, error) {
+	sess, _ := c.Cookie("session")
+	cl := &Claims{
+		SessionID:     sess,
+		Domain:        "webtor.io",
+		RemoteAddress: getRemoteAddress(c.Request),
+		Agent:         c.Request.Header.Get("User-Agent"),
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(24 * 7 * time.Hour).Unix(),
+		},
+	}
+	u := auth.GetUserFromContext(c)
+	uc := claims.GetFromContext(c)
+	if uc != nil {
+		cl.Role = uc.Context.Tier.Name
+		rate := uc.Claims.Connection.Rate
+		if rate > 0 {
+			cl.Rate = fmt.Sprintf("%dM", rate)
+		}
+	}
+	if u.Email != "" {
+		h := sha1.New()
+		h.Write([]byte(u.Email))
+		hashEmail := hex.EncodeToString(h.Sum(nil))
+		cl.SessionID = hashEmail
+	}
+	return cl, nil
+}
+
+func GetClaimsFromContext(c *gin.Context) *Claims {
+	return c.Request.Context().Value(ApiClaimsContext{}).(*Claims)
+}
+
+func (s *Api) RegisterHandler(c *cli.Context, r *gin.Engine) error {
+	r.Use(func(c *gin.Context) {
+		ac, err := s.MakeClaimsFromContext(c)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), ApiClaimsContext{}, ac))
+		c.Next()
+	})
+	return nil
 }

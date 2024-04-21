@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"time"
 
-	sv "github.com/webtor-io/web-ui-v2/services"
+	"github.com/webtor-io/web-ui-v2/services/api"
+	"github.com/webtor-io/web-ui-v2/services/job"
 )
 
-func (s *Handler) Download(claims *sv.Claims, resourceID string, itemID string) (job *sv.Job, err error) {
+func (s *Handler) Download(claims *api.Claims, resourceID string, itemID string) (j *job.Job, err error) {
 	id := fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID)))
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Minute)
-	job = s.q.GetOrCreate("download").Enqueue(ctx, id, func(j *sv.Job) {
+	j = s.q.GetOrCreate("download").Enqueue(ctx, id, func(j *job.Job) {
 		j.InProgress("retriving download link", "retriving download link")
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()

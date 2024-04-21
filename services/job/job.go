@@ -1,4 +1,4 @@
-package services
+package job
 
 import (
 	"context"
@@ -8,13 +8,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type JobObserver struct {
-	C      chan JobLogItem
+type Observer struct {
+	C      chan LogItem
 	mux    sync.Mutex
 	closed bool
 }
 
-func (s *JobObserver) Close() {
+func (s *Observer) Close() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	if !s.closed {
@@ -23,7 +23,7 @@ func (s *JobObserver) Close() {
 	}
 }
 
-func (s *JobObserver) Push(v JobLogItem) {
+func (s *Observer) Push(v LogItem) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	if !s.closed {
@@ -31,39 +31,39 @@ func (s *JobObserver) Push(v JobLogItem) {
 	}
 }
 
-func NewJobObserver() *JobObserver {
-	return &JobObserver{
-		C: make(chan JobLogItem, 100),
+func NewObserver() *Observer {
+	return &Observer{
+		C: make(chan LogItem, 100),
 	}
 }
 
 type Job struct {
 	ID        string
 	Queue     string
-	l         []JobLogItem
+	l         []LogItem
 	run       func(j *Job)
-	observers []*JobObserver
+	observers []*Observer
 	closed    bool
 	mux       sync.Mutex
 }
 
-type JobLogItemLevel string
+type LogItemLevel string
 
 const (
-	Info           JobLogItemLevel = "info"
-	Error          JobLogItemLevel = "error"
-	Warn           JobLogItemLevel = "warn"
-	Done           JobLogItemLevel = "done"
-	InProgress     JobLogItemLevel = "inprogress"
-	Finish         JobLogItemLevel = "finish"
-	Redirect       JobLogItemLevel = "redirect"
-	Download       JobLogItemLevel = "download"
-	RenderTemplate JobLogItemLevel = "rendertemplate"
-	StatusUpdate   JobLogItemLevel = "statusupdate"
-	Close          JobLogItemLevel = "close"
+	Info           LogItemLevel = "info"
+	Error          LogItemLevel = "error"
+	Warn           LogItemLevel = "warn"
+	Done           LogItemLevel = "done"
+	InProgress     LogItemLevel = "inprogress"
+	Finish         LogItemLevel = "finish"
+	Redirect       LogItemLevel = "redirect"
+	Download       LogItemLevel = "download"
+	RenderTemplate LogItemLevel = "rendertemplate"
+	StatusUpdate   LogItemLevel = "statusupdate"
+	Close          LogItemLevel = "close"
 )
 
-var levelMap = map[JobLogItemLevel]log.Level{
+var levelMap = map[LogItemLevel]log.Level{
 	Info:           log.InfoLevel,
 	Error:          log.ErrorLevel,
 	Warn:           log.WarnLevel,
@@ -77,23 +77,23 @@ var levelMap = map[JobLogItemLevel]log.Level{
 	Close:          log.InfoLevel,
 }
 
-type JobLogItem struct {
-	Level     JobLogItemLevel `json:"level,omitempty"`
-	Message   string          `json:"message,omitempty"`
-	Tag       string          `json:"tag,omitempty"`
-	Location  string          `json:"location,omitempty"`
-	Template  string          `json:"template,omitempty"`
-	Body      string          `json:"body,omitempty"`
-	Timestamp time.Time       `json:"timestamp,omitempty"`
+type LogItem struct {
+	Level     LogItemLevel `json:"level,omitempty"`
+	Message   string       `json:"message,omitempty"`
+	Tag       string       `json:"tag,omitempty"`
+	Location  string       `json:"location,omitempty"`
+	Template  string       `json:"template,omitempty"`
+	Body      string       `json:"body,omitempty"`
+	Timestamp time.Time    `json:"timestamp,omitempty"`
 }
 
-func NewJob(id string, queue string, run func(j *Job)) *Job {
+func New(id string, queue string, run func(j *Job)) *Job {
 	return &Job{
 		ID:        id,
 		Queue:     queue,
 		run:       run,
-		l:         []JobLogItem{},
-		observers: []*JobObserver{},
+		l:         []LogItem{},
+		observers: []*Observer{},
 	}
 }
 
@@ -101,8 +101,8 @@ func (s *Job) Run() {
 	s.run(s)
 }
 
-func (s *Job) ObserveLog() *JobObserver {
-	o := NewJobObserver()
+func (s *Job) ObserveLog() *Observer {
+	o := NewObserver()
 	s.observers = append(s.observers, o)
 	for _, i := range s.l {
 		o.Push(i)
@@ -110,7 +110,7 @@ func (s *Job) ObserveLog() *JobObserver {
 	return o
 }
 
-func (s *Job) log(l JobLogItem) {
+func (s *Job) log(l LogItem) {
 	l.Timestamp = time.Now()
 	s.l = append(s.l, l)
 	for _, o := range s.observers {
@@ -146,7 +146,7 @@ func (s *Job) log(l JobLogItem) {
 }
 
 func (s *Job) Info(message string) *Job {
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level:   Info,
 		Message: message,
 	})
@@ -155,7 +155,7 @@ func (s *Job) Info(message string) *Job {
 
 func (s *Job) Warn(err error, message string, tag string) *Job {
 	log.WithError(err).Error("got job warning")
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level:   Warn,
 		Message: message,
 		Tag:     tag,
@@ -165,7 +165,7 @@ func (s *Job) Warn(err error, message string, tag string) *Job {
 
 func (s *Job) Error(err error, message string, tag string) *Job {
 	log.WithError(err).Error("got job error")
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level:   Error,
 		Message: message,
 		Tag:     tag,
@@ -174,7 +174,7 @@ func (s *Job) Error(err error, message string, tag string) *Job {
 }
 
 func (s *Job) InProgress(message string, tag string) *Job {
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level:   InProgress,
 		Message: message,
 		Tag:     tag,
@@ -183,7 +183,7 @@ func (s *Job) InProgress(message string, tag string) *Job {
 }
 
 func (s *Job) StatusUpdate(message string, tag string) *Job {
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level:   StatusUpdate,
 		Message: message,
 		Tag:     tag,
@@ -192,14 +192,14 @@ func (s *Job) StatusUpdate(message string, tag string) *Job {
 }
 
 func (s *Job) Done(tag string) *Job {
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level: Done,
 		Tag:   tag,
 	})
 	return s
 }
 func (s *Job) Finish() *Job {
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level:   Finish,
 		Message: "success!",
 	})
@@ -207,7 +207,7 @@ func (s *Job) Finish() *Job {
 }
 
 func (s *Job) Download(url string) *Job {
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level:    Download,
 		Location: url,
 	})
@@ -215,7 +215,7 @@ func (s *Job) Download(url string) *Job {
 }
 
 func (s *Job) Redirect(url string) *Job {
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level:    Redirect,
 		Location: url,
 	})
@@ -223,7 +223,7 @@ func (s *Job) Redirect(url string) *Job {
 }
 
 func (s *Job) RenderTemplate(name string, body string) *Job {
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level:    RenderTemplate,
 		Template: name,
 		Body:     body,
@@ -232,7 +232,7 @@ func (s *Job) RenderTemplate(name string, body string) *Job {
 }
 
 func (s *Job) FinishWithMessage(m string) *Job {
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level:   Finish,
 		Message: m,
 	})
@@ -246,7 +246,7 @@ func (s *Job) Close() {
 		return
 	}
 	s.closed = true
-	s.log(JobLogItem{
+	s.log(LogItem{
 		Level: Close,
 	})
 }
@@ -257,7 +257,7 @@ type Jobs struct {
 	jobs  map[string]*Job
 }
 
-func NewJobs(queue string) *Jobs {
+func newJobs(queue string) *Jobs {
 	return &Jobs{
 		queue: queue,
 		jobs:  map[string]*Job{},
@@ -270,7 +270,7 @@ func (s *Jobs) Enqueue(ctx context.Context, id string, r func(j *Job)) *Job {
 	if _, ok := s.jobs[id]; ok {
 		return s.jobs[id]
 	}
-	j := NewJob(id, s.queue, r)
+	j := New(id, s.queue, r)
 	s.jobs[id] = j
 	go func() {
 		j.Run()
@@ -283,8 +283,8 @@ func (s *Jobs) Enqueue(ctx context.Context, id string, r func(j *Job)) *Job {
 	return j
 }
 
-func (s *Jobs) Log(id string) chan JobLogItem {
-	c := make(chan JobLogItem, 100)
+func (s *Jobs) Log(id string) chan LogItem {
+	c := make(chan LogItem, 100)
 	if _, ok := s.jobs[id]; ok {
 		go func() {
 			o := s.jobs[id].ObserveLog()
@@ -299,24 +299,24 @@ func (s *Jobs) Log(id string) chan JobLogItem {
 	return c
 }
 
-type JobQueues map[string]*Jobs
+type Queues map[string]*Jobs
 
 var queueMux sync.Mutex
 
-func NewJobQueues() *JobQueues {
-	return &JobQueues{}
+func NewQueues() *Queues {
+	return &Queues{}
 }
 
-func (s JobQueues) Get(name string) *Jobs {
+func (s Queues) Get(name string) *Jobs {
 	return s[name]
 }
 
-func (s JobQueues) GetOrCreate(name string) *Jobs {
+func (s Queues) GetOrCreate(name string) *Jobs {
 	queueMux.Lock()
 	defer queueMux.Unlock()
 	_, ok := s[name]
 	if !ok {
-		s[name] = NewJobs(name)
+		s[name] = newJobs(name)
 	}
 	return s[name]
 }

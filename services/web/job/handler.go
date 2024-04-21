@@ -2,16 +2,26 @@ package job
 
 import (
 	"github.com/gin-gonic/gin"
-	sv "github.com/webtor-io/web-ui-v2/services"
+	"github.com/webtor-io/web-ui-v2/services/api"
+	"github.com/webtor-io/web-ui-v2/services/job"
+	"github.com/webtor-io/web-ui-v2/services/template"
 )
 
 type Handler struct {
-	q *sv.JobQueues
+	q   *job.Queues
+	tm  *template.Manager
+	api *api.Api
 }
 
-func RegisterHandler(r *gin.Engine, queues *sv.JobQueues) {
-	h := &Handler{
-		q: queues,
+func New(q *job.Queues, tm *template.Manager, api *api.Api) *Handler {
+	return &Handler{
+		q:   q,
+		tm:  tm,
+		api: api,
 	}
-	r.GET("/queue/:queue_id/job/:job_id/log", h.log)
+}
+
+func (s *Handler) RegisterHandler(r *gin.Engine) *Handler {
+	r.GET("/queue/:queue_id/job/:job_id/log", s.log)
+	return s
 }

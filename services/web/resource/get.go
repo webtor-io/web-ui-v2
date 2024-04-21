@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	ra "github.com/webtor-io/rest-api/services"
 	sv "github.com/webtor-io/web-ui-v2/services"
+	"github.com/webtor-io/web-ui-v2/services/api"
 )
 
 var (
@@ -27,7 +28,7 @@ type GetArgs struct {
 	PageSize uint
 	PWD      string
 	File     string
-	Claims   *sv.Claims
+	Claims   *api.Claims
 }
 
 func (s *Handler) bindGetArgs(c *gin.Context) (*GetArgs, error) {
@@ -43,25 +44,22 @@ func (s *Handler) bindGetArgs(c *gin.Context) (*GetArgs, error) {
 			page = uint(p)
 		}
 	}
-	claims, err := s.MakeClaims(c)
-	if err != nil {
-		return nil, err
-	}
+
 	return &GetArgs{
 		ID:       id,
 		Page:     page,
 		PageSize: pageSize,
 		PWD:      c.Query("pwd"),
 		File:     c.Query("file"),
-		Claims:   claims,
+		Claims:   api.GetClaimsFromContext(c),
 	}, nil
 }
 
 func (s *Handler) getList(ctx context.Context, args *GetArgs) (l *ra.ListResponse, err error) {
 	limit := uint(args.PageSize)
 	offset := (args.Page - 1) * args.PageSize
-	l, err = s.api.ListResourceContent(ctx, args.Claims, args.ID, &sv.ListResourceContentArgs{
-		Output: sv.OutputTree,
+	l, err = s.api.ListResourceContent(ctx, args.Claims, args.ID, &api.ListResourceContentArgs{
+		Output: api.OutputTree,
 		Path:   args.PWD,
 		Limit:  limit,
 		Offset: offset,
@@ -128,7 +126,7 @@ func (s *Handler) getBestItem(ctx context.Context, l *ra.ListResponse, args *Get
 				return
 			}
 		}
-		l, err = s.api.ListResourceContent(ctx, args.Claims, args.ID, &sv.ListResourceContentArgs{
+		l, err = s.api.ListResourceContent(ctx, args.Claims, args.ID, &api.ListResourceContentArgs{
 			Path: args.File,
 		})
 		if err != nil {

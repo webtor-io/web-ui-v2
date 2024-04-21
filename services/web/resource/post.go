@@ -12,16 +12,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	sv "github.com/webtor-io/web-ui-v2/services"
+	"github.com/webtor-io/web-ui-v2/services/job"
 	sw "github.com/webtor-io/web-ui-v2/services/web"
 
 	ra "github.com/webtor-io/rest-api/services"
+	"github.com/webtor-io/web-ui-v2/services/api"
 )
 
 type PostArgs struct {
 	File   *multipart.FileHeader
 	Query  string
 	ID     string
-	Claims *sv.Claims
+	Claims *api.Claims
 }
 
 func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
@@ -41,14 +43,11 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 	if file == nil && query == "" {
 		return nil, errors.Errorf("no resource provided")
 	}
-	claims, err := s.MakeClaims(c)
-	if err != nil {
-		return nil, err
-	}
+
 	return &PostArgs{
 		File:   file,
 		Query:  query,
-		Claims: claims,
+		Claims: api.GetClaimsFromContext(c),
 		ID:     id,
 	}, nil
 }
@@ -89,7 +88,7 @@ func (s *Handler) post(c *gin.Context) {
 		d    PostData
 		err  error
 		args *PostArgs
-		job  *sv.Job
+		job  *job.Job
 		res  *ra.ResourceResponse
 	)
 	args, err = s.bindPostArgs(c)

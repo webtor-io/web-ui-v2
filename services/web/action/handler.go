@@ -2,7 +2,6 @@ package action
 
 import (
 	"context"
-	"html/template"
 	"net/http"
 	"time"
 
@@ -11,15 +10,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
-	sv "github.com/webtor-io/web-ui-v2/services"
-	j "github.com/webtor-io/web-ui-v2/services/job"
-	w "github.com/webtor-io/web-ui-v2/services/web"
+	api "github.com/webtor-io/web-ui-v2/services/api"
+	"github.com/webtor-io/web-ui-v2/services/job"
+	"github.com/webtor-io/web-ui-v2/services/template"
+	wj "github.com/webtor-io/web-ui-v2/services/web/job"
 )
 
 type PostArgs struct {
 	ResourceID string
 	ItemID     string
-	Claims     *sv.Claims
+	Claims     *api.Claims
 }
 
 type TrackPutArgs struct {
@@ -29,21 +29,19 @@ type TrackPutArgs struct {
 }
 
 type PostData struct {
-	Job  *sv.Job
+	Job  *job.Job
 	Args *PostArgs
 }
 
 type Handler struct {
-	*w.ClaimsHandler
-	jobs *j.Handler
-	tm   *w.TemplateManager
+	jobs *wj.Handler
+	tm   *template.Manager
 }
 
-func RegisterHandler(c *cli.Context, r *gin.Engine, tm *w.TemplateManager, jobs *j.Handler, uc *sv.UserClaims) {
+func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager, jobs *wj.Handler) {
 	h := &Handler{
-		tm:            tm,
-		ClaimsHandler: w.NewClaimsHandler(uc),
-		jobs:          jobs,
+		tm:   tm,
+		jobs: jobs,
 	}
 	r.POST("/download-file", func(c *gin.Context) {
 		h.post(c, "download")
@@ -101,14 +99,11 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 	if !ok {
 		return nil, errors.Errorf("no item id provided")
 	}
-	claims, err := s.MakeClaims(c)
-	if err != nil {
-		return nil, err
-	}
+
 	return &PostArgs{
 		ResourceID: rID[0],
 		ItemID:     iID[0],
-		Claims:     claims,
+		Claims:     api.GetClaimsFromContext(c),
 	}, nil
 }
 
@@ -117,7 +112,7 @@ func (s *Handler) post(c *gin.Context, action string) {
 		d    PostData
 		err  error
 		args *PostArgs
-		job  *sv.Job
+		job  *job.Job
 	)
 	postTpl := s.tm.MakeTemplate("action/post")
 	args, err = s.bindPostArgs(c)

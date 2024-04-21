@@ -2,11 +2,12 @@ package action
 
 import (
 	"fmt"
+	"strconv"
+
 	ra "github.com/webtor-io/rest-api/services"
-	"github.com/webtor-io/web-ui-v2/services"
+	"github.com/webtor-io/web-ui-v2/services/api"
 	m "github.com/webtor-io/web-ui-v2/services/models"
 	"golang.org/x/text/language"
-	"strconv"
 )
 
 type ListItem struct {
@@ -20,11 +21,11 @@ type ListItem struct {
 	Kind     string
 }
 
-func GetDurationSec(mp *services.MediaProbe) string {
+func GetDurationSec(mp *api.MediaProbe) string {
 	return mp.Format.Duration
 }
 
-func GetAudioTracks(ud *m.VideoStreamUserData, mp *services.MediaProbe) []ListItem {
+func GetAudioTracks(ud *m.VideoStreamUserData, mp *api.MediaProbe) []ListItem {
 	var res []ListItem
 	if mp == nil {
 		res = append(res, ListItem{
@@ -100,7 +101,7 @@ func canoninizeSrcLangs(lis []ListItem) []ListItem {
 	return lis
 }
 
-func GetSubtitles(ud *m.VideoStreamUserData, mp *services.MediaProbe, tag *ra.ExportTag, opensubs []services.OpenSubtitleTrack) []ListItem {
+func GetSubtitles(ud *m.VideoStreamUserData, mp *api.MediaProbe, tag *ra.ExportTag, opensubs []api.OpenSubtitleTrack) []ListItem {
 	var res []ListItem
 	res = append(res, ListItem{
 		ID:    "none",

@@ -1,5 +1,5 @@
 import SuperTokens from 'supertokens-web-js';
-import Session, { attemptRefreshingSession } from 'supertokens-web-js/recipe/session';
+import Session from 'supertokens-web-js/recipe/session';
 import Passwordless, { createCode, consumeCode, signOut } from "supertokens-web-js/recipe/passwordless";
 
 function preAPIHook(context) {
@@ -51,7 +51,7 @@ export async function init() {
 }
 
 let inited = false;
-function initSuperTokens() {
+async function initSuperTokens() {
     if (inited) {
         return;
     }
@@ -69,4 +69,9 @@ function initSuperTokens() {
             Passwordless.init(),
         ],
     });
+    if (window._sessionExpired) {
+        if (await Session.attemptRefreshingSession()) {
+            window.dispatchEvent(new CustomEvent('auth'));
+        }
+    }
 }

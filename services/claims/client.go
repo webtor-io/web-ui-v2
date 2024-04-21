@@ -1,4 +1,4 @@
-package services
+package claims
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ const (
 	claimsProviderPortFlag = "claims-provider-port"
 )
 
-func RegisterClaimsProviderClientFlags(f []cli.Flag) []cli.Flag {
+func RegisterClientFlags(f []cli.Flag) []cli.Flag {
 	return append(f,
 		cli.StringFlag{
 			Name:   claimsProviderHostFlag,
@@ -32,7 +32,7 @@ func RegisterClaimsProviderClientFlags(f []cli.Flag) []cli.Flag {
 	)
 }
 
-type ClaimsProviderClient struct {
+type Client struct {
 	once sync.Once
 	cl   proto.ClaimsProviderClient
 	err  error
@@ -41,14 +41,14 @@ type ClaimsProviderClient struct {
 	conn *grpc.ClientConn
 }
 
-func NewClaimsProviderClient(c *cli.Context) *ClaimsProviderClient {
-	return &ClaimsProviderClient{
+func NewClient(c *cli.Context) *Client {
+	return &Client{
 		host: c.String(claimsProviderHostFlag),
 		port: c.Int(claimsProviderPortFlag),
 	}
 }
 
-func (s *ClaimsProviderClient) Get() (proto.ClaimsProviderClient, error) {
+func (s *Client) Get() (proto.ClaimsProviderClient, error) {
 	s.once.Do(func() {
 		addr := fmt.Sprintf("%s:%d", s.host, s.port)
 		conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -62,7 +62,7 @@ func (s *ClaimsProviderClient) Get() (proto.ClaimsProviderClient, error) {
 	return s.cl, s.err
 }
 
-func (s *ClaimsProviderClient) Close() {
+func (s *Client) Close() {
 	if s.conn != nil {
 		_ = s.conn.Close()
 	}

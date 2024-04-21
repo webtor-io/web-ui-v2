@@ -12,18 +12,20 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	ra "github.com/webtor-io/rest-api/services"
-	sv "github.com/webtor-io/web-ui-v2/services"
 	m "github.com/webtor-io/web-ui-v2/services/models"
+
+	"github.com/webtor-io/web-ui-v2/services/api"
+	"github.com/webtor-io/web-ui-v2/services/job"
 )
 
 type StreamContent struct {
 	ExportTag           *ra.ExportTag
-	MediaProbe          *sv.MediaProbe
-	OpenSubtitles       []sv.OpenSubtitleTrack
+	MediaProbe          *api.MediaProbe
+	OpenSubtitles       []api.OpenSubtitleTrack
 	VideoStreamUserData *m.VideoStreamUserData
 }
 
-func (s *Handler) streamContent(j *sv.Job, c *gin.Context, claims *sv.Claims, resourceID string, itemID string, template string) {
+func (s *Handler) streamContent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, template string) {
 	sc := &StreamContent{}
 	j.InProgress("retrieving stream url", "retrieving stream")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -75,19 +77,19 @@ func (s *Handler) streamContent(j *sv.Job, c *gin.Context, claims *sv.Claims, re
 	j.InProgress("waiting player initialization", "player init").Close()
 }
 
-func (s *Handler) previewImage(j *sv.Job, c *gin.Context, claims *sv.Claims, resourceID string, itemID string) {
+func (s *Handler) previewImage(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string) {
 	s.streamContent(j, c, claims, resourceID, itemID, "preview_image")
 }
 
-func (s *Handler) streamAudio(j *sv.Job, c *gin.Context, claims *sv.Claims, resourceID string, itemID string) {
+func (s *Handler) streamAudio(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string) {
 	s.streamContent(j, c, claims, resourceID, itemID, "stream_audio")
 }
 
-func (s *Handler) streamVideo(j *sv.Job, c *gin.Context, claims *sv.Claims, resourceID string, itemID string) {
+func (s *Handler) streamVideo(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string) {
 	s.streamContent(j, c, claims, resourceID, itemID, "stream_video")
 }
 
-func (s *Handler) renderActionTemplate(j *sv.Job, c *gin.Context, sc *StreamContent, name string) error {
+func (s *Handler) renderActionTemplate(j *job.Job, c *gin.Context, sc *StreamContent, name string) error {
 	template := "action/" + name
 	tpl := s.tm.MakeTemplateWithLayout(template, `{{ template "main" . }}`)
 	str, err := tpl.ToString(c, sc)
@@ -98,7 +100,7 @@ func (s *Handler) renderActionTemplate(j *sv.Job, c *gin.Context, sc *StreamCont
 	return nil
 }
 
-func (s *Handler) download(j *sv.Job, claims *sv.Claims, resourceID string, itemID string) {
+func (s *Handler) download(j *job.Job, claims *api.Claims, resourceID string, itemID string) {
 	j.InProgress("retrieving download link", "retrieving download link")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -117,7 +119,7 @@ func (s *Handler) download(j *sv.Job, claims *sv.Claims, resourceID string, item
 	j.Download(url).Close()
 }
 
-func (s *Handler) warmUp(j *sv.Job, m string, u string, su string, size int, limitStart int, limitEnd int, tagSuff string, useStatus bool) error {
+func (s *Handler) warmUp(j *job.Job, m string, u string, su string, size int, limitStart int, limitEnd int, tagSuff string, useStatus bool) error {
 	tag := "download"
 	if tagSuff != "" {
 		tag += "-" + tagSuff
@@ -177,9 +179,9 @@ func (s *Handler) warmUp(j *sv.Job, m string, u string, su string, size int, lim
 	return nil
 }
 
-func (s *Handler) Action(ctx context.Context, c *gin.Context, claims *sv.Claims, resourceID string, itemID string, action string) (job *sv.Job, err error) {
+func (s *Handler) Action(ctx context.Context, c *gin.Context, claims *api.Claims, resourceID string, itemID string, action string) (j *job.Job, err error) {
 	id := fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+claims.Role+"/"+claims.SessionID)))
-	job = s.q.GetOrCreate(action).Enqueue(ctx, id, func(j *sv.Job) {
+	j = s.q.GetOrCreate(action).Enqueue(ctx, id, func(j *job.Job) {
 		switch action {
 		case "download":
 			s.download(j, claims, resourceID, itemID)
