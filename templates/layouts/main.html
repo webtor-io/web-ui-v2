@@ -12,7 +12,7 @@
         <script>window._sessionExpired = {{ .User.Expired }};</script>
         <script async src="{{ "auth.js" | asset }}"></script>
         {{- end }}
-        {{- template "head" . }}
+        {{- template "head_extra" . }}
     </head>
     <body style="background-color: rgb(15, 23, 42);">
         <script>document.body.style.display = 'none';</script>

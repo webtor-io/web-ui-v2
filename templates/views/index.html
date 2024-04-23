@@ -35,7 +35,7 @@
 </form>
 <div class="divider h-12">OR</div>
 <form class="flex flex-col justify-center items-center" action="/" method="post" enctype="multipart/form-data" async-target="main">
-    <input type="hidden" name="resource" value="magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337&tr=udp%3A%2F%2Fexplodie.org%3A6969&tr=udp%3A%2F%2Ftracker.empire-js.us%3A1337&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&tr=wss%3A%2F%2Ftracker.fastcast.nz&ws=https%3A%2F%2Fwebtorrent.io%2Ftorrents%2F" />
+    <input type="hidden" name="resource" value="{{ .DemoMagnet }}" />
     <button type="submit" class="btn btn-accent btn-outline">Try demo!</button>
 </form>
 {{ end }}

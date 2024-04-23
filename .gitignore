@@ -23,3 +23,5 @@ node_modules
 assets/dist/*
 
 .env
+
+templates/partials/extend.html

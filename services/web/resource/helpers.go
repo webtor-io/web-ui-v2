@@ -162,3 +162,7 @@ func MakePagination(lr *ra.ListResponse, page uint, pageSize uint) []Pagination 
 	})
 	return res
 }
+
+func (s *Handler) IsDemoMagnet(m string) bool {
+	return s.dm == m
+}

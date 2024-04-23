@@ -84,7 +84,15 @@ func (s *Helper) GetFuncs() template.FuncMap {
 		"useAuth":       s.UseAuth,
 		"domain":        s.Domain,
 		"has":           Has,
+		"hasAds":        HasAds,
 	}
+}
+
+func HasAds(c *claims.Data) bool {
+	if c == nil {
+		return false
+	}
+	return !c.Claims.Site.NoAds
 }
 
 func (s *Helper) UseAuth() bool {

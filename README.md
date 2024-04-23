@@ -25,7 +25,9 @@ Some features to mention:
 - [x] Authentication
   - [x] Passwordless authentication
   - [x] Patreon account linking
-- [ ] Ads integration
+- [x] Ads and statistic integration support
+- [ ] Feedback form
+- [ ] Chrome extension integration
 - [ ] Embed support
 - [ ] 🚀Switch webtor.io to web-ui-v2
 

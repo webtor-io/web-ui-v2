@@ -16,4 +16,5 @@
 {{ end }}
 <script async src="{{ "resource/get.js" | asset }}"></script>
 {{ if dev }}<script async src="{{ "resource/get.js" | devAsset }}"></script>{{ end }}
+{{ template "get_extra" . }}
 {{ end }}
