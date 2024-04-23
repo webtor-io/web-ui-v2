@@ -37,8 +37,11 @@ function renderBody(target, body, template) {
         target,
         template,
     };
+    // Update async elements
     const event = new CustomEvent('async', { detail });
     window.dispatchEvent(event);
+
+    // Process async views
     if (template) {
         const event = new CustomEvent('async:' + template, { detail });
         window.dispatchEvent(event);

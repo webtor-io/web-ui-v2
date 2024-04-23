@@ -36,7 +36,7 @@ function executeScriptElements(containerElement) {
 
 if (!loaded) {
     loaded = true;
-    window.addEventListener('DOMContentLoaded', (event) => {
+    window.addEventListener('load', (event) => {
         const scripts = document.querySelectorAll('script');
         for (const s of scripts) {
             const name = getScriptName(s);
