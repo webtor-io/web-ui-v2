@@ -11,6 +11,14 @@ export function initAsyncView(target, name, init, destroy) {
         }
         target.classList.add('async-view');
         target.classList.add(`async-view-${name}`);
+        // In case if async binding has not been invoked
+        if (!target.reload) {
+            target.reload = function() {
+                return new Promise(function(resolve, _) {
+                    target.reloadResolve = resolve;
+                })
+            }
+        }
         init.call(target);
     }
     window.addEventListener(`async:${name}`, onLoad);

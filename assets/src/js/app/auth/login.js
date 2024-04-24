@@ -11,7 +11,7 @@ window.submitLoginForm = function(target, e) {
             initCloseable(closeable);
         }
         try {
-            const resp = await supertokens.sendMagicLink(data);
+            const resp = await supertokens.sendMagicLink(data, window._CSRF);
             pl.done('login');
             pl.finish('magic link sent to ' + data.email);
         } catch (err) {

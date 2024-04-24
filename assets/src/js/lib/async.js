@@ -32,7 +32,7 @@ async function asyncFetch(url, targetSelector, fetchParams, params) {
     loadAsyncView(target, text, template, layout);
     return res;
 }
-function async(selector, params = {}, scope = null) {
+async function async(selector, params = {}, scope = null) {
     if (!scope) {
         scope = document;
         window.addEventListener('popstate', async function(e) {
@@ -51,9 +51,14 @@ function async(selector, params = {}, scope = null) {
     }
     const els = scope.querySelectorAll(selector);
     for (const el of els) {
-        el.load = function() {
+        el.reload = function() {
             let {url, fetchParams} = params.fetchParams.call(el);
             return asyncFetch.call(el, url, el, fetchParams, params);
+        }
+        // In case if reload was already invoked
+        if (el.reloadResolve) {
+            const res = await el.reload();
+            el.reloadResolve(res);
         }
         if (!el.getAttribute('async-target')) continue;
         el.addEventListener(params.event, async function(e) {

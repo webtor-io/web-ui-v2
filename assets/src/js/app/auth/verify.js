@@ -7,7 +7,7 @@ av(target, 'auth/verify', async function() {
     pl.inProgress('checking magic link', 'verify');
     const supertokens = (await import('../../lib/supertokens'));
     try {
-        const res = await supertokens.handleMagicLinkClicked();
+        const res = await supertokens.handleMagicLinkClicked(window._CSRF);
         if (res.status === 'OK') {
             pl.done('verify');
             pl.finish('login successful');

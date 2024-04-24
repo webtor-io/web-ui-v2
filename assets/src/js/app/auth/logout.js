@@ -7,7 +7,7 @@ av(target, 'auth/logout', async function() {
     pl.inProgress('logging out', 'logout' );
     const supertokens = (await import('../../lib/supertokens'));
     try {
-        await supertokens.logout();
+        await supertokens.logout(window._CSRF);
         pl.done('logout');
         pl.finish('logout successful');
         window.dispatchEvent(new CustomEvent('auth'));
