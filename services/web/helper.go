@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
-	"html/template"
 	"io"
 	"os"
 	"reflect"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli"
-	csrf "github.com/utrack/gin-csrf"
 
 	h "github.com/dustin/go-humanize"
 	log "github.com/sirupsen/logrus"
@@ -21,49 +19,48 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/auth"
 	"github.com/webtor-io/web-ui-v2/services/claims"
 	"github.com/webtor-io/web-ui-v2/services/job"
-	st "github.com/webtor-io/web-ui-v2/services/template"
+	"github.com/webtor-io/web-ui-v2/services/obfuscator"
 )
 
-func MakeJobLogURL(j *job.Job) string {
+func (s *Helper) MakeJobLogURL(j *job.Job) string {
 	return fmt.Sprintf("/queue/%v/job/%v/log", j.Queue, j.ID)
 }
 
-func Log(err error) error {
+func (s *Helper) Log(err error) error {
 	log.Error(err)
 	return err
 }
 
-func ShortErr(err error) string {
+func (s *Helper) ShortErr(err error) string {
 	return strings.Split(err.Error(), ":")[0]
 }
 
-func BitsForHumans(b int64) string {
+func (s *Helper) BitsForHumans(b int64) string {
 	return h.Bytes(uint64(b))
 }
 
-func Dev() bool {
+func (s *Helper) Dev() bool {
 	return gin.Mode() == "debug"
 }
 
-func Has(obj any, fieldName string) bool {
+func (s *Helper) Has(obj any, fieldName string) bool {
 	value := reflect.Indirect(reflect.ValueOf(obj))
 	field := value.FieldByName(fieldName)
 	return field.IsValid() && !field.IsNil()
 }
 
-type JobData struct {
-	Job *job.Job
-}
 type Helper struct {
 	assetsHost string
 	assetsPath string
 	useAuth    bool
 	domain     string
+	demoMagnet string
 	ah         *AssetHashes
 }
 
 func NewHelper(c *cli.Context) *Helper {
 	return &Helper{
+		demoMagnet: c.String(services.DemoMagnetFlag),
 		assetsHost: c.String(assetsHostFlag),
 		assetsPath: c.String(assetsPathFlag),
 		useAuth:    c.Bool(auth.UseAuthFlag),
@@ -72,23 +69,7 @@ func NewHelper(c *cli.Context) *Helper {
 	}
 }
 
-func (s *Helper) GetFuncs() template.FuncMap {
-	return template.FuncMap{
-		"asset":         s.MakeAsset,
-		"devAsset":      s.MakeDevAsset,
-		"makeJobLogURL": MakeJobLogURL,
-		"bitsForHumans": BitsForHumans,
-		"log":           Log,
-		"shortErr":      ShortErr,
-		"dev":           Dev,
-		"useAuth":       s.UseAuth,
-		"domain":        s.Domain,
-		"has":           Has,
-		"hasAds":        HasAds,
-	}
-}
-
-func HasAds(c *claims.Data) bool {
+func (s *Helper) HasAds(c *claims.Data) bool {
 	if c == nil {
 		return false
 	}
@@ -103,16 +84,28 @@ func (s *Helper) Domain() string {
 	return s.domain
 }
 
-func (s *Helper) MakeAsset(in string) string {
+func (s *Helper) DemoMagnet() string {
+	return s.demoMagnet
+}
+
+func (s *Helper) IsDemoMagnet(m string) bool {
+	return s.demoMagnet == m
+}
+
+func (s *Helper) Obfuscate(in string) string {
+	return obfuscator.Obfuscate(in)
+}
+
+func (s *Helper) Asset(in string) string {
 	path := s.assetsHost + "/assets/" + in
-	if !Dev() {
+	if !s.Dev() {
 		h, _ := s.ah.Get(in)
 		path += "?" + h
 	}
 	return path
 }
 
-func (s *Helper) MakeDevAsset(in string) string {
+func (s *Helper) DevAsset(in string) string {
 	return s.assetsHost + "/assets/dev/" + in
 }
 
@@ -149,30 +142,3 @@ func NewAssetHashes(path string) *AssetHashes {
 		path:    path,
 	}
 }
-
-func (s *Helper) WrapContext(c *gin.Context, obj any, err error) any {
-	return NewContext(c, obj, err)
-}
-
-type Context struct {
-	Data   any
-	CSRF   string
-	Err    error
-	User   *auth.User
-	Claims *claims.Data
-}
-
-func NewContext(c *gin.Context, obj any, err error) any {
-	user := auth.GetUserFromContext(c)
-	cl := claims.GetFromContext(c)
-
-	return &Context{
-		Data:   obj,
-		CSRF:   csrf.GetToken(c),
-		Err:    err,
-		User:   user,
-		Claims: cl,
-	}
-}
-
-var _ st.Args = (*Helper)(nil)

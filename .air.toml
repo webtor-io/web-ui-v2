@@ -6,13 +6,13 @@ tmp_dir = "tmp"
   args_bin = ['s', '--assets-host', 'http://localhost:8082']
   bin = ";SUPERTOKENS_DEBUG=1 GIN_MODE=debug ./tmp/main"
   cmd = "go build -o ./tmp/main ."
+  full_bin = "dlv exec ./tmp/main --listen=127.0.0.1:2345 --headless=true --api-version=2 --accept-multiclient --continue --log -- "
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata", "node_modules"]
   exclude_file = []
   exclude_regex = ["_test.go"]
   exclude_unchanged = false
   follow_symlink = false
-  full_bin = ""
   include_dir = []
   include_ext = ["go", "tpl", "tmpl", "html"]
   kill_delay = "0s"

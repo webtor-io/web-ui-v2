@@ -35,12 +35,12 @@ type PostData struct {
 
 type Handler struct {
 	jobs *wj.Handler
-	tm   *template.Manager
+	tb   template.Builder
 }
 
 func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager, jobs *wj.Handler) {
 	h := &Handler{
-		tm:   tm,
+		tb:   tm.MustRegisterViews("action/*").WithHelper(NewHelper()),
 		jobs: jobs,
 	}
 	r.POST("/download-file", func(c *gin.Context) {
@@ -82,12 +82,6 @@ func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager, jobs *
 			c.Error(err)
 		}
 	})
-
-	h.tm.RegisterViewsWithFuncs("action/*", template.FuncMap{
-		"getDurationSec": GetDurationSec,
-		"getAudioTracks": GetAudioTracks,
-		"getSubtitles":   GetSubtitles,
-	})
 }
 
 func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
@@ -114,7 +108,7 @@ func (s *Handler) post(c *gin.Context, action string) {
 		args *PostArgs
 		job  *job.Job
 	)
-	postTpl := s.tm.MakeTemplate("action/post")
+	postTpl := s.tb.Build("action/post")
 	args, err = s.bindPostArgs(c)
 	if err != nil {
 		postTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)

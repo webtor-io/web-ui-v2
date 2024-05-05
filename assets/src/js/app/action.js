@@ -10,17 +10,16 @@ av(target, 'action/post', async function() {
         initCloseable(closeable);
     }
     const initProgressLog = (await import('../lib/progressLog')).initProgressLog;
-    const pb = initProgressLog(progress, function(ev) {
-        if (ev.level == 'rendertemplate') {
-            window.addEventListener('player_ready', function(e) {
-                progress.classList.add('hidden');
-                el.classList.remove('hidden');
-            }, {once: true});
-            el.classList.add('hidden');
-            el.classList.add('mb-5')
-            self.appendChild(el);
-            ev.render(el);
-        }
+    initProgressLog(progress, function(ev) {
+        if (ev.level != 'rendertemplate') return;
+        window.addEventListener('player_ready', function(e) {
+            progress.classList.add('hidden');
+            el.classList.remove('hidden');
+        }, {once: true});
+        el.classList.add('hidden');
+        el.classList.add('mb-5')
+        self.appendChild(el);
+        ev.render(el);
     });
 });
 

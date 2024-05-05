@@ -9,14 +9,14 @@ import (
 
 type Handler struct {
 	q   *job.Queues
-	tm  *template.Manager
+	tb  template.Builder
 	api *api.Api
 }
 
 func New(q *job.Queues, tm *template.Manager, api *api.Api) *Handler {
 	return &Handler{
 		q:   q,
-		tm:  tm,
+		tb:  tm,
 		api: api,
 	}
 }

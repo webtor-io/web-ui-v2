@@ -41,10 +41,12 @@ type Job struct {
 	ID        string
 	Queue     string
 	l         []LogItem
-	run       func(j *Job)
+	runnable  Runnable
 	observers []*Observer
 	closed    bool
 	mux       sync.Mutex
+	cur       string
+	Context   context.Context
 }
 
 type LogItemLevel string
@@ -87,18 +89,19 @@ type LogItem struct {
 	Timestamp time.Time    `json:"timestamp,omitempty"`
 }
 
-func New(id string, queue string, run func(j *Job)) *Job {
+func New(ctx context.Context, id string, queue string, runnable Runnable) *Job {
 	return &Job{
 		ID:        id,
 		Queue:     queue,
-		run:       run,
+		runnable:  runnable,
+		Context:   ctx,
 		l:         []LogItem{},
 		observers: []*Observer{},
 	}
 }
 
-func (s *Job) Run() {
-	s.run(s)
+func (s *Job) Run(ctx context.Context) {
+	s.runnable.Run(s)
 }
 
 func (s *Job) ObserveLog() *Observer {
@@ -135,6 +138,9 @@ func (s *Job) log(l LogItem) {
 	if l.Level == RenderTemplate {
 		message = "rendertemplate"
 	}
+	if l.Level == Close {
+		message = "close"
+	}
 	log.WithFields(log.Fields{
 		"ID":       s.ID,
 		"Queue":    s.Queue,
@@ -153,48 +159,49 @@ func (s *Job) Info(message string) *Job {
 	return s
 }
 
-func (s *Job) Warn(err error, message string, tag string) *Job {
+func (s *Job) Warn(err error, message string) *Job {
 	log.WithError(err).Error("got job warning")
 	s.log(LogItem{
 		Level:   Warn,
 		Message: message,
-		Tag:     tag,
+		Tag:     s.cur,
 	})
 	return s
 }
 
-func (s *Job) Error(err error, message string, tag string) *Job {
+func (s *Job) Error(err error, message string) error {
 	log.WithError(err).Error("got job error")
 	s.log(LogItem{
 		Level:   Error,
 		Message: message,
-		Tag:     tag,
+		Tag:     s.cur,
 	})
-	return s
+	return err
 }
 
-func (s *Job) InProgress(message string, tag string) *Job {
+func (s *Job) InProgress(message string) *Job {
+	s.cur = message
 	s.log(LogItem{
 		Level:   InProgress,
 		Message: message,
-		Tag:     tag,
+		Tag:     s.cur,
 	})
 	return s
 }
 
-func (s *Job) StatusUpdate(message string, tag string) *Job {
+func (s *Job) StatusUpdate(message string) *Job {
 	s.log(LogItem{
 		Level:   StatusUpdate,
 		Message: message,
-		Tag:     tag,
+		Tag:     s.cur,
 	})
 	return s
 }
 
-func (s *Job) Done(tag string) *Job {
+func (s *Job) Done() *Job {
 	s.log(LogItem{
 		Level: Done,
-		Tag:   tag,
+		Tag:   s.cur,
 	})
 	return s
 }
@@ -264,18 +271,18 @@ func newJobs(queue string) *Jobs {
 	}
 }
 
-func (s *Jobs) Enqueue(ctx context.Context, id string, r func(j *Job)) *Job {
+func (s *Jobs) Enqueue(ctx context.Context, id string, r Runnable) *Job {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	if _, ok := s.jobs[id]; ok {
 		return s.jobs[id]
 	}
-	j := New(id, s.queue, r)
+	j := New(ctx, id, s.queue, r)
 	s.jobs[id] = j
 	go func() {
-		j.Run()
-		<-ctx.Done()
+		j.Run(ctx)
 		j.Close()
+		<-ctx.Done()
 		s.mux.Lock()
 		defer s.mux.Unlock()
 		delete(s.jobs, id)
@@ -319,4 +326,20 @@ func (s Queues) GetOrCreate(name string) *Jobs {
 		s[name] = newJobs(name)
 	}
 	return s[name]
+}
+
+type Runnable interface {
+	Run(j *Job) error
+}
+
+type Script struct {
+	body func(j *Job) error
+}
+
+func (s *Script) Run(j *Job) error {
+	return s.body(j)
+}
+
+func NewScript(body func(j *Job) error) *Script {
+	return &Script{body: body}
 }

@@ -75,8 +75,8 @@ type GetData struct {
 }
 
 func (s *Handler) get(c *gin.Context) {
-	indexTpl := s.tm.MakeTemplate("index")
-	getTpl := s.tm.MakeTemplate("resource/get")
+	indexTpl := s.tb.Build("index")
+	getTpl := s.tb.Build("resource/get")
 	var (
 		args *GetArgs
 		res  *ra.ResourceResponse
@@ -133,7 +133,6 @@ func (s *Handler) getBestItem(ctx context.Context, l *ra.ListResponse, args *Get
 			return
 		}
 		if len(l.Items) > 0 {
-
 			i = &l.Items[0]
 			return
 		}

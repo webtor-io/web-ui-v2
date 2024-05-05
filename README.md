@@ -22,13 +22,16 @@ Some features to mention:
   - [ ] Subtitle uploading support
   - [ ] Chromecast support
   - [ ] Subtitle size control
+  - [ ] Embed control
 - [x] Authentication
   - [x] Passwordless authentication
   - [x] Patreon account linking
 - [x] Ads and statistic integration support
 - [ ] Feedback form
 - [ ] Chrome extension integration
-- [ ] Embed support
+- [x] Embed support
+  - [x] Base version
+  - [ ] Extended version
 - [ ] 🚀Switch webtor.io to web-ui-v2
 
 

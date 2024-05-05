@@ -1,11 +1,13 @@
 import MD5 from "crypto-js/md5";
+import {makeDebug} from './debug';
+const debug = await makeDebug('webtor:embed:message');
 export function initAsyncView(target, name, init, destroy) {
     const layout = target.getAttribute('async-layout');
     if (layout) {
         name = name + '_' + MD5(layout).toString();
     }
     const onLoad = function(e) {
-        console.log(`async:${name} load`);
+        debug(`webtor:async view loaded name=%o`, name);
         if (e && e.detail && e.detail.target) {
             target = e.detail.target;
         }
@@ -26,7 +28,7 @@ export function initAsyncView(target, name, init, destroy) {
         onLoad();
     }
     const listener = async (e) => {
-        console.log(`async:${name} destroy`);
+        debug(`webtor:async view destroyed name=%o`, name);
         const event = new CustomEvent(`async:${name}_destroyed`);
         if (destroy) {
             let target = document;

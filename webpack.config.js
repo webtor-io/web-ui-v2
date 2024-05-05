@@ -80,6 +80,8 @@ module.exports = async (env, options) => {
             new CopyPlugin({
                 patterns: [
                     { from: 'node_modules/mediaelement/build/mejs-controls.svg', to: 'mejs-controls.svg' },
+                    { from: 'node_modules/hls.js/dist/hls.min.js', to: 'lib/hls.min.js'},
+                    { from: 'node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js', to: 'lib/iframeResizer.contentWindow.min.js'},
                 ],
             }),
         ],

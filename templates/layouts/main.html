@@ -1,12 +1,14 @@
 <!doctype html>
-<html lang="en" data-theme="night">
+<html lang="en" data-theme="night" style="background-color: rgb(15, 23, 42);">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title>Download and play torrents | Webtor.io</title>
         <meta name="description" content="Download and play torrents with free online torrent web player and downloader. Just paste the magnet link or open the torrent file and start downloading or watching torrent content safely and anonymously through your web browser. Works instantly without client and registration!">
-        <script>window._CSRF = "{{ .CSRF }}";</script>
-        <script>window._domain = "{{ domain }}";</script>
+        <script>
+            window._CSRF = "{{ .CSRF }}";
+            window._domain = "{{ domain }}";
+        </script>
         <script async src="{{ "layout.js" | asset }}"></script>
         {{- if useAuth }}
         <script>window._sessionExpired = {{ .User.Expired }};</script>
@@ -14,7 +16,7 @@
         {{- end }}
         {{- template "head_extra" . }}
     </head>
-    <body style="background-color: rgb(15, 23, 42);">
+    <body>
         <script>document.body.style.display = 'none';</script>
         <progress id="progress" class="progress fixed progress-accent h-1"></progress>
         <nav async-get="/" async-layout="{{`{{ template "nav" . }}`}}">{{ template "nav" . }}</nav>

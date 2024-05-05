@@ -117,7 +117,7 @@ export function initPlayer(target, ready) {
             capLevelOnFPSDrop: true,
             // progressive: true,
             testBandwidth: false,
-            path: 'https://cdn.jsdelivr.net/npm/hls.js@1.5.6',
+            path: '/assets/lib/hls.min.js',
         },
         error: function(e) {
             console.log(e);

@@ -21,11 +21,18 @@ type ListItem struct {
 	Kind     string
 }
 
-func GetDurationSec(mp *api.MediaProbe) string {
+type Helper struct {
+}
+
+func NewHelper() *Helper {
+	return &Helper{}
+}
+
+func (s *Helper) GetDurationSec(mp *api.MediaProbe) string {
 	return mp.Format.Duration
 }
 
-func GetAudioTracks(ud *m.VideoStreamUserData, mp *api.MediaProbe) []ListItem {
+func (s *Helper) GetAudioTracks(ud *m.VideoStreamUserData, mp *api.MediaProbe) []ListItem {
 	var res []ListItem
 	if mp == nil {
 		res = append(res, ListItem{
@@ -59,10 +66,10 @@ func GetAudioTracks(ud *m.VideoStreamUserData, mp *api.MediaProbe) []ListItem {
 			}
 		}
 	}
-	return selectListItem(canoninizeSrcLangs(res), ud.AudioID, ud)
+	return s.selectListItem(s.canoninizeSrcLangs(res), ud.AudioID, ud)
 }
 
-func selectListItem(lis []ListItem, id string, ud *m.VideoStreamUserData) []ListItem {
+func (s *Helper) selectListItem(lis []ListItem, id string, ud *m.VideoStreamUserData) []ListItem {
 	if len(lis) == 0 {
 		return lis
 	}
@@ -91,7 +98,7 @@ func selectListItem(lis []ListItem, id string, ud *m.VideoStreamUserData) []List
 	return lis
 }
 
-func canoninizeSrcLangs(lis []ListItem) []ListItem {
+func (s *Helper) canoninizeSrcLangs(lis []ListItem) []ListItem {
 	for i, li := range lis {
 		if t, err := language.Parse(li.SrcLang); err == nil {
 			lis[i].SrcLang = t.String()
@@ -101,7 +108,7 @@ func canoninizeSrcLangs(lis []ListItem) []ListItem {
 	return lis
 }
 
-func GetSubtitles(ud *m.VideoStreamUserData, mp *api.MediaProbe, tag *ra.ExportTag, opensubs []api.OpenSubtitleTrack) []ListItem {
+func (s *Helper) GetSubtitles(ud *m.VideoStreamUserData, mp *api.MediaProbe, tag *ra.ExportTag, opensubs []api.OpenSubtitleTrack) []ListItem {
 	var res []ListItem
 	res = append(res, ListItem{
 		ID:    "none",
@@ -152,5 +159,5 @@ func GetSubtitles(ud *m.VideoStreamUserData, mp *api.MediaProbe, tag *ra.ExportT
 			Provider: "OpenSubtitles",
 		})
 	}
-	return selectListItem(canoninizeSrcLangs(res), ud.SubtitleID, ud)
+	return s.selectListItem(s.canoninizeSrcLangs(res), ud.SubtitleID, ud)
 }

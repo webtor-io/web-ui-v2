@@ -117,6 +117,7 @@ func New(c *cli.Context, r *gin.Engine) *Web {
 	r.UseRawPath = true
 	assetsPath := c.String(assetsPathFlag)
 	r.Static("/assets", assetsPath)
+	r.Static("/pub", "./pub")
 	r.StaticFile("/favicon.ico", assetsPath+"/favicon.ico")
 
 	return &Web{

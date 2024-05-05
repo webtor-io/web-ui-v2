@@ -18,8 +18,10 @@ import (
 	w "github.com/webtor-io/web-ui-v2/services/web"
 	wa "github.com/webtor-io/web-ui-v2/services/web/action"
 	wau "github.com/webtor-io/web-ui-v2/services/web/auth"
+	we "github.com/webtor-io/web-ui-v2/services/web/embed"
 	wi "github.com/webtor-io/web-ui-v2/services/web/index"
 	wj "github.com/webtor-io/web-ui-v2/services/web/job"
+	wm "github.com/webtor-io/web-ui-v2/services/web/migration"
 	p "github.com/webtor-io/web-ui-v2/services/web/profile"
 	wr "github.com/webtor-io/web-ui-v2/services/web/resource"
 )
@@ -43,9 +45,14 @@ func configureServe(c *cli.Command) {
 	c.Flags = auth.RegisterFlags(c.Flags)
 	c.Flags = claims.RegisterFlags(c.Flags)
 	c.Flags = claims.RegisterClientFlags(c.Flags)
+	// c.Flags = cs.RegisterRedisClientFlags(c.Flags)
 }
 
 func serve(c *cli.Context) error {
+
+	// Setting Redis
+	// redis := cs.NewRedisClient(c)
+	// defer redis.Close()
 
 	servers := []cs.Servable{}
 	// Setting Probe
@@ -65,6 +72,9 @@ func serve(c *cli.Context) error {
 	servers = append(servers, web)
 	defer web.Close()
 
+	// Setting Migration from v1 to v2
+	wm.RegisterHandler(r)
+
 	// Setting HTTP Client
 	cl := http.DefaultClient
 
@@ -75,7 +85,7 @@ func serve(c *cli.Context) error {
 	helper := w.NewHelper(c)
 
 	// Setting TemplateManager
-	tm := template.NewManager(re, helper)
+	tm := template.NewManager(re).WithHelper(helper).WithContextWrapper(w.NewContext)
 
 	// Setting JobQueues
 	queues := job.NewQueues()
@@ -123,14 +133,20 @@ func serve(c *cli.Context) error {
 	// Setting ProfileHandler
 	p.RegisterHandler(c, r, tm)
 
+	// Setting EmbedHandler
+	we.RegisterHandler(c, r, tm, jobs)
+
 	// Render templates
-	tm.Init()
+	err := tm.Init()
+	if err != nil {
+		return err
+	}
 
 	// Setting Serve
 	serve := cs.NewServe(servers...)
 
 	// And SERVE!
-	err := serve.Serve()
+	err = serve.Serve()
 	if err != nil {
 		log.WithError(err).Error("got server error")
 	}

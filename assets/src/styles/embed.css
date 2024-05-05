@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.loading-elipsis::after {
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: bottom;
+  animation: ellipsis steps(4, end) 1500ms infinite;
+  content: "...";
+  width: 0;
+  margin-left: 0.15rem;
+}
+
+@keyframes ellipsis {
+  to {
+    width: 2.25em;
+  }
+}
+
+.popin {
+  animation: popin 200ms;
+}
+
+@keyframes popin {
+  from {
+    transform: scaleX(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@layer components {
+  .progress-alert {
+    @apply py-4 popin;
+    position: relative;
+    color: white;
+
+    pre {
+      @apply px-5 leading-8 whitespace-pre-wrap flex;
+      &::before {
+        content: "> ";
+        @apply shrink-0;
+      }
+      &.in-progress {
+        @apply loading-elipsis;
+      }
+      &.error-summary {
+        @apply px-5 bg-warning text-warning-content;
+      }
+      &.done-summary {
+        @apply px-5 bg-success text-success-content;
+      }
+    }
+    .close {
+      @apply btn btn-sm btn-accent mr-4;
+    }
+    &-oneline {
+      @apply flex;
+      pre {
+        @apply flex-grow;
+      }
+    }
+  }
+}

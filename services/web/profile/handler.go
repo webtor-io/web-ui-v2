@@ -11,18 +11,16 @@ import (
 type ProfileData struct{}
 
 type Handler struct {
-	tm *template.Manager
+	tb template.Builder
 }
 
 func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager) {
 	h := &Handler{
-		tm: tm,
+		tb: tm.MustRegisterViews("profile/*").WithLayout("main"),
 	}
 	r.GET("/profile", h.get)
-
-	tm.RegisterViews("profile/*")
 }
 
 func (s *Handler) get(c *gin.Context) {
-	s.tm.MakeTemplate("profile/get").HTML(http.StatusOK, c, &ProfileData{})
+	s.tb.Build("profile/get").HTML(http.StatusOK, c, &ProfileData{})
 }

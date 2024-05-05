@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html style="background-color: black;">
+    <head>
+        <script>
+            window._id = "{{ .Data.ID }}";
+            window._CSRF = "{{ .CSRF }}";
+        </script>
+        <script async src="{{ "embed/index.js" | asset }}"></script>
+    </head>
+    <body data-iframe-height>
+        {{ if .Err }}
+        <div class="progress-alert progress-alert-oneline mb-10 closeable">
+            <pre>{{ .Err | log | shortErr }}</pre>
+            <a class="closeable-close close">ok</a>
+        </div>
+        {{ end }} 
+        {{ with .Data }}
+        <form class="hidden progress-alert progress-alert-block mb-10 closeable" async-progress-log="{{ .Job | makeJobLogURL }}">
+            <div class="log-target"></div>
+            <div class="pt-3 flex justify-end hidden alert-close-wrapper">
+                <a class="closeable-close close">got it!</a>
+            </div>
+        </form>
+        {{ end }}
+        <script type="text/javascript" src="{{ "lib/iframeResizer.contentWindow.min.js" | asset }}" defer></script>
+    </body>
+</html>

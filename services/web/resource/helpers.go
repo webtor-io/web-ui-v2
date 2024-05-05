@@ -5,7 +5,9 @@ import (
 	"strings"
 
 	h "github.com/dustin/go-humanize"
+	"github.com/urfave/cli"
 	ra "github.com/webtor-io/rest-api/services"
+	"github.com/webtor-io/web-ui-v2/services"
 	w "github.com/webtor-io/web-ui-v2/services/web"
 )
 
@@ -33,7 +35,7 @@ type Pagination struct {
 	Number bool
 }
 
-func MakeButton(ctx *w.Context, gd *GetData, name string, icon string, endpoint string) *ButtonItem {
+func (s *Helper) MakeButton(ctx *w.Context, gd *GetData, name string, icon string, endpoint string) *ButtonItem {
 	return &ButtonItem{
 		ID:         gd.Item.ID,
 		ItemID:     gd.Item.ID,
@@ -45,7 +47,7 @@ func MakeButton(ctx *w.Context, gd *GetData, name string, icon string, endpoint 
 	}
 }
 
-func MakeDirButton(ctx *w.Context, gd *GetData, name string, action string, endpoint string) *ButtonItem {
+func (s *Helper) MakeDirButton(ctx *w.Context, gd *GetData, name string, action string, endpoint string) *ButtonItem {
 	return &ButtonItem{
 		ID:         gd.List.ID,
 		ItemID:     gd.List.ID,
@@ -57,46 +59,46 @@ func MakeDirButton(ctx *w.Context, gd *GetData, name string, action string, endp
 	}
 }
 
-func MakeFileDownload(ctx *w.Context, gd *GetData) *ButtonItem {
-	return MakeButton(ctx, gd,
+func (s *Helper) MakeFileDownload(ctx *w.Context, gd *GetData) *ButtonItem {
+	return s.MakeButton(ctx, gd,
 		fmt.Sprintf("Download [%v]", h.Bytes(uint64(gd.Item.Size))),
 		"download",
 		"/download-file",
 	)
 }
 
-func MakeImage(ctx *w.Context, gd *GetData) *ButtonItem {
-	return MakeButton(ctx, gd,
+func (s *Helper) MakeImage(ctx *w.Context, gd *GetData) *ButtonItem {
+	return s.MakeButton(ctx, gd,
 		"Preview",
 		"preview",
 		"/preview-image",
 	)
 }
 
-func MakeAudio(ctx *w.Context, gd *GetData) *ButtonItem {
-	return MakeButton(ctx, gd,
+func (s *Helper) MakeAudio(ctx *w.Context, gd *GetData) *ButtonItem {
+	return s.MakeButton(ctx, gd,
 		"Stream",
 		"stream",
 		"/stream-audio",
 	)
 }
-func MakeVideo(ctx *w.Context, gd *GetData) *ButtonItem {
-	return MakeButton(ctx, gd,
+func (s *Helper) MakeVideo(ctx *w.Context, gd *GetData) *ButtonItem {
+	return s.MakeButton(ctx, gd,
 		"Stream",
 		"stream",
 		"/stream-video",
 	)
 }
 
-func MakeDirDownload(ctx *w.Context, gd *GetData) *ButtonItem {
-	return MakeDirButton(ctx, gd,
+func (s *Helper) MakeDirDownload(ctx *w.Context, gd *GetData) *ButtonItem {
+	return s.MakeDirButton(ctx, gd,
 		fmt.Sprintf("Download Directory as ZIP [%v]", h.Bytes(uint64(gd.List.Size))),
 		"download",
 		"/download-dir",
 	)
 }
 
-func HasBreadcrumbs(lr *ra.ListResponse) bool {
+func (s *Helper) HasBreadcrumbs(lr *ra.ListResponse) bool {
 	hasDir := false
 	for _, i := range lr.Items {
 		if i.Type == ra.ListTypeDirectory {
@@ -107,7 +109,7 @@ func HasBreadcrumbs(lr *ra.ListResponse) bool {
 	return hasDir || lr.ListItem.PathStr != "/"
 }
 
-func MakeBreadcrumbs(r ra.ResourceResponse, pathStr string) []Breadcrumb {
+func (s *Helper) MakeBreadcrumbs(r *ra.ResourceResponse, pathStr string) []Breadcrumb {
 	var res []Breadcrumb
 	res = append(res, Breadcrumb{
 		Name:    r.Name,
@@ -128,11 +130,11 @@ func MakeBreadcrumbs(r ra.ResourceResponse, pathStr string) []Breadcrumb {
 	return res
 }
 
-func HasPagination(lr *ra.ListResponse) bool {
+func (s *Helper) HasPagination(lr *ra.ListResponse) bool {
 	return lr.Count > len(lr.Items)
 }
 
-func MakePagination(lr *ra.ListResponse, page uint, pageSize uint) []Pagination {
+func (s *Helper) MakePagination(lr *ra.ListResponse, page uint, pageSize uint) []Pagination {
 	var res []Pagination
 	pages := uint(lr.Count)/pageSize + 1
 	prev := page - 1
@@ -163,6 +165,12 @@ func MakePagination(lr *ra.ListResponse, page uint, pageSize uint) []Pagination 
 	return res
 }
 
-func (s *Handler) IsDemoMagnet(m string) bool {
-	return s.dm == m
+type Helper struct {
+	dm string
+}
+
+func NewHelper(c *cli.Context) *Helper {
+	return &Helper{
+		dm: c.String(services.DemoMagnetFlag),
+	}
 }
