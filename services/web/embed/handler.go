@@ -19,5 +19,4 @@ func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager, jobs *
 	}
 	r.GET("/embed", h.get)
 	r.POST("/embed", h.post)
-	r.GET("/embed/example", h.example)
 }

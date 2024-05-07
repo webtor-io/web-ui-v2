@@ -86,6 +86,14 @@ let video;
 
 export function initPlayer(target, ready) {
     video = target.querySelector('.player');
+    const width = window._settings?.width;
+    const height = window._settings?.height;
+    const stretching = height ? 'auto' : 'responsive';
+    if (stretching == 'auto') {
+        if (width) video.setAttribute('width', width);
+        if (height) video.setAttribute('height', height);
+    }
+    console.log(width, height, stretching);
     const duration = video.getAttribute('data-duration') ? parseFloat(video.getAttribute('data-duration')) : -1;
     const features = [
         'playpause',
@@ -103,8 +111,8 @@ export function initPlayer(target, ready) {
         autoRewind: false,
         defaultSeekBackwardInterval: (media) => 15,
         defaultSeekForwardInterval: (media) => 15,
-        stretching: 'responsive',
         iconSprite: 'assets/mejs-controls.svg',
+        stretching,
         features,
         hls: {
             // debug: true,
@@ -143,11 +151,16 @@ export function initPlayer(target, ready) {
                 }
             }
             media.addEventListener('canplay', () => {
+
                 if (hlsPlayer && document.getElementById('subtitles')) {
                     const audioId = document.querySelector('.audio[data-default=true]').getAttribute('data-mp-id');
                     const subId = document.querySelector('.subtitle[data-default=true]').getAttribute('data-mp-id');
                     if (audioId) hlsPlayer.audioTrack = audioId;
                     if (subId) hlsPlayer.subtitleTrack = subId;
+                }
+                if (stretching != 'responsive') {
+                    if (width) player.node.style.width = width;
+                    if (height) player.node.style.height = height;
                 }
                 ready();
             });

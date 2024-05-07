@@ -1,21 +1,27 @@
 import message from './message';
 const sha1 = require('sha1');
-
-function setWidth() {
-    const width = document.body.offsetWidth;
-    const height = width/16*9;
-    document.body.style.height = height + 'px';
-}
-setWidth();
-window.addEventListener('resize', setWidth);
-window.addEventListener('click', async () => {
-    message.send('init');
-    const init = await message.receiveOnce('init');
-    const c = await check();
-    if (c) {
-        initEmbed(init);
+message.send('init');
+const init = await message.receiveOnce('init');
+const c = await check();
+if (c) {
+    if (!init.height) {
+        function setHeight() {
+            const width = document.body.offsetWidth;
+            const height = width/16*9;
+            document.body.style.height = height + 'px';
+        }
+        window.addEventListener('resize', setHeight);
+        const s = document.createElement('script');
+        s.src = 'assets/lib/iframeResizer.contentWindow.min.js';
+        document.body.appendChild(s);
+        setHeight();
+    } else {
+        document.body.style.height = init.height;
     }
-});
+    window.addEventListener('click', async () => {
+        initEmbed(init);
+    }, {once: true});
+}
 
 async function check() {
     message.send('inject', window._checkScript);

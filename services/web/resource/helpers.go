@@ -7,7 +7,6 @@ import (
 	h "github.com/dustin/go-humanize"
 	"github.com/urfave/cli"
 	ra "github.com/webtor-io/rest-api/services"
-	"github.com/webtor-io/web-ui-v2/services"
 	w "github.com/webtor-io/web-ui-v2/services/web"
 )
 
@@ -166,11 +165,8 @@ func (s *Helper) MakePagination(lr *ra.ListResponse, page uint, pageSize uint) [
 }
 
 type Helper struct {
-	dm string
 }
 
 func NewHelper(c *cli.Context) *Helper {
-	return &Helper{
-		dm: c.String(services.DemoMagnetFlag),
-	}
+	return &Helper{}
 }

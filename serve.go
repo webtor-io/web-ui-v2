@@ -19,6 +19,7 @@ import (
 	wa "github.com/webtor-io/web-ui-v2/services/web/action"
 	wau "github.com/webtor-io/web-ui-v2/services/web/auth"
 	we "github.com/webtor-io/web-ui-v2/services/web/embed"
+	wee "github.com/webtor-io/web-ui-v2/services/web/embed/example"
 	wi "github.com/webtor-io/web-ui-v2/services/web/index"
 	wj "github.com/webtor-io/web-ui-v2/services/web/job"
 	wm "github.com/webtor-io/web-ui-v2/services/web/migration"
@@ -132,6 +133,9 @@ func serve(c *cli.Context) error {
 
 	// Setting ProfileHandler
 	p.RegisterHandler(c, r, tm)
+
+	// Setting EmbedExamplesHandler
+	wee.RegisterHandler(c, r, tm)
 
 	// Setting EmbedHandler
 	we.RegisterHandler(c, r, tm, jobs)

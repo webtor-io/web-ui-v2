@@ -1,12 +1,10 @@
 import '../../../styles/embed.css';
 
-function setWidth() {
+function setHeight() {
     const width = document.body.offsetWidth;
     const height = width/16*9;
     document.body.style.height = height + 'px';
 }
-setWidth();
-window.addEventListener('resize', setWidth);
 
 window.addEventListener('load', async () => {
     const progress = document.querySelector('.progress-alert');
@@ -15,8 +13,8 @@ window.addEventListener('load', async () => {
     initProgressLog(progress, function(ev) {
         if (ev.level != 'rendertemplate') return;
         window.addEventListener('player_ready', function(e) {
-            window.removeEventListener('resize', setWidth);
-            document.body.style.height = 'auto';
+            window.removeEventListener('resize', setHeight);
+            // document.body.style.height = 'auto';
             progress.classList.add('hidden');
             el.classList.remove('hidden');
         }, {once: true});
@@ -25,4 +23,11 @@ window.addEventListener('load', async () => {
         document.body.appendChild(el);
         ev.render(el);
     });
+    if (!window._settings.height) {
+        const s = document.createElement('script');
+        s.src = 'assets/lib/iframeResizer.contentWindow.min.js';
+        document.body.appendChild(s);
+    }
+    setHeight();
+    window.addEventListener('resize', setHeight);
 });

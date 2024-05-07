@@ -3,7 +3,9 @@ package web
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"os"
 	"reflect"
@@ -84,8 +86,8 @@ func (s *Helper) Domain() string {
 	return s.domain
 }
 
-func (s *Helper) DemoMagnet() string {
-	return s.demoMagnet
+func (s *Helper) DemoMagnet() template.URL {
+	return template.URL(s.demoMagnet)
 }
 
 func (s *Helper) IsDemoMagnet(m string) bool {
@@ -94,6 +96,11 @@ func (s *Helper) IsDemoMagnet(m string) bool {
 
 func (s *Helper) Obfuscate(in string) string {
 	return obfuscator.Obfuscate(in)
+}
+
+func (s *Helper) Json(in any) template.JS {
+	out, _ := json.Marshal(in)
+	return template.JS(out)
 }
 
 func (s *Helper) Asset(in string) string {

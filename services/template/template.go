@@ -18,6 +18,8 @@ import (
 	"github.com/gin-gonic/gin/render"
 
 	"github.com/gin-contrib/multitemplate"
+
+	"github.com/yargevad/filepathx"
 )
 
 type FuncMap = template.FuncMap
@@ -100,6 +102,7 @@ type Manager struct {
 	partials       []string
 	views          []*View
 	mux            sync.Mutex
+	base           string
 }
 
 func NewManager(re multitemplate.Renderer) *Manager {
@@ -107,6 +110,7 @@ func NewManager(re multitemplate.Renderer) *Manager {
 		re:             re,
 		funcs:          FuncMap{},
 		contextWrapper: NewContext,
+		base:           "templates/",
 	}
 }
 
@@ -120,7 +124,7 @@ func (s *Manager) MustRegisterViews(pattern string) *Manager {
 
 func (s *Manager) RegisterViews(pattern string) (m *Manager, err error) {
 	m = s
-	views, err := filepath.Glob("templates/views/" + pattern)
+	views, err := s.getFiles("views/" + pattern)
 	if err != nil {
 		return
 	}
@@ -133,10 +137,6 @@ func (s *Manager) RegisterViews(pattern string) (m *Manager, err error) {
 		return
 	}
 	for _, v := range views {
-		f, _ := os.Stat(v)
-		if f.IsDir() {
-			continue
-		}
 		s.views = append(s.views, s.makeView(v, "", partials, s.funcs))
 		for _, l := range layouts {
 			s.views = append(s.views, s.makeView(v, l, partials, s.funcs))
@@ -146,14 +146,31 @@ func (s *Manager) RegisterViews(pattern string) (m *Manager, err error) {
 	return
 }
 
+func (s *Manager) getFiles(pattern string) ([]string, error) {
+	g, err := filepathx.Glob(s.base + pattern)
+	if err != nil {
+		return nil, err
+	}
+	res := []string{}
+	for _, l := range g {
+		f, _ := os.Stat(l)
+		if f.IsDir() {
+			continue
+		}
+		res = append(res, l)
+	}
+	return res, nil
+}
+
 func (s *Manager) GetLayouts() ([]string, error) {
 	if s.layouts != nil {
 		return s.layouts, nil
 	}
-	layouts, err := filepath.Glob("templates/layouts/*")
+	layouts, err := s.getFiles("layouts/**/*")
 	if err != nil {
 		return nil, err
 	}
+
 	s.layouts = layouts
 	return layouts, nil
 }
@@ -162,7 +179,7 @@ func (s *Manager) GetPartials() ([]string, error) {
 	if s.partials != nil {
 		return s.partials, nil
 	}
-	partials, err := filepath.Glob("templates/partials/*")
+	partials, err := s.getFiles("partials/**")
 	if err != nil {
 		return nil, err
 	}
@@ -171,8 +188,8 @@ func (s *Manager) GetPartials() ([]string, error) {
 }
 
 func (s *Manager) makeView(view string, layout string, partials []string, funcs FuncMap) *View {
-	lName := fileNameWithoutExt(filepath.Base(layout))
-	vName := fileNameWithoutExt(strings.TrimPrefix(view, "templates/views/"))
+	lName := fileNameWithoutExt(strings.TrimPrefix(layout, s.base+"layouts/"))
+	vName := fileNameWithoutExt(strings.TrimPrefix(view, s.base+"views/"))
 	return &View{
 		re:         s.re,
 		Name:       vName,

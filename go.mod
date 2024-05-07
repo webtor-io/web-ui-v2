@@ -110,6 +110,7 @@ require (
 	github.com/webtor-io/lazymap v0.0.0-20221030185154-1799721becef // indirect
 	github.com/webtor-io/magnet2torrent v0.0.0-20220312143110-bc1a7e4bcbba // indirect
 	github.com/webtor-io/torrent-store v0.0.0-20230129225621-aec101523586 // indirect
+	github.com/yargevad/filepathx v1.0.0 // indirect
 	golang.org/x/arch v0.6.0 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/net v0.24.0 // indirect

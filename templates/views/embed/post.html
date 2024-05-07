@@ -4,6 +4,7 @@
         <script>
             window._id = "{{ .Data.ID }}";
             window._CSRF = "{{ .CSRF }}";
+            window._settings = {{ .Data.Settings | json }};
         </script>
         <script async src="{{ "embed/index.js" | asset }}"></script>
     </head>
@@ -22,6 +23,5 @@
             </div>
         </form>
         {{ end }}
-        <script type="text/javascript" src="{{ "lib/iframeResizer.contentWindow.min.js" | asset }}" defer></script>
     </body>
 </html>
