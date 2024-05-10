@@ -14,7 +14,7 @@ window.addEventListener('load', async () => {
         if (ev.level != 'rendertemplate') return;
         window.addEventListener('player_ready', function(e) {
             window.removeEventListener('resize', setHeight);
-            // document.body.style.height = 'auto';
+            document.body.style.height = 'auto';
             progress.classList.add('hidden');
             el.classList.remove('hidden');
         }, {once: true});

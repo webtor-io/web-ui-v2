@@ -70,7 +70,7 @@ func (s *View) makeTemplateName() string {
 }
 
 func (s *View) Render() (string, error) {
-	s.once.Do(func() {
+	f := func() {
 		s.templateName = s.makeTemplateName()
 		var t *template.Template
 		t, s.err = s.makeTemplate()
@@ -78,7 +78,12 @@ func (s *View) Render() (string, error) {
 			return
 		}
 		s.re.Add(s.templateName, t)
-	})
+	}
+	if gin.IsDebugging() {
+		f()
+	} else {
+		s.once.Do(f)
+	}
 	return s.templateName, s.err
 }
 
