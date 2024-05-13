@@ -69,7 +69,10 @@ func serve(c *cli.Context) error {
 	r.HTMLRender = re
 
 	// Setting Web
-	web := w.New(c, r)
+	web, err := w.New(c, r)
+	if err != nil {
+		return err
+	}
 	servers = append(servers, web)
 	defer web.Close()
 
@@ -141,7 +144,7 @@ func serve(c *cli.Context) error {
 	we.RegisterHandler(c, r, tm, jobs)
 
 	// Render templates
-	err := tm.Init()
+	err = tm.Init()
 	if err != nil {
 		return err
 	}

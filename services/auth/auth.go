@@ -234,7 +234,7 @@ func verifySession(options *sessmodels.VerifySessionOptions) gin.HandlerFunc {
 	}
 }
 
-func (s *Auth) RegisterHandler(r *gin.Engine) error {
+func (s *Auth) RegisterHandler(r *gin.Engine) {
 	// CORS
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
@@ -256,5 +256,4 @@ func (s *Auth) RegisterHandler(r *gin.Engine) error {
 	r.Use(verifySession(&sessmodels.VerifySessionOptions{
 		SessionRequired: &sessionRequired,
 	}))
-	return nil
 }

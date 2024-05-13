@@ -65,11 +65,10 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 }
 
 type Web struct {
-	host   string
-	port   int
-	secret string
-	ln     net.Listener
-	r      *gin.Engine
+	host string
+	port int
+	ln   net.Listener
+	r    *gin.Engine
 }
 
 func (s *Web) Serve() error {
@@ -93,11 +92,18 @@ func (s *Web) Close() {
 	}
 }
 
-func New(c *cli.Context, r *gin.Engine) *Web {
-	var store sessions.Store
+func New(c *cli.Context, r *gin.Engine) (*Web, error) {
+	var (
+		store sessions.Store
+		err   error
+	)
+
 	if c.String(services.RedisHostFlag) != "" && c.Int(services.RedisPortFlag) != 0 {
 		url := fmt.Sprintf("%v:%v", c.String(services.RedisHostFlag), c.Int(services.RedisPortFlag))
-		store, _ = redis.NewStore(10, "tcp", url, "", []byte(sessionSecretFlag))
+		store, err = redis.NewStore(10, "tcp", url, "", []byte(sessionSecretFlag))
+		if err != nil {
+			return nil, err
+		}
 		log.Infof("using redis store %v", url)
 	} else {
 		store = cookie.NewStore([]byte(sessionSecretFlag))
@@ -124,5 +130,5 @@ func New(c *cli.Context, r *gin.Engine) *Web {
 		host: c.String(webHostFlag),
 		port: c.Int(webPortFlag),
 		r:    r,
-	}
+	}, nil
 }

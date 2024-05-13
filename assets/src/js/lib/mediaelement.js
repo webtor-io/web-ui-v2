@@ -93,7 +93,6 @@ export function initPlayer(target, ready) {
         if (width) video.setAttribute('width', width);
         if (height) video.setAttribute('height', height);
     }
-    console.log(width, height, stretching);
     const duration = video.getAttribute('data-duration') ? parseFloat(video.getAttribute('data-duration')) : -1;
     const features = [
         'playpause',

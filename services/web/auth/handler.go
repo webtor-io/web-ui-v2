@@ -21,7 +21,7 @@ type Handler struct {
 	tb template.Builder
 }
 
-func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager) error {
+func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager) {
 	h := &Handler{
 		tb: tm.MustRegisterViews("auth/*").WithLayout("main"),
 	}
@@ -29,8 +29,6 @@ func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager) error 
 	r.GET("/login", h.login)
 	r.GET("/logout", h.logout)
 	r.GET("/auth/verify", h.verify)
-
-	return nil
 }
 
 func (s *Handler) login(c *gin.Context) {

@@ -539,7 +539,7 @@ func (s *Api) RegisterHandler(c *cli.Context, r *gin.Engine) error {
 	r.Use(func(c *gin.Context) {
 		ac, err := s.MakeClaimsFromContext(c)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), ApiClaimsContext{}, ac))
