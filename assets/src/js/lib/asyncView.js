@@ -23,11 +23,7 @@ export function initAsyncView(target, name, init, destroy) {
         }
         init.call(target);
     }
-    window.addEventListener(`async:${name}`, onLoad);
-    if (document.readyState !== 'complete') {
-        onLoad();
-    }
-    const listener = async (e) => {
+    const onDestroy = async (e) => {
         debug(`webtor:async view destroyed name=%o`, name);
         const event = new CustomEvent(`async:${name}_destroyed`);
         if (destroy) {
@@ -39,7 +35,12 @@ export function initAsyncView(target, name, init, destroy) {
         }
         window.dispatchEvent(event);
     } 
-    window.addEventListener(`async:${name}_destroy`, listener);
-    const event = new CustomEvent(`async:${name}_loaded`);
-    window.dispatchEvent(event);
+    const key = `__async${name}_loaded`;
+    if (!window[key]) {
+        window.addEventListener(`async:${name}`, onLoad);
+        window.addEventListener(`async:${name}_destroy`, onDestroy);
+        window[key] = true;
+        onLoad();
+    }
+
 }

@@ -4,14 +4,17 @@
     <video class="player"
            crossorigin="anonymous"
            preload="{{ .ExportTag.Preload }}"
-           {{ if .ExportTag.Poster }}poster="{{ .ExportTag.Poster }}" {{ end }}
+           {{ if .ExternalData.Poster }}poster="{{ .ExternalData.Poster }}"
+           {{ else if .ExportTag.Poster }}poster="{{ .ExportTag.Poster }}" {{ end }}
            {{ if .MediaProbe }}data-duration="{{ .MediaProbe | getDurationSec }}" {{ end }}
-           controls
+           {{ if .Settings.Controls }}controls{{ end }}
+           {{ if .Settings.Width }}width="{{ .Settings.Width }}"{{ end }}
+           {{ if .Settings.Height }}height="{{ .Settings.Height }}"{{ end }}
            autoplay>
         {{ range .ExportTag.Sources }}
         <source src="{{ .Src }}" type="{{ .Type }}">
         {{ end }}
-        {{ range getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles }}
+        {{ range getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles .ExternalData }}
         {{ if ne .Provider "MediaProbe" }}
         {{ if ne .ID "none" }}
         <track src="{{ .Src }}" id="{{ .ID }}" srclang="{{ .SrcLang }}" label="{{ .Label }}" kind="{{ .Kind }}" {{ if .Default }}default="default"{{ end }}>
@@ -34,7 +37,7 @@
                 <div class="flex-1">
                     <h3 class="font-bold text-lg">Subtitles</h3>
                     <ul class="flex flex-wrap">
-                        {{ range getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles }}
+                        {{ range getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles .ExternalData }}
                         {{ if ne .Provider "OpenSubtitles" }}
                         <li data-id="{{ .ID }}" data-mp-id="{{ .MPID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="subtitle cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}" onclick="setSubtitle(this)">{{ .Label }}</li>
                         {{ end }}
@@ -46,7 +49,7 @@
                 <div class="flex-1">
                     <h3 class="font-bold text-lg">OpenSubtitles</h3>
                     <ul class="flex flex-wrap">
-                        {{ range getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles }}
+                        {{ range getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles .ExternalData }}
                         {{ if eq .Provider "OpenSubtitles" }}
                         <li data-id="{{ .ID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="subtitle cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}" onclick="setSubtitle(this)">{{ .Label }}</li>
                         {{ end }}
@@ -62,5 +65,5 @@
     </div>
 </div>
 {{ end }}
-<script async src="{{ "action/player.js" | asset }}"></script>
+<script async src="{{ "action/video.js" | asset }}"></script>
 {{ end }}

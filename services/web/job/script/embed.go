@@ -19,28 +19,36 @@ var (
 	sampleReg = regexp.MustCompile("/sample/i")
 )
 
-type EmbedScript struct {
-	api    *api.Api
-	claims *api.Claims
-	args   *LoadArgs
-	file   string
-	tb     template.Builder
-	c      *gin.Context
+type EmbedSettings struct {
+	StreamSettings
+	Version string `json:"version"`
+	Magnet  string `json:"magnet"`
 }
 
-func NewEmbedScript(tb template.Builder, c *gin.Context, api *api.Api, claims *api.Claims, args *LoadArgs, file string) *EmbedScript {
+type EmbedScript struct {
+	api      *api.Api
+	claims   *api.Claims
+	settings *EmbedSettings
+	file     string
+	tb       template.Builder
+	c        *gin.Context
+}
+
+func NewEmbedScript(tb template.Builder, c *gin.Context, api *api.Api, claims *api.Claims, settings *EmbedSettings, file string) *EmbedScript {
 	return &EmbedScript{
-		api:    api,
-		claims: claims,
-		args:   args,
-		file:   file,
-		tb:     tb,
-		c:      c,
+		api:      api,
+		claims:   claims,
+		settings: settings,
+		file:     file,
+		tb:       tb,
+		c:        c,
 	}
 }
 
 func (s *EmbedScript) Run(j *job.Job) (err error) {
-	ls, _, err := Load(s.api, s.claims, s.args)
+	ls, _, err := Load(s.api, s.claims, &LoadArgs{
+		Query: s.settings.Magnet,
+	})
 	if err != nil {
 		return err
 	}
@@ -59,8 +67,8 @@ func (s *EmbedScript) Run(j *job.Job) (err error) {
 	} else if i.MediaFormat == ra.Audio {
 		action = "stream-audio"
 	}
-	as, _ := Action(s.tb, s.api, s.claims, s.c, id, i.ID, action)
-	as.Run(j)
+	as, _ := Action(s.tb, s.api, s.claims, s.c, id, i.ID, action, &s.settings.StreamSettings)
+	err = as.Run(j)
 	if err != nil {
 		return err
 	}
@@ -107,12 +115,8 @@ func (s *EmbedScript) findBestItem(l *ra.ListResponse) *ra.ListItem {
 	return nil
 }
 
-func Embed(tb template.Builder, c *gin.Context, api *api.Api, claims *api.Claims, args *LoadArgs, file string) (r job.Runnable, hash string, err error) {
-	h := sha1.New()
-	h.Write(args.File)
-	h.Write([]byte(args.Query))
-	h.Write([]byte(file))
-	hash = fmt.Sprintf("%x", h.Sum(nil))
-	r = NewEmbedScript(tb, c, api, claims, args, file)
+func Embed(tb template.Builder, c *gin.Context, api *api.Api, claims *api.Claims, settings *EmbedSettings, file string) (r job.Runnable, hash string, err error) {
+	hash = fmt.Sprintf("%x", sha1.Sum([]byte(claims.Role+"/"+claims.SessionID+"/"+file+"/"+fmt.Sprintf("%+v", settings))))
+	r = NewEmbedScript(tb, c, api, claims, settings, file)
 	return
 }

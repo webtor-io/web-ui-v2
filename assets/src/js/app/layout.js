@@ -17,7 +17,7 @@ import '../../styles/style.css';
 
 import {bindAsync} from '../lib/async';
 
-window.addEventListener('load', async () => {
+function onLoad() {
     document.body.style.display = 'block';
     hideProgress();
     bindAsync({
@@ -33,4 +33,9 @@ window.addEventListener('load', async () => {
             layout: 'async',
         },
     });
-});
+}
+
+if (document.readyState !== 'loading') {
+    onLoad();
+}
+window.addEventListener('DOMContentLoaded', onLoad);

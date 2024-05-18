@@ -36,6 +36,7 @@ type View struct {
 	err          error
 	re           multitemplate.Renderer
 	templateName string
+	mux          sync.Mutex
 }
 
 func (s *View) makeTemplate() (t *template.Template, err error) {
@@ -77,6 +78,8 @@ func (s *View) Render() (string, error) {
 		if s.err != nil {
 			return
 		}
+		s.mux.Lock()
+		defer s.mux.Unlock()
 		s.re.Add(s.templateName, t)
 	}
 	if gin.IsDebugging() {

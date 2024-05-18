@@ -30,4 +30,8 @@ window.addEventListener('load', async () => {
     }
     setHeight();
     window.addEventListener('resize', setHeight);
+    if (window._settings.poster) {
+        document.body.style.backgroundImage = 'url(' + window._settings.poster + ')';
+        document.body.style.backgroundSize = 'cover';
+    }
 });

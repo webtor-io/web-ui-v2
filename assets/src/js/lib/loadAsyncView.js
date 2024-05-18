@@ -1,5 +1,4 @@
 import executeScriptElements from "./executeScriptElements";
-const loadedViews = {};
 function loadAsyncView(target, body, template) {
     const nodes = target.querySelectorAll('.async-view');
     const els = [];
@@ -45,12 +44,6 @@ function renderBody(target, body, template) {
     if (template) {
         const event = new CustomEvent('async:' + template, { detail });
         window.dispatchEvent(event);
-        if (!loadedViews[template]) {
-            window.addEventListener(`async:${template}_loaded`, async function (e) {
-                loadedViews[template] = true;
-                window.dispatchEvent(event);
-            });
-        }
     }
 }
 

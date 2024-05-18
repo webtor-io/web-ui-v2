@@ -1,0 +1,6 @@
+{{ define "main" }}
+<video src="{{ demoMagnet }}" controls data-config='{"baseUrl": "{{ domain }}"}'>
+    <track srclang="ru" label="test" default src="{{ domain }}/pub/Sintel.ru.srt">
+    <track srclang="en" label="test2" src="{{ domain }}/pub/Sintel.ru.srt">
+</video>
+{{ end}}

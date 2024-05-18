@@ -24,10 +24,39 @@ type StreamContent struct {
 	MediaProbe          *api.MediaProbe
 	OpenSubtitles       []api.OpenSubtitleTrack
 	VideoStreamUserData *m.VideoStreamUserData
+	Settings            *StreamSettings
+	ExternalData        *m.ExternalData
 }
 
-func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, template string) (err error) {
-	sc := &StreamContent{}
+type SettingsTrack struct {
+	Src     string  `json:"src"`
+	SrcLang string  `json:"srclang,omitempty"`
+	Label   string  `json:"label,omitempty"`
+	Default *string `json:"default,omitempty"`
+}
+
+type StreamSettings struct {
+	BaseURL   string          `json:"baseUrl"`
+	Width     string          `json:"width"`
+	Height    string          `json:"height"`
+	Mode      string          `json:"mode"`
+	Subtitles []SettingsTrack `json:"subtitles"`
+	Poster    string          `json:"poster"`
+	Header    bool            `json:"header"`
+	Title     string          `json:"title"`
+	ImdbID    string          `json:"imdbId"`
+	Lang      string          `json:"lang"`
+	I18n      struct{}        `json:"i18n"`
+	Features  struct{}        `json:"features"`
+	El        struct{}        `json:"el"`
+	Controls  bool            `json:"controls"`
+}
+
+func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, template string, settings *StreamSettings) (err error) {
+	sc := &StreamContent{
+		Settings:     settings,
+		ExternalData: &m.ExternalData{},
+	}
 	j.InProgress("retrieving stream url")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -69,6 +98,17 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 			j.Done()
 		}
 	}
+	if settings.Poster != "" {
+		sc.ExternalData.Poster = s.api.AttachExternalFile(se, settings.Poster)
+	}
+	for _, v := range settings.Subtitles {
+		sc.ExternalData.Tracks = append(sc.ExternalData.Tracks, m.ExternalTrack{
+			Src:     s.api.AttachExternalSubtitle(se, v.Src),
+			Label:   v.Label,
+			SrcLang: v.SrcLang,
+			Default: v.Default != nil,
+		})
+	}
 	err = s.renderActionTemplate(j, c, sc, template)
 	if err != nil {
 		return j.Error(err, "failed to render resource")
@@ -77,16 +117,16 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 	return
 }
 
-func (s *ActionScript) previewImage(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string) error {
-	return s.streamContent(j, c, claims, resourceID, itemID, "preview_image")
+func (s *ActionScript) previewImage(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *StreamSettings) error {
+	return s.streamContent(j, c, claims, resourceID, itemID, "preview_image", settings)
 }
 
-func (s *ActionScript) streamAudio(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string) error {
-	return s.streamContent(j, c, claims, resourceID, itemID, "stream_audio")
+func (s *ActionScript) streamAudio(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *StreamSettings) error {
+	return s.streamContent(j, c, claims, resourceID, itemID, "stream_audio", settings)
 }
 
-func (s *ActionScript) streamVideo(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string) error {
-	return s.streamContent(j, c, claims, resourceID, itemID, "stream_video")
+func (s *ActionScript) streamVideo(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *StreamSettings) error {
+	return s.streamContent(j, c, claims, resourceID, itemID, "stream_video", settings)
 }
 
 func (s *ActionScript) renderActionTemplate(j *job.Job, c *gin.Context, sc *StreamContent, name string) error {
@@ -185,6 +225,7 @@ type ActionScript struct {
 	itemId     string
 	action     string
 	tb         template.Builder
+	settings   *StreamSettings
 }
 
 func (s *ActionScript) Run(j *job.Job) (err error) {
@@ -192,19 +233,17 @@ func (s *ActionScript) Run(j *job.Job) (err error) {
 	case "download":
 		return s.download(j, s.claims, s.resourceId, s.itemId)
 	case "preview-image":
-		return s.previewImage(j, s.c, s.claims, s.resourceId, s.itemId)
+		return s.previewImage(j, s.c, s.claims, s.resourceId, s.itemId, s.settings)
 	case "stream-audio":
-		return s.streamAudio(j, s.c, s.claims, s.resourceId, s.itemId)
+		return s.streamAudio(j, s.c, s.claims, s.resourceId, s.itemId, s.settings)
 	case "stream-video":
-		return s.streamVideo(j, s.c, s.claims, s.resourceId, s.itemId)
-	case "stream":
-		return s.streamVideo(j, s.c, s.claims, s.resourceId, s.itemId)
+		return s.streamVideo(j, s.c, s.claims, s.resourceId, s.itemId, s.settings)
 	}
 	return
 }
 
-func Action(tb template.Builder, api *api.Api, claims *api.Claims, c *gin.Context, resourceID string, itemID string, action string) (r job.Runnable, id string) {
-	id = fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+claims.Role+"/"+claims.SessionID)))
+func Action(tb template.Builder, api *api.Api, claims *api.Claims, c *gin.Context, resourceID string, itemID string, action string, settings *StreamSettings) (r job.Runnable, id string) {
+	id = fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+claims.Role+"/"+claims.SessionID+"/"+fmt.Sprintf("%+v", settings))))
 	return &ActionScript{
 		tb:         tb,
 		api:        api,
@@ -213,5 +252,6 @@ func Action(tb template.Builder, api *api.Api, claims *api.Claims, c *gin.Contex
 		resourceId: resourceID,
 		itemId:     itemID,
 		action:     action,
+		settings:   settings,
 	}, id
 }

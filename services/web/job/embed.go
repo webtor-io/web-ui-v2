@@ -10,8 +10,8 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/web/job/script"
 )
 
-func (s *Handler) Embed(c *gin.Context, claims *api.Claims, args *script.LoadArgs) (j *job.Job, err error) {
-	es, hash, err := script.Embed(s.tb, c, s.api, claims, args, "")
+func (s *Handler) Embed(c *gin.Context, claims *api.Claims, settings *script.EmbedSettings) (j *job.Job, err error) {
+	es, hash, err := script.Embed(s.tb, c, s.api, claims, settings, "")
 	if err != nil {
 		return
 	}

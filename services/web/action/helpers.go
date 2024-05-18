@@ -83,6 +83,11 @@ func (s *Helper) selectListItem(lis []ListItem, id string, ud *m.VideoStreamUser
 			langs = append(langs, t)
 		}
 	}
+	for _, li := range lis {
+		if li.Default {
+			return lis
+		}
+	}
 	matcher := language.NewMatcher(langs)
 	_, index, confidence := matcher.Match(ud.AcceptLangTags...)
 	if confidence > language.No {
@@ -108,7 +113,7 @@ func (s *Helper) canoninizeSrcLangs(lis []ListItem) []ListItem {
 	return lis
 }
 
-func (s *Helper) GetSubtitles(ud *m.VideoStreamUserData, mp *api.MediaProbe, tag *ra.ExportTag, opensubs []api.OpenSubtitleTrack) []ListItem {
+func (s *Helper) GetSubtitles(ud *m.VideoStreamUserData, mp *api.MediaProbe, tag *ra.ExportTag, opensubs []api.OpenSubtitleTrack, ext *m.ExternalData) []ListItem {
 	var res []ListItem
 	res = append(res, ListItem{
 		ID:    "none",
@@ -157,6 +162,17 @@ func (s *Helper) GetSubtitles(ud *m.VideoStreamUserData, mp *api.MediaProbe, tag
 			Kind:     string(t.Kind),
 			Src:      t.Src,
 			Provider: "OpenSubtitles",
+		})
+	}
+	for i, t := range ext.Tracks {
+		res = append(res, ListItem{
+			ID:       "ext-" + strconv.Itoa(i+1),
+			Label:    t.Label,
+			SrcLang:  t.SrcLang,
+			Default:  t.Default,
+			Kind:     "subtitles",
+			Src:      t.Src,
+			Provider: "External",
 		})
 	}
 	return s.selectListItem(s.canoninizeSrcLangs(res), ud.SubtitleID, ud)

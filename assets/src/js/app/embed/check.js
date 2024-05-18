@@ -1,13 +1,20 @@
 import message from './message';
 const sha1 = require('sha1');
 message.send('init');
-const init = await message.receiveOnce('init');
+const data = await message.receiveOnce('init');
 const c = await check();
 if (c) {
-    if (!init.height) {
+    initPlaceholder(data);
+    window.addEventListener('click', async () => {
+        initEmbed(data);
+    }, { once: true });
+}
+
+function initPlaceholder(data) {
+    if (!data.height) {
         function setHeight() {
             const width = document.body.offsetWidth;
-            const height = width/16*9;
+            const height = width / 16 * 9;
             document.body.style.height = height + 'px';
         }
         window.addEventListener('resize', setHeight);
@@ -16,11 +23,12 @@ if (c) {
         document.body.appendChild(s);
         setHeight();
     } else {
-        document.body.style.height = init.height;
+        document.body.style.height = data.height;
     }
-    window.addEventListener('click', async () => {
-        initEmbed(init);
-    }, {once: true});
+    if (data.poster) {
+        document.body.style.backgroundImage = 'url(' + data.poster + ')';
+        document.body.style.backgroundSize = 'cover';
+    }
 }
 
 async function check() {
@@ -29,7 +37,7 @@ async function check() {
     return sha1(window._id + check) == _checkHash;
 }
 
-function initEmbed(init) {
+function initEmbed(data) {
     const form = document.createElement('form');
     form.setAttribute('method', 'post');
     form.setAttribute('enctype', 'multipart/form-data');
@@ -39,7 +47,7 @@ function initEmbed(init) {
     form.append(csrf);
     const i = document.createElement('input');
     i.setAttribute('name', 'settings');
-    i.setAttribute('value', JSON.stringify(init));
+    i.setAttribute('value', JSON.stringify(data));
     form.append(i);
     document.body.append(form);
     // form.setAttribute('action', '/');

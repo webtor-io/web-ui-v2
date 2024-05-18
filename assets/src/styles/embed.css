@@ -39,6 +39,7 @@
     @apply py-4 popin;
     position: relative;
     color: white;
+    background: rgba(0, 0, 0, 0.5);
 
     pre {
       @apply px-5 leading-8 whitespace-pre-wrap flex;

@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/text/language"
@@ -64,4 +65,16 @@ func (s *VideoStreamUserData) UpdateSessionData(c *gin.Context) error {
 		session.Set(audioKey, s.AudioID)
 	}
 	return session.Save()
+}
+
+type ExternalData struct {
+	Poster string
+	Tracks []ExternalTrack
+}
+
+type ExternalTrack struct {
+	Src     string
+	SrcLang string
+	Label   string
+	Default bool
 }

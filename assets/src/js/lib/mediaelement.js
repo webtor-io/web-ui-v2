@@ -1,3 +1,4 @@
+import '../../styles/mediaelement.css';
 import 'mediaelement';
 import './mediaelement-plugins/availableprogress';
 import './mediaelement-plugins/advancedtracks';
@@ -86,13 +87,15 @@ let video;
 
 export function initPlayer(target, ready) {
     video = target.querySelector('.player');
-    const width = window._settings?.width;
-    const height = window._settings?.height;
+    const width = video.width;
+    const height = video.height;
+    const controls = video.controls;
     const stretching = height ? 'auto' : 'responsive';
     if (stretching == 'auto') {
         if (width) video.setAttribute('width', width);
         if (height) video.setAttribute('height', height);
     }
+
     const duration = video.getAttribute('data-duration') ? parseFloat(video.getAttribute('data-duration')) : -1;
     const features = [
         'playpause',
@@ -122,7 +125,7 @@ export function initPlayer(target, ready) {
             manifestLoadingMaxRetryTimeout: 1000 * 10,
             capLevelToPlayerSize: true,
             capLevelOnFPSDrop: true,
-            // progressive: true,
+            progressive: true,
             testBandwidth: false,
             path: '/assets/lib/hls.min.js',
         },
@@ -150,7 +153,6 @@ export function initPlayer(target, ready) {
                 }
             }
             media.addEventListener('canplay', () => {
-
                 if (hlsPlayer && document.getElementById('subtitles')) {
                     const audioId = document.querySelector('.audio[data-default=true]').getAttribute('data-mp-id');
                     const subId = document.querySelector('.subtitle[data-default=true]').getAttribute('data-mp-id');
@@ -160,6 +162,10 @@ export function initPlayer(target, ready) {
                 if (stretching != 'responsive') {
                     if (width) player.node.style.width = width;
                     if (height) player.node.style.height = height;
+                }
+                player.controlsEnabled = controls;
+                if (!controls) {
+                    document.querySelector('.mejs__controls').style.display = 'none';
                 }
                 ready();
             });

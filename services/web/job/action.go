@@ -11,7 +11,9 @@ import (
 )
 
 func (s *Handler) Action(ctx context.Context, c *gin.Context, claims *api.Claims, resourceID string, itemID string, action string) (j *job.Job, err error) {
-	as, id := script.Action(s.tb, s.api, claims, c, resourceID, itemID, action)
+	as, id := script.Action(s.tb, s.api, claims, c, resourceID, itemID, action, &script.StreamSettings{
+		Controls: true,
+	})
 	j = s.q.GetOrCreate(action).Enqueue(ctx, id, as)
 	return
 }

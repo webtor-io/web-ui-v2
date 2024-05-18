@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha1"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -479,12 +480,42 @@ func (s *Api) makeSubtitleURL(u string, esub ExtSubtitle) string {
 	pathParts := strings.Split(src.Path, "/")
 	pathParts = pathParts[:len(pathParts)-1]
 	path = strings.Join(pathParts, "/") + esub.Src
-	if esub.Format == "srt" {
-		nameParts := strings.Split(esub.Src, "/")
-		name := strings.Join(nameParts[len(nameParts)-1:], "/")
-		path += "~vtt/" + strings.TrimSuffix(name, ".srt") + ".vtt"
-	}
 	src.Path = path
+	res := src.String()
+	if esub.Format == "srt" {
+		res = s.convertToVTT(res)
+	}
+	return res
+}
+
+func (*Api) convertToVTT(u string) string {
+	src, _ := url.Parse(u)
+	nameParts := strings.Split(src.Path, "/")
+	name := strings.Join(nameParts[len(nameParts)-1:], "/")
+	src.Path += "~vtt/" + strings.TrimSuffix(name, ".srt") + ".vtt"
+	return src.String()
+}
+
+func (s *Api) AttachExternalSubtitle(ei ra.ExportItem, u string) string {
+	res := s.AttachExternalFile(ei, u)
+	format := "vtt"
+
+	src, _ := url.Parse(u)
+	if strings.HasSuffix(src.Path, ".srt") {
+		format = "srt"
+	}
+	if format == "srt" {
+		res = s.convertToVTT(res)
+	}
+	return res
+}
+
+func (s *Api) AttachExternalFile(ei ra.ExportItem, u string) string {
+	src, _ := url.Parse(ei.URL)
+	nameParts := strings.Split(u, "/")
+	name := strings.Join(nameParts[len(nameParts)-1:], "/")
+	encodedURL := url.QueryEscape(base64.StdEncoding.EncodeToString([]byte(u)))
+	src.Path = fmt.Sprintf("/ext/%s/%s", encodedURL, name)
 	return src.String()
 }
 
