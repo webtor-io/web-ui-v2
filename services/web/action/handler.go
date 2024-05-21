@@ -14,6 +14,7 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/job"
 	"github.com/webtor-io/web-ui-v2/services/template"
 	wj "github.com/webtor-io/web-ui-v2/services/web/job"
+	"github.com/webtor-io/web-ui-v2/services/web/job/script"
 )
 
 type PostArgs struct {
@@ -116,7 +117,7 @@ func (s *Handler) post(c *gin.Context, action string) {
 	}
 	d.Args = args
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Minute)
-	job, err = s.jobs.Action(ctx, c, args.Claims, args.ResourceID, args.ItemID, action)
+	job, err = s.jobs.Action(ctx, c, args.Claims, args.ResourceID, args.ItemID, action, &script.StreamSettings{})
 	if err != nil {
 		postTpl.HTMLWithErr(errors.Wrap(err, "failed to start downloading"), http.StatusBadRequest, c, d)
 		return

@@ -7,6 +7,7 @@ import (
 	ra "github.com/webtor-io/rest-api/services"
 	"github.com/webtor-io/web-ui-v2/services/api"
 	m "github.com/webtor-io/web-ui-v2/services/models"
+	"github.com/webtor-io/web-ui-v2/services/web/job/script"
 	"golang.org/x/text/language"
 )
 
@@ -30,6 +31,14 @@ func NewHelper() *Helper {
 
 func (s *Helper) GetDurationSec(mp *api.MediaProbe) string {
 	return mp.Format.Duration
+}
+
+func (s *Helper) HasControls(settings *script.StreamSettings) bool {
+	if settings.Controls == nil {
+		return true
+	}
+	controls := *settings.Controls
+	return controls
 }
 
 func (s *Helper) GetAudioTracks(ud *m.VideoStreamUserData, mp *api.MediaProbe) []ListItem {

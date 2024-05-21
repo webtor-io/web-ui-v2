@@ -7,10 +7,10 @@
            {{ if .ExternalData.Poster }}poster="{{ .ExternalData.Poster }}"
            {{ else if .ExportTag.Poster }}poster="{{ .ExportTag.Poster }}" {{ end }}
            {{ if .MediaProbe }}data-duration="{{ .MediaProbe | getDurationSec }}" {{ end }}
-           {{ if .Settings.Controls }}controls{{ end }}
+           {{ if .Settings | hasControls }}controls{{ end }}
            {{ if .Settings.Width }}width="{{ .Settings.Width }}"{{ end }}
            {{ if .Settings.Height }}height="{{ .Settings.Height }}"{{ end }}
-           autoplay>
+           autoplay data-settings="{{ .Settings | json }}">
         {{ range .ExportTag.Sources }}
         <source src="{{ .Src }}" type="{{ .Type }}">
         {{ end }}

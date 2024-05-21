@@ -1,0 +1,116 @@
+package session
+
+import (
+	"bufio"
+	"context"
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-contrib/sessions/redis"
+	"github.com/gin-gonic/gin"
+	"github.com/urfave/cli"
+	csrf "github.com/utrack/gin-csrf"
+	"github.com/webtor-io/web-ui-v2/services"
+
+	log "github.com/sirupsen/logrus"
+)
+
+const (
+	sessionSecretFlag = "secret"
+)
+
+func RegisterFlags(f []cli.Flag) []cli.Flag {
+	return append(f,
+		cli.StringFlag{
+			Name:   sessionSecretFlag,
+			Usage:  "session secret",
+			Value:  "secret123",
+			EnvVar: "SESSION_SECRET",
+		},
+	)
+}
+
+type Session struct {
+	ID   string
+	CSRF string
+}
+
+func RegisterHandler(c *cli.Context, r *gin.Engine) (err error) {
+	var store sessions.Store
+	if c.String(services.RedisHostFlag) != "" && c.Int(services.RedisPortFlag) != 0 {
+		url := fmt.Sprintf("%v:%v", c.String(services.RedisHostFlag), c.Int(services.RedisPortFlag))
+		store, err = redis.NewStore(10, "tcp", url, "", []byte(sessionSecretFlag))
+		if err != nil {
+			return err
+		}
+		log.Infof("using redis store %v", url)
+	} else {
+		store = cookie.NewStore([]byte(sessionSecretFlag))
+	}
+	r.Use(func(ctx *gin.Context) {
+		id := ctx.GetHeader("X-Session-Id")
+		if id != "" {
+			ctx.Request.AddCookie(&http.Cookie{
+				Name:  "session",
+				Value: id,
+			})
+		}
+
+	})
+	r.Use(sessions.Sessions("session", store))
+	r.Use(csrf.Middleware(csrf.Options{
+		Secret: c.String(sessionSecretFlag),
+		ErrorFunc: func(c *gin.Context) {
+			if strings.HasPrefix(c.Request.URL.Path, "/auth/dashboard") {
+				c.Next()
+				return
+			}
+			c.String(400, "CSRF token mismatch")
+			c.Abort()
+		},
+	}))
+	r.Use(func(c *gin.Context) {
+		if c.GetHeader("X-Token") != "" {
+			csrf.GetToken(c)
+		}
+	})
+	r.Use(func(c *gin.Context) {
+		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), Session{}, &Session{
+			CSRF: csrf.GetToken(c),
+			ID:   getSessionId(c, "session"),
+		}))
+	})
+	return
+}
+func getSessionId(c *gin.Context, name string) (id string) {
+	id, _ = c.Cookie(name)
+	if id != "" {
+		return
+	}
+	id = getSessionIdFromResponseHeader(c, "Set-Cookie", name)
+	return
+}
+
+func getSessionIdFromResponseHeader(c *gin.Context, headerName string, cookieName string) string {
+	cookies := c.Writer.Header().Get(headerName)
+	rawRequest := fmt.Sprintf("GET / HTTP/1.0\r\nCookie: %s\r\n\r\n", cookies)
+	req, _ := http.ReadRequest(bufio.NewReader(strings.NewReader(rawRequest)))
+	var id string
+	for _, q := range req.Cookies() {
+		if q.Name == cookieName {
+			id = q.Value
+			break
+		}
+	}
+	return id
+}
+
+func GetFromContext(c *gin.Context) *Session {
+	if r := c.Request.Context().Value(Session{}); r != nil {
+		return r.(*Session)
+	}
+	return nil
+}

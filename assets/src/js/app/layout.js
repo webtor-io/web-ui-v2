@@ -24,6 +24,7 @@ function onLoad() {
         async fetch(f, url, fetchParams) {
             showProgress();
             fetchParams.headers['X-CSRF-TOKEN'] = window._CSRF;
+            fetchParams.headers['X-SESSION-ID'] = window._sessionID;
             const res = await fetch(url, fetchParams);
             hideProgress();
             return res;

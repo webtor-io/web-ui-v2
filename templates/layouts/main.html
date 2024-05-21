@@ -7,6 +7,7 @@
         <meta name="description" content="Download and play torrents with free online torrent web player and downloader. Just paste the magnet link or open the torrent file and start downloading or watching torrent content safely and anonymously through your web browser. Works instantly without client and registration!">
         <script>
             window._CSRF = "{{ .CSRF }}";
+            window._sessionID = "{{ .SessionID }}";
             window._domain = "{{ domain }}";
         </script>
         <script async src="{{ "layout.js" | asset }}"></script>

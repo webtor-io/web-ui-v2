@@ -47,9 +47,9 @@ type StreamSettings struct {
 	ImdbID    string          `json:"imdbId"`
 	Lang      string          `json:"lang"`
 	I18n      struct{}        `json:"i18n"`
-	Features  struct{}        `json:"features"`
+	Features  map[string]bool `json:"features"`
 	El        struct{}        `json:"el"`
-	Controls  bool            `json:"controls"`
+	Controls  *bool           `json:"controls"`
 }
 
 func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, template string, settings *StreamSettings) (err error) {

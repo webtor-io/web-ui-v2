@@ -10,10 +10,8 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/web/job/script"
 )
 
-func (s *Handler) Action(ctx context.Context, c *gin.Context, claims *api.Claims, resourceID string, itemID string, action string) (j *job.Job, err error) {
-	as, id := script.Action(s.tb, s.api, claims, c, resourceID, itemID, action, &script.StreamSettings{
-		Controls: true,
-	})
+func (s *Handler) Action(ctx context.Context, c *gin.Context, claims *api.Claims, resourceID string, itemID string, action string, settings *script.StreamSettings) (j *job.Job, err error) {
+	as, id := script.Action(s.tb, s.api, claims, c, resourceID, itemID, action, settings)
 	j = s.q.GetOrCreate(action).Enqueue(ctx, id, as)
 	return
 }

@@ -4,28 +4,19 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
-
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
-	"github.com/gin-contrib/sessions/redis"
-	csrf "github.com/utrack/gin-csrf"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 
 	log "github.com/sirupsen/logrus"
-
-	"github.com/webtor-io/web-ui-v2/services"
 )
 
 const (
-	webHostFlag       = "host"
-	webPortFlag       = "port"
-	sessionSecretFlag = "secret"
-	assetsPathFlag    = "assets-path"
-	assetsHostFlag    = "assets-host"
+	webHostFlag    = "host"
+	webPortFlag    = "port"
+	assetsPathFlag = "assets-path"
+	assetsHostFlag = "assets-host"
 )
 
 func RegisterFlags(f []cli.Flag) []cli.Flag {
@@ -41,12 +32,6 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 			Usage:  "http listening port",
 			Value:  8080,
 			EnvVar: "WEB_PORT",
-		},
-		cli.StringFlag{
-			Name:   sessionSecretFlag,
-			Usage:  "session secret",
-			Value:  "secret123",
-			EnvVar: "SESSION_SECRET",
 		},
 
 		cli.StringFlag{
@@ -93,33 +78,7 @@ func (s *Web) Close() {
 }
 
 func New(c *cli.Context, r *gin.Engine) (*Web, error) {
-	var (
-		store sessions.Store
-		err   error
-	)
 
-	if c.String(services.RedisHostFlag) != "" && c.Int(services.RedisPortFlag) != 0 {
-		url := fmt.Sprintf("%v:%v", c.String(services.RedisHostFlag), c.Int(services.RedisPortFlag))
-		store, err = redis.NewStore(10, "tcp", url, "", []byte(sessionSecretFlag))
-		if err != nil {
-			return nil, err
-		}
-		log.Infof("using redis store %v", url)
-	} else {
-		store = cookie.NewStore([]byte(sessionSecretFlag))
-	}
-	r.Use(sessions.Sessions("session", store))
-	r.Use(csrf.Middleware(csrf.Options{
-		Secret: c.String(sessionSecretFlag),
-		ErrorFunc: func(c *gin.Context) {
-			if strings.HasPrefix(c.Request.URL.Path, "/auth/dashboard") {
-				c.Next()
-				return
-			}
-			c.String(400, "CSRF token mismatch")
-			c.Abort()
-		},
-	}))
 	r.UseRawPath = true
 	assetsPath := c.String(assetsPathFlag)
 	r.Static("/assets", assetsPath)

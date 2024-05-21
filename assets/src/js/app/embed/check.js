@@ -2,6 +2,7 @@ import message from './message';
 const sha1 = require('sha1');
 message.send('init');
 const data = await message.receiveOnce('init');
+console.log(data);
 const c = await check();
 if (c) {
     initPlaceholder(data);

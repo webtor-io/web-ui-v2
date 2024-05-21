@@ -25,6 +25,7 @@ import (
 	wm "github.com/webtor-io/web-ui-v2/services/web/migration"
 	p "github.com/webtor-io/web-ui-v2/services/web/profile"
 	wr "github.com/webtor-io/web-ui-v2/services/web/resource"
+	sess "github.com/webtor-io/web-ui-v2/services/web/session"
 )
 
 func makeServeCMD() cli.Command {
@@ -46,6 +47,7 @@ func configureServe(c *cli.Command) {
 	c.Flags = auth.RegisterFlags(c.Flags)
 	c.Flags = claims.RegisterFlags(c.Flags)
 	c.Flags = claims.RegisterClientFlags(c.Flags)
+	c.Flags = sess.RegisterFlags(c.Flags)
 	// c.Flags = cs.RegisterRedisClientFlags(c.Flags)
 }
 
@@ -75,6 +77,11 @@ func serve(c *cli.Context) error {
 	}
 	servers = append(servers, web)
 	defer web.Close()
+
+	err = sess.RegisterHandler(c, r)
+	if err != nil {
+		return err
+	}
 
 	// Setting Migration from v1 to v2
 	wm.RegisterHandler(r)

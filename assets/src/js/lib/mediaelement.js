@@ -87,6 +87,7 @@ let video;
 
 export function initPlayer(target, ready) {
     video = target.querySelector('.player');
+    const settings = JSON.parse(video.dataset.settings);
     const width = video.width;
     const height = video.height;
     const controls = video.controls;
@@ -97,7 +98,7 @@ export function initPlayer(target, ready) {
     }
 
     const duration = video.getAttribute('data-duration') ? parseFloat(video.getAttribute('data-duration')) : -1;
-    const features = [
+    let features = [
         'playpause',
         'current',
         'progress',
@@ -108,6 +109,15 @@ export function initPlayer(target, ready) {
     ];
     if (duration > 0) {
         features.push('availableprogress');
+    }
+    if (settings.features) {
+        for (const name in settings.features) {
+            if (features.includes(name) && settings.features[name] == false) {
+                features = features.filter((e) => e != name);
+            } else if (!features.includes(name) && settings.features[name] == true) {
+                features.push(name);
+            }
+        }
     }
     player = new MediaElementPlayer(video, {
         autoRewind: false,
