@@ -243,7 +243,7 @@ func (s *ActionScript) Run(j *job.Job) (err error) {
 }
 
 func Action(tb template.Builder, api *api.Api, claims *api.Claims, c *gin.Context, resourceID string, itemID string, action string, settings *StreamSettings) (r job.Runnable, id string) {
-	id = fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+claims.Role+"/"+claims.SessionID+"/"+fmt.Sprintf("%+v", settings))))
+	id = fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+claims.Role+"/"+fmt.Sprintf("%+v", settings))))
 	return &ActionScript{
 		tb:         tb,
 		api:        api,

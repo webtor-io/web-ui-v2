@@ -26,6 +26,7 @@ import (
 	p "github.com/webtor-io/web-ui-v2/services/web/profile"
 	wr "github.com/webtor-io/web-ui-v2/services/web/resource"
 	sess "github.com/webtor-io/web-ui-v2/services/web/session"
+	sta "github.com/webtor-io/web-ui-v2/services/web/static"
 )
 
 func makeServeCMD() cli.Command {
@@ -48,6 +49,7 @@ func configureServe(c *cli.Command) {
 	c.Flags = claims.RegisterFlags(c.Flags)
 	c.Flags = claims.RegisterClientFlags(c.Flags)
 	c.Flags = sess.RegisterFlags(c.Flags)
+	c.Flags = sta.RegisterFlags(c.Flags)
 	// c.Flags = cs.RegisterRedisClientFlags(c.Flags)
 }
 
@@ -82,6 +84,8 @@ func serve(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
+	sta.RegisterHandler(c, r)
 
 	// Setting Migration from v1 to v2
 	wm.RegisterHandler(r)

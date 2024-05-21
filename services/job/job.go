@@ -101,6 +101,11 @@ func New(ctx context.Context, id string, queue string, runnable Runnable) *Job {
 }
 
 func (s *Job) Run(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Errorf("job panic: %v", r)
+		}
+	}()
 	s.runnable.Run(s)
 }
 

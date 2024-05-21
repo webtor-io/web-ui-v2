@@ -22,6 +22,7 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/claims"
 	"github.com/webtor-io/web-ui-v2/services/job"
 	"github.com/webtor-io/web-ui-v2/services/obfuscator"
+	"github.com/webtor-io/web-ui-v2/services/web/static"
 )
 
 func (s *Helper) MakeJobLogURL(j *job.Job) string {
@@ -63,11 +64,11 @@ type Helper struct {
 func NewHelper(c *cli.Context) *Helper {
 	return &Helper{
 		demoMagnet: c.String(services.DemoMagnetFlag),
-		assetsHost: c.String(assetsHostFlag),
-		assetsPath: c.String(assetsPathFlag),
+		assetsHost: c.String(static.AssetsHostFlag),
+		assetsPath: c.String(static.AssetsPathFlag),
 		useAuth:    c.Bool(auth.UseAuthFlag),
 		domain:     c.String(services.DomainFlag),
-		ah:         NewAssetHashes(c.String(assetsPathFlag)),
+		ah:         NewAssetHashes(c.String(static.AssetsPathFlag)),
 	}
 }
 

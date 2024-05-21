@@ -116,7 +116,7 @@ func (s *EmbedScript) findBestItem(l *ra.ListResponse) *ra.ListItem {
 }
 
 func Embed(tb template.Builder, c *gin.Context, api *api.Api, claims *api.Claims, settings *EmbedSettings, file string) (r job.Runnable, hash string, err error) {
-	hash = fmt.Sprintf("%x", sha1.Sum([]byte(claims.Role+"/"+claims.SessionID+"/"+file+"/"+fmt.Sprintf("%+v", settings))))
+	hash = fmt.Sprintf("%x", sha1.Sum([]byte(claims.Role+"/"+fmt.Sprintf("%+v", settings))))
 	r = NewEmbedScript(tb, c, api, claims, settings, file)
 	return
 }

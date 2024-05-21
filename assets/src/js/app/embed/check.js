@@ -46,6 +46,10 @@ function initEmbed(data) {
     csrf.setAttribute('name', '_csrf');
     csrf.setAttribute('value', window._CSRF);
     form.append(csrf);
+    const sessionID = document.createElement('input');
+    sessionID.setAttribute('name', '_sessionID');
+    sessionID.setAttribute('value', window._sessionID);
+    form.append(sessionID);
     const i = document.createElement('input');
     i.setAttribute('name', 'settings');
     i.setAttribute('value', JSON.stringify(data));

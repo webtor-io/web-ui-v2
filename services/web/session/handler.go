@@ -50,8 +50,12 @@ func RegisterHandler(c *cli.Context, r *gin.Engine) (err error) {
 	} else {
 		store = cookie.NewStore([]byte(sessionSecretFlag))
 	}
+	r.Use(sessions.Sessions("session", store))
 	r.Use(func(ctx *gin.Context) {
 		id := ctx.GetHeader("X-Session-Id")
+		if id == "" {
+			id, _ = ctx.GetPostForm("_sessionID")
+		}
 		if id != "" {
 			ctx.Request.AddCookie(&http.Cookie{
 				Name:  "session",
@@ -60,7 +64,6 @@ func RegisterHandler(c *cli.Context, r *gin.Engine) (err error) {
 		}
 
 	})
-	r.Use(sessions.Sessions("session", store))
 	r.Use(csrf.Middleware(csrf.Options{
 		Secret: c.String(sessionSecretFlag),
 		ErrorFunc: func(c *gin.Context) {

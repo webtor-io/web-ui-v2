@@ -13,10 +13,8 @@ import (
 )
 
 const (
-	webHostFlag    = "host"
-	webPortFlag    = "port"
-	assetsPathFlag = "assets-path"
-	assetsHostFlag = "assets-host"
+	webHostFlag = "host"
+	webPortFlag = "port"
 )
 
 func RegisterFlags(f []cli.Flag) []cli.Flag {
@@ -32,19 +30,6 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 			Usage:  "http listening port",
 			Value:  8080,
 			EnvVar: "WEB_PORT",
-		},
-
-		cli.StringFlag{
-			Name:   assetsPathFlag,
-			Usage:  "assets path",
-			Value:  "./assets/dist",
-			EnvVar: "ASSETS_PATH",
-		},
-		cli.StringFlag{
-			Name:   assetsHostFlag,
-			Usage:  "assets host",
-			Value:  "",
-			EnvVar: "WEB_ASSETS_HOST",
 		},
 	)
 }
@@ -78,12 +63,7 @@ func (s *Web) Close() {
 }
 
 func New(c *cli.Context, r *gin.Engine) (*Web, error) {
-
 	r.UseRawPath = true
-	assetsPath := c.String(assetsPathFlag)
-	r.Static("/assets", assetsPath)
-	r.Static("/pub", "./pub")
-	r.StaticFile("/favicon.ico", assetsPath+"/favicon.ico")
 
 	return &Web{
 		host: c.String(webHostFlag),

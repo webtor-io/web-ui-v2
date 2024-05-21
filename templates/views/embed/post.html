@@ -5,6 +5,7 @@
             window._id = "{{ .Data.ID }}";
             window._CSRF = "{{ .CSRF }}";
             window._settings = {{ .Data.Settings | json }};
+            window._sessionID = "{{ .SessionID }}";
         </script>
         <script async src="{{ "embed/index.js" | asset }}"></script>
     </head>
