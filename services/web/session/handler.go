@@ -13,13 +13,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli"
 	csrf "github.com/utrack/gin-csrf"
-	"github.com/webtor-io/web-ui-v2/services"
 
 	log "github.com/sirupsen/logrus"
 )
 
 const (
 	sessionSecretFlag = "secret"
+	redisHostFlag     = "session-redis-host"
+	redisPortFlag     = "session-redis-port"
 )
 
 func RegisterFlags(f []cli.Flag) []cli.Flag {
@@ -29,6 +30,16 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 			Usage:  "session secret",
 			Value:  "secret123",
 			EnvVar: "SESSION_SECRET",
+		},
+		cli.StringFlag{
+			Name:   redisHostFlag,
+			Usage:  "session redis host",
+			EnvVar: "REDIS_MASTER_SERVICE_HOST, REDIS_SERVICE_HOST",
+		},
+		cli.IntFlag{
+			Name:   redisPortFlag,
+			Usage:  "session redis port",
+			EnvVar: "REDIS_MASTER_SERVICE_PORT, REDIS_SERVICE_PORT",
 		},
 	)
 }
@@ -40,8 +51,8 @@ type Session struct {
 
 func RegisterHandler(c *cli.Context, r *gin.Engine) (err error) {
 	var store sessions.Store
-	if c.String(services.RedisHostFlag) != "" && c.Int(services.RedisPortFlag) != 0 {
-		url := fmt.Sprintf("%v:%v", c.String(services.RedisHostFlag), c.Int(services.RedisPortFlag))
+	if c.String(redisHostFlag) != "" && c.Int(redisPortFlag) != 0 {
+		url := fmt.Sprintf("%v:%v", c.String(redisHostFlag), c.Int(redisPortFlag))
 		store, err = redis.NewStore(10, "tcp", url, "", []byte(sessionSecretFlag))
 		if err != nil {
 			return err

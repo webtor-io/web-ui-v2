@@ -7,7 +7,8 @@
        {{ if .Poster }}poster="{{ .Poster }}" {{ end }}
        {{ if $MediaProbe }}data-duration="{{ $MediaProbe | getDurationSec }}" {{ end }}
        controls
-       autoplay>
+       autoplay
+       data-settings="{{ $.Data.Settings | json }}">
     {{ range .Sources }}
     <source src="{{ .Src }}" type="{{ .Type }}">
     {{ end }}

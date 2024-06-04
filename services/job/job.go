@@ -47,6 +47,8 @@ type Job struct {
 	mux       sync.Mutex
 	cur       string
 	Context   context.Context
+	storage   Storage
+	main      bool
 }
 
 type LogItemLevel string
@@ -89,7 +91,7 @@ type LogItem struct {
 	Timestamp time.Time    `json:"timestamp,omitempty"`
 }
 
-func New(ctx context.Context, id string, queue string, runnable Runnable) *Job {
+func New(ctx context.Context, id string, queue string, runnable Runnable, storage Storage) *Job {
 	return &Job{
 		ID:        id,
 		Queue:     queue,
@@ -97,16 +99,35 @@ func New(ctx context.Context, id string, queue string, runnable Runnable) *Job {
 		Context:   ctx,
 		l:         []LogItem{},
 		observers: []*Observer{},
+		storage:   storage,
+		main:      true,
 	}
 }
 
-func (s *Job) Run(ctx context.Context) {
+func (s *Job) Run(ctx context.Context) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Errorf("job panic: %v", r)
 		}
 	}()
-	s.runnable.Run(s)
+	items, err := s.storage.Sub(ctx, s.ID)
+	if err != nil {
+		return err
+	}
+	if items != nil {
+		s.main = false
+		for i := range items {
+			err = s.log(i)
+			if err != nil {
+				return err
+			}
+		}
+		return
+	}
+	if s.runnable != nil {
+		return s.runnable.Run(s)
+	}
+	return
 }
 
 func (s *Job) ObserveLog() *Observer {
@@ -114,11 +135,14 @@ func (s *Job) ObserveLog() *Observer {
 	s.observers = append(s.observers, o)
 	for _, i := range s.l {
 		o.Push(i)
+		if i.Level == Close {
+			o.Close()
+		}
 	}
 	return o
 }
 
-func (s *Job) log(l LogItem) {
+func (s *Job) log(l LogItem) error {
 	l.Timestamp = time.Now()
 	s.l = append(s.l, l)
 	for _, o := range s.observers {
@@ -127,6 +151,13 @@ func (s *Job) log(l LogItem) {
 			o.Close()
 		}
 	}
+	if s.main {
+		err := s.storage.Pub(s.Context, s.ID, &l)
+		if err != nil {
+			return err
+		}
+	}
+
 	message := l.Message
 	if l.Level == Done {
 		message = "done"
@@ -154,6 +185,7 @@ func (s *Job) log(l LogItem) {
 		"Template": l.Template,
 		"Body":     l.Body,
 	}).Log(levelMap[l.Level], message)
+	return nil
 }
 
 func (s *Job) Info(message string) *Job {
@@ -264,15 +296,17 @@ func (s *Job) Close() {
 }
 
 type Jobs struct {
-	queue string
-	mux   sync.Mutex
-	jobs  map[string]*Job
+	queue   string
+	mux     sync.Mutex
+	jobs    map[string]*Job
+	storage Storage
 }
 
-func newJobs(queue string) *Jobs {
+func newJobs(queue string, storage Storage) *Jobs {
 	return &Jobs{
-		queue: queue,
-		jobs:  map[string]*Job{},
+		queue:   queue,
+		jobs:    map[string]*Job{},
+		storage: storage,
 	}
 }
 
@@ -282,10 +316,13 @@ func (s *Jobs) Enqueue(ctx context.Context, id string, r Runnable) *Job {
 	if _, ok := s.jobs[id]; ok {
 		return s.jobs[id]
 	}
-	j := New(ctx, id, s.queue, r)
+	j := New(ctx, id, s.queue, r, s.storage)
 	s.jobs[id] = j
 	go func() {
-		j.Run(ctx)
+		err := j.Run(ctx)
+		if err != nil {
+			log.WithError(err).Error("got job error")
+		}
 		j.Close()
 		<-ctx.Done()
 		s.mux.Lock()
@@ -295,42 +332,54 @@ func (s *Jobs) Enqueue(ctx context.Context, id string, r Runnable) *Job {
 	return j
 }
 
-func (s *Jobs) Log(id string) chan LogItem {
-	c := make(chan LogItem, 100)
-	if _, ok := s.jobs[id]; ok {
-		go func() {
-			o := s.jobs[id].ObserveLog()
-			for i := range o.C {
-				c <- i
-			}
+func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
+	c = make(chan LogItem)
+	j, ok := s.jobs[id]
+	if !ok {
+		var state *JobState
+		state, err = s.storage.GetState(ctx, id)
+		if err != nil || state == nil {
 			close(c)
-		}()
-	} else {
-		close(c)
+			return
+		}
+		jCtx := context.Background()
+		if (state.TTL) > 0 {
+			jCtx, _ = context.WithTimeout(context.Background(), state.TTL)
+		}
+		j = s.Enqueue(jCtx, id, nil)
 	}
-	return c
+	go func() {
+		o := j.ObserveLog()
+		for i := range o.C {
+			c <- i
+		}
+		close(c)
+	}()
+	return
 }
 
-type Queues map[string]*Jobs
+type Queues struct {
+	jobs    map[string]*Jobs
+	storage Storage
+}
 
 var queueMux sync.Mutex
 
-func NewQueues() *Queues {
-	return &Queues{}
-}
-
-func (s Queues) Get(name string) *Jobs {
-	return s[name]
+func NewQueues(storage Storage) *Queues {
+	return &Queues{
+		jobs:    map[string]*Jobs{},
+		storage: storage,
+	}
 }
 
 func (s Queues) GetOrCreate(name string) *Jobs {
 	queueMux.Lock()
 	defer queueMux.Unlock()
-	_, ok := s[name]
+	_, ok := s.jobs[name]
 	if !ok {
-		s[name] = newJobs(name)
+		s.jobs[name] = newJobs(name, s.storage)
 	}
-	return s[name]
+	return s.jobs[name]
 }
 
 type Runnable interface {

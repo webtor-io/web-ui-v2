@@ -133,10 +133,10 @@ export function initPlayer(target, ready) {
             manifestLoadingTimeOut: 1000 * 60 * 10,
             manifestLoadingMaxRetry: 100,
             manifestLoadingMaxRetryTimeout: 1000 * 10,
-            capLevelToPlayerSize: true,
-            capLevelOnFPSDrop: true,
-            progressive: true,
-            testBandwidth: false,
+            // capLevelToPlayerSize: true,
+            // capLevelOnFPSDrop: true,
+            // progressive: true,
+            // testBandwidth: false,
             path: '/assets/lib/hls.min.js',
         },
         error: function(e) {
@@ -173,7 +173,9 @@ export function initPlayer(target, ready) {
                     if (width) player.node.style.width = width;
                     if (height) player.node.style.height = height;
                 }
-                player.controlsEnabled = controls;
+                if (player) {
+                    player.controlsEnabled = controls;
+                }
                 if (!controls) {
                     document.querySelector('.mejs__controls').style.display = 'none';
                 }

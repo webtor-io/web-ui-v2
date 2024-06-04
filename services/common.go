@@ -16,8 +16,6 @@ var (
 	SMTPPassFlag   = "smtp-pass"
 	SMTPPortFlag   = "smtp-port"
 	SMTPSecureFlag = "smtp-secure"
-	RedisHostFlag  = "redis-host"
-	RedisPortFlag  = "redis-port"
 )
 
 func RegisterFlags(f []cli.Flag) []cli.Flag {
@@ -60,16 +58,6 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 			Name:   SMTPSecureFlag,
 			Usage:  "smtp secure",
 			EnvVar: "SMTP_SECURE",
-		},
-		cli.StringFlag{
-			Name:   RedisHostFlag,
-			Usage:  "redis host",
-			EnvVar: "REDIS_MASTER_SERVICE_HOST, REDIS_SERVICE_HOST",
-		},
-		cli.IntFlag{
-			Name:   RedisPortFlag,
-			Usage:  "redis port",
-			EnvVar: "REDIS_MASTER_SERVICE_PORT, REDIS_SERVICE_PORT",
 		},
 	)
 

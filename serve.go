@@ -50,6 +50,7 @@ func configureServe(c *cli.Command) {
 	c.Flags = claims.RegisterClientFlags(c.Flags)
 	c.Flags = sess.RegisterFlags(c.Flags)
 	c.Flags = sta.RegisterFlags(c.Flags)
+	c.Flags = cs.RegisterRedisClientFlags(c.Flags)
 	// c.Flags = cs.RegisterRedisClientFlags(c.Flags)
 }
 
@@ -102,8 +103,11 @@ func serve(c *cli.Context) error {
 	// Setting TemplateManager
 	tm := template.NewManager(re).WithHelper(helper).WithContextWrapper(w.NewContext)
 
+	// Setting Redis
+	redis := cs.NewRedisClient(c)
+
 	// Setting JobQueues
-	queues := job.NewQueues()
+	queues := job.NewQueues(job.NewStorage(redis))
 
 	// Setting JobHandler
 	jobs := wj.New(queues, tm, api)
