@@ -12,9 +12,6 @@ window.progress = {
     hide: hideProgress,
 };
 
-import '../../styles/style.css';
-
-
 import {bindAsync} from '../lib/async';
 
 function onLoad() {

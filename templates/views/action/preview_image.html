@@ -2,5 +2,5 @@
 {{ with .Data.ExportTag }}
 <img src="{{ .Src }}" alt="{{ .Alt }}">
 {{ end }}
-<script async src="{{ "action/image.js" | asset }}"></script>
+{{ "action/image.js" | asset }}
 {{ end }}

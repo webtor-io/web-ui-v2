@@ -1,5 +1,3 @@
-import '../../../styles/embed.css';
-
 function setHeight() {
     const width = document.body.offsetWidth;
     const height = width/16*9;

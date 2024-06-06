@@ -10,10 +10,12 @@
             window._sessionID = "{{ .SessionID }}";
             window._domain = "{{ domain }}";
         </script>
-        <script async src="{{ "layout.js" | asset }}"></script>
+        {{ "layout.js" | asset }}
+        {{ "baskerville.css" | asset }}
+        {{ "style.css" | asset }}
         {{- if useAuth }}
         <script>window._sessionExpired = {{ .User.Expired }};</script>
-        <script async src="{{ "auth.js" | asset }}"></script>
+        {{ "auth.js" | asset }}
         {{- end }}
         {{- template "head_extra" . }}
     </head>

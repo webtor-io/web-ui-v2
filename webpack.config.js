@@ -2,15 +2,16 @@ const path = require('path');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const fs = require('fs');
 
-function getEntries(path, prefix = '') {
+function getEntries(path, ext, prefix = '') {
     return new Promise((resolve) => {
         fs.readdir(path, { recursive: true }, (err, files) => {
             const entries = {};
             for (const f of files) {
-                if (f.endsWith('.js')) entries[prefix + f.replace('.js', '')] = path + '/' + f;
+                if (f.endsWith(ext)) entries[prefix + f.replace(ext, '')] = path + '/' + f;
             }
             resolve(entries);
         });
@@ -18,12 +19,14 @@ function getEntries(path, prefix = '') {
 }
 
 module.exports = async (env, options) => {
-    const entries = await getEntries('./assets/src/js/app');
+    const jsEntries = await getEntries('./assets/src/js/app', '.js');
+    const styleEntries = await getEntries('./assets/src/styles', '.css');
     const devMode = options.mode !== 'production';
-    const devEntries = devMode ? await getEntries('./assets/src/js/dev', 'dev/') : {};
+    const devEntries = devMode ? await getEntries('./assets/src/js/dev', '.js', 'dev/') : {};
     return {
         entry: {
-            ...entries,
+            ...jsEntries,
+            ...styleEntries,
             ...devEntries,
         },
         devtool: 'source-map',
@@ -69,7 +72,7 @@ module.exports = async (env, options) => {
                     test: /\.css$/i,
                     include: path.resolve(__dirname, 'assets', 'src'),
                     use: [
-                        'style-loader',
+                        devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
                         'css-loader',
                         'postcss-loader'
                     ],
@@ -77,6 +80,9 @@ module.exports = async (env, options) => {
             ]
         },
         plugins: [
+            new MiniCssExtractPlugin({
+                filename: '[name].css',
+            }),
             new CopyPlugin({
                 patterns: [
                     { from: 'node_modules/mediaelement/build/mejs-controls.svg', to: 'mejs-controls.svg' },

@@ -7,7 +7,8 @@
             window._settings = {{ .Data.Settings | json }};
             window._sessionID = "{{ .SessionID }}";
         </script>
-        <script async src="{{ "embed/index.js" | asset }}"></script>
+        {{ "embed.css" | asset }}
+        {{ "embed/index.js" | asset }}
     </head>
     <body data-iframe-height>
         {{ if .Err }}

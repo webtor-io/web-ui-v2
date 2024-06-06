@@ -104,17 +104,26 @@ func (s *Helper) Json(in any) template.JS {
 	return template.JS(out)
 }
 
-func (s *Helper) Asset(in string) string {
+func (s *Helper) Asset(in string) template.HTML {
+	if strings.HasSuffix(in, ".css") && s.Dev() {
+		in = strings.TrimSuffix(in, ".css") + ".js"
+	}
 	path := s.assetsHost + "/assets/" + in
 	if !s.Dev() {
 		h, _ := s.ah.Get(in)
 		path += "?" + h
 	}
-	return path
+	if strings.HasSuffix(in, ".js") {
+		return template.HTML(fmt.Sprintf("<script type=\"text/javascript\" async src=\"%v\"></script>", path))
+	}
+	return template.HTML(fmt.Sprintf("<link href=\"%v\" rel=\"stylesheet\"/>", path))
 }
 
-func (s *Helper) DevAsset(in string) string {
-	return s.assetsHost + "/assets/dev/" + in
+func (s *Helper) DevAsset(in string) template.HTML {
+	if s.Dev() {
+		return s.Asset("dev/" + in)
+	}
+	return template.HTML("")
 }
 
 type AssetHashes struct {
