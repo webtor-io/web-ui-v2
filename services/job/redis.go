@@ -2,33 +2,39 @@ package job
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
 type Redis struct {
-	cl redis.UniversalClient
+	cl     redis.UniversalClient
+	prefix string
 }
 
-func NewRedis(cl redis.UniversalClient) *Redis {
+func NewRedis(cl redis.UniversalClient, prefix string) *Redis {
 	return &Redis{
-		cl: cl,
+		prefix: prefix,
+		cl:     cl,
 	}
 }
 
 func (s *Redis) Pub(ctx context.Context, id string, l *LogItem) (err error) {
+	key := s.makeKey(id)
 	j, err := json.Marshal(l)
 	if err != nil {
 		return err
 	}
 
-	cmd := s.cl.RPush(ctx, id, j)
+	cmd := s.cl.RPush(ctx, key, j)
 	if cmd.Err() != nil {
 		return cmd.Err()
 	}
-	cmd = s.cl.Publish(ctx, id, string(j))
+	cmd = s.cl.Publish(ctx, key, string(j))
 	if cmd.Err() != nil {
 		return cmd.Err()
 	}
@@ -36,7 +42,8 @@ func (s *Redis) Pub(ctx context.Context, id string, l *LogItem) (err error) {
 }
 
 func (s *Redis) GetState(ctx context.Context, id string) (state *JobState, err error) {
-	ttlCmd := s.cl.TTL(ctx, id)
+	key := s.makeKey(id)
+	ttlCmd := s.cl.TTL(ctx, key)
 	if ttlCmd.Err() != nil {
 		return nil, ttlCmd.Err()
 	}
@@ -79,25 +86,26 @@ func (s *Redis) Sub(ctx context.Context, id string) (res chan LogItem, err error
 	return
 }
 func (s *Redis) subRaw(ctx context.Context, id string) (res chan string, err error) {
-	exCmd := s.cl.Exists(ctx, id)
+	key := s.makeKey(id)
+	exCmd := s.cl.Exists(ctx, key)
 	ex, err := exCmd.Result()
 	if err != nil {
 		return
 	}
 	if ex == 0 {
 		if deadline, ok := ctx.Deadline(); ok {
-			pCmd := s.cl.LPush(ctx, id, "")
+			pCmd := s.cl.LPush(ctx, key, "")
 			if err = pCmd.Err(); err != nil {
 				return
 			}
-			eCmd := s.cl.ExpireAt(ctx, id, deadline)
+			eCmd := s.cl.ExpireAt(ctx, key, deadline)
 			if err = eCmd.Err(); err != nil {
 				return
 			}
 		}
 		return
 	}
-	cmd := s.cl.LRange(ctx, id, 0, -1)
+	cmd := s.cl.LRange(ctx, key, 0, -1)
 	items, err := cmd.Result()
 	if err != nil {
 		return
@@ -110,13 +118,18 @@ func (s *Redis) subRaw(ctx context.Context, id string) (res chan string, err err
 			}
 			res <- i
 		}
-		ps := s.cl.Subscribe(ctx, id)
+		ps := s.cl.Subscribe(ctx, key)
 		for m := range ps.Channel() {
 			res <- m.Payload
 		}
 		close(res)
 	}()
 	return
+}
+
+func (s *Redis) makeKey(id string) string {
+	hash := md5.Sum([]byte(fmt.Sprintf("%s%s", s.prefix, id)))
+	return hex.EncodeToString(hash[:])
 }
 
 var _ Storage = (*Redis)(nil)

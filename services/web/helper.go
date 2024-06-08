@@ -105,18 +105,21 @@ func (s *Helper) Json(in any) template.JS {
 }
 
 func (s *Helper) Asset(in string) template.HTML {
-	if strings.HasSuffix(in, ".css") && s.Dev() {
+	t := ""
+	if strings.HasSuffix(in, ".js") {
+		t = "<script type=\"text/javascript\" async src=\"%v\"></script>"
+	} else if strings.HasSuffix(in, ".css") && s.Dev() {
 		in = strings.TrimSuffix(in, ".css") + ".js"
+		t = "<script type=\"text/javascript\" src=\"%v\"></script>"
+	} else if strings.HasSuffix(in, ".css") {
+		t = "<link href=\"%v\" rel=\"stylesheet\"/>"
 	}
 	path := s.assetsHost + "/assets/" + in
 	if !s.Dev() {
 		h, _ := s.ah.Get(in)
 		path += "?" + h
 	}
-	if strings.HasSuffix(in, ".js") {
-		return template.HTML(fmt.Sprintf("<script type=\"text/javascript\" async src=\"%v\"></script>", path))
-	}
-	return template.HTML(fmt.Sprintf("<link href=\"%v\" rel=\"stylesheet\"/>", path))
+	return template.HTML(fmt.Sprintf(t, path))
 }
 
 func (s *Helper) DevAsset(in string) template.HTML {

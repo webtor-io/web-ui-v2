@@ -34,10 +34,10 @@ func (s *NilStorage) GetState(ctx context.Context, id string) (state *JobState, 
 
 var _ Storage = (*NilStorage)(nil)
 
-func NewStorage(rc *cs.RedisClient) Storage {
+func NewStorage(rc *cs.RedisClient, prefix string) Storage {
 	cl := rc.Get()
 	if cl == nil {
 		return &NilStorage{}
 	}
-	return NewRedis(cl)
+	return NewRedis(cl, prefix)
 }

@@ -107,7 +107,7 @@ func serve(c *cli.Context) error {
 	redis := cs.NewRedisClient(c)
 
 	// Setting JobQueues
-	queues := job.NewQueues(job.NewStorage(redis))
+	queues := job.NewQueues(job.NewStorage(redis, gin.Mode()))
 
 	// Setting JobHandler
 	jobs := wj.New(queues, tm, api)
