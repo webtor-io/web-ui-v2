@@ -119,6 +119,12 @@ func (s *Redis) subRaw(ctx context.Context, id string) (res chan string, err err
 			res <- i
 		}
 		ps := s.cl.Subscribe(ctx, key)
+		defer ps.Close()
+
+		if err = ps.Ping(ctx); err != nil {
+			return
+		}
+
 		for m := range ps.Channel() {
 			res <- m.Payload
 		}
