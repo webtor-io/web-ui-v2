@@ -4,9 +4,11 @@
         <script>
             window._id = "{{ .Data.ID }}";
             window._CSRF = "{{ .CSRF }}";
-            window._settings = {{ .Data.Settings | json }};
+            window._embedSettings = {{ .Data.EmbedSettings | json }};
+            window._domainSettings = {{ .Data.DomainSettings | json }};
             window._sessionID = "{{ .SessionID }}";
         </script>
+        {{ template "embed_extra" . }}
         {{ "embed.css" | asset }}
         {{ "embed/index.js" | asset }}
     </head>
@@ -18,12 +20,15 @@
         </div>
         {{ end }} 
         {{ with .Data }}
+
+        {{ if has . "Job" }}
         <form class="hidden progress-alert progress-alert-block mb-10 closeable" async-progress-log="{{ .Job | makeJobLogURL }}">
             <div class="log-target"></div>
             <div class="pt-3 flex justify-end hidden alert-close-wrapper">
                 <a class="closeable-close close">got it!</a>
             </div>
         </form>
+        {{ end }}
         {{ end }}
     </body>
 </html>

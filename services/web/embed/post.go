@@ -3,23 +3,26 @@ package embed
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/webtor-io/web-ui-v2/services/api"
+	"github.com/webtor-io/web-ui-v2/services/embed"
 	"github.com/webtor-io/web-ui-v2/services/job"
 	"github.com/webtor-io/web-ui-v2/services/web/job/script"
 )
 
 type PostArgs struct {
-	ID       string
-	Settings *script.EmbedSettings
-	Claims   *api.Claims
+	ID            string
+	EmbedSettings *script.EmbedSettings
+	Claims        *api.Claims
 }
 
 type PostData struct {
-	ID       string
-	Settings *script.EmbedSettings
-	Job      *job.Job
+	ID             string
+	EmbedSettings  *script.EmbedSettings
+	DomainSettings *embed.DomainSettingsData
+	Job            *job.Job
 }
 
 func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
@@ -32,9 +35,9 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 	id := c.Query("id")
 
 	return &PostArgs{
-		ID:       id,
-		Settings: &settings,
-		Claims:   api.GetClaimsFromContext(c),
+		ID:            id,
+		EmbedSettings: &settings,
+		Claims:        api.GetClaimsFromContext(c),
 	}, nil
 
 }
@@ -48,8 +51,19 @@ func (s *Handler) post(c *gin.Context) {
 		return
 	}
 	pd.ID = args.ID
-	pd.Settings = args.Settings
-	job, err := s.jobs.Embed(c, args.Claims, args.Settings)
+	u, err := url.Parse(args.EmbedSettings.Referer)
+	if err != nil {
+		tpl.HTMLWithErr(err, http.StatusBadRequest, c, pd)
+		return
+	}
+	dsd, err := s.ds.Get(u.Hostname())
+	if err != nil {
+		tpl.HTMLWithErr(err, http.StatusBadRequest, c, pd)
+		return
+	}
+	pd.EmbedSettings = args.EmbedSettings
+	pd.DomainSettings = dsd
+	job, err := s.jobs.Embed(c, args.Claims, args.EmbedSettings)
 	if err != nil {
 		tpl.HTMLWithErr(err, http.StatusBadRequest, c, pd)
 		return

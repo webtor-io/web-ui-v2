@@ -2,7 +2,6 @@ import message from './message';
 const sha1 = require('sha1');
 message.send('init');
 const data = await message.receiveOnce('init');
-console.log(data);
 const c = await check();
 if (c) {
     initPlaceholder(data);
@@ -45,14 +44,17 @@ function initEmbed(data) {
     const csrf = document.createElement('input');
     csrf.setAttribute('name', '_csrf');
     csrf.setAttribute('value', window._CSRF);
+    csrf.setAttribute('type', 'hidden');
     form.append(csrf);
     const sessionID = document.createElement('input');
     sessionID.setAttribute('name', '_sessionID');
     sessionID.setAttribute('value', window._sessionID);
+    sessionID.setAttribute('type', 'hidden');
     form.append(sessionID);
     const i = document.createElement('input');
     i.setAttribute('name', 'settings');
     i.setAttribute('value', JSON.stringify(data));
+    i.setAttribute('type', 'hidden');
     form.append(i);
     document.body.append(form);
     // form.setAttribute('action', '/');

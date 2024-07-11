@@ -1,3 +1,5 @@
+import message from './message';
+
 function setHeight() {
     const width = document.body.offsetWidth;
     const height = width/16*9;
@@ -15,21 +17,25 @@ window.addEventListener('load', async () => {
             document.body.style.height = 'auto';
             progress.classList.add('hidden');
             el.classList.remove('hidden');
+            if (window._domainSettings.ads && window._injectAds) {
+                console.log('injecting ads');
+                message.send('inject', window._injectAds);
+            }
         }, {once: true});
         el.classList.add('hidden');
         el.classList.add('mb-5')
         document.body.appendChild(el);
         ev.render(el);
     });
-    if (!window._settings.height) {
+    if (!window._embedSettings.height) {
         const s = document.createElement('script');
         s.src = 'assets/lib/iframeResizer.contentWindow.min.js';
         document.body.appendChild(s);
     }
     setHeight();
     window.addEventListener('resize', setHeight);
-    if (window._settings.poster) {
-        document.body.style.backgroundImage = 'url(' + window._settings.poster + ')';
+    if (window._embedSettings.poster) {
+        document.body.style.backgroundImage = 'url(' + window._embedSettings.poster + ')';
         document.body.style.backgroundSize = 'cover';
     }
 });

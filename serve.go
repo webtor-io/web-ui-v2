@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/webtor-io/web-ui-v2/services/api"
 	"github.com/webtor-io/web-ui-v2/services/auth"
+	"github.com/webtor-io/web-ui-v2/services/embed"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -41,6 +42,7 @@ func makeServeCMD() cli.Command {
 }
 
 func configureServe(c *cli.Command) {
+	c.Flags = cs.RegisterPGFlags(c.Flags)
 	c.Flags = cs.RegisterProbeFlags(c.Flags)
 	c.Flags = api.RegisterFlags(c.Flags)
 	c.Flags = w.RegisterFlags(c.Flags)
@@ -55,6 +57,16 @@ func configureServe(c *cli.Command) {
 }
 
 func serve(c *cli.Context) error {
+	// Setting DB
+	pg := cs.NewPG(c)
+	defer pg.Close()
+
+	// Setting Migrations
+	m := cs.NewPGMigration(pg)
+	err := m.Run()
+	if err != nil {
+		return err
+	}
 
 	// Setting Redis
 	// redis := cs.NewRedisClient(c)
@@ -137,6 +149,9 @@ func serve(c *cli.Context) error {
 		uc.RegisterHandler(c, r)
 	}
 
+	// Setting DomainSettings
+	ds := embed.NewDomainSettings(pg, uc)
+
 	// Setting ApiClaimsHandler
 	api.RegisterHandler(c, r)
 
@@ -156,7 +171,7 @@ func serve(c *cli.Context) error {
 	wee.RegisterHandler(c, r, tm)
 
 	// Setting EmbedHandler
-	we.RegisterHandler(c, r, tm, jobs)
+	we.RegisterHandler(c, r, tm, jobs, ds)
 
 	// Render templates
 	err = tm.Init()

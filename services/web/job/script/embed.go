@@ -23,6 +23,7 @@ type EmbedSettings struct {
 	StreamSettings
 	Version string `json:"version"`
 	Magnet  string `json:"magnet"`
+	Referer string `json:"referer"`
 }
 
 type EmbedScript struct {

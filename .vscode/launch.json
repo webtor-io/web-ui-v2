@@ -22,7 +22,7 @@
             "mode": "auto",
             "program": "${workspaceRoot}",
             "args": ["serve", "--assets-host", "http://localhost:8082"],
-            "envFile": "${workspaceRoot}/.env"
+            "envFile": "${workspaceRoot}/.env",
         },
         {
             "name": "Launch Webpack Dev Server",
