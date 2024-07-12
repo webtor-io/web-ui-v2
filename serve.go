@@ -98,7 +98,10 @@ func serve(c *cli.Context) error {
 		return err
 	}
 
-	sta.RegisterHandler(c, r)
+	err = sta.RegisterHandler(c, r)
+	if err != nil {
+		return err
+	}
 
 	// Setting Migration from v1 to v2
 	wm.RegisterHandler(r)

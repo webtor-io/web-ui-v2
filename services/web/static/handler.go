@@ -1,6 +1,10 @@
 package static
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli"
 )
@@ -27,9 +31,25 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 	)
 }
 
-func RegisterHandler(c *cli.Context, r *gin.Engine) {
+func RegisterHandler(c *cli.Context, r *gin.Engine) error {
 	assetsPath := c.String(AssetsPathFlag)
+	pubPath := "pub"
+
 	r.Static("/assets", assetsPath)
-	r.Static("/pub", "./pub")
+	r.Static("/pub", pubPath)
+
+	err := filepath.Walk(pubPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			r.StaticFile(strings.TrimPrefix(path, pubPath), path)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
 	r.StaticFile("/favicon.ico", assetsPath+"/favicon.ico")
+	return nil
 }
