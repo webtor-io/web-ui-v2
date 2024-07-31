@@ -324,8 +324,11 @@ func (s *Api) doRequest(ctx context.Context, c *Claims, url string, method strin
 	}
 }
 
-func (s *Api) ExportResourceContent(ctx context.Context, c *Claims, infohash string, itemID string) (e *ra.ExportResponse, err error) {
+func (s *Api) ExportResourceContent(ctx context.Context, c *Claims, infohash string, itemID string, imdbID string) (e *ra.ExportResponse, err error) {
 	u := s.url + "/resource/" + infohash + "/export/" + itemID
+	if imdbID != "" {
+		u += "?imdb-id=" + imdbID
+	}
 	e = &ra.ExportResponse{}
 	err = s.doRequest(ctx, c, u, "GET", nil, e)
 	// if e.Source.ID == nil

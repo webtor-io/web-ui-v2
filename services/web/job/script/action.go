@@ -60,7 +60,7 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 	j.InProgress("retrieving stream url")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
-	resp, err := s.api.ExportResourceContent(ctx, claims, resourceID, itemID)
+	resp, err := s.api.ExportResourceContent(ctx, claims, resourceID, itemID, settings.ImdbID)
 	if err != nil {
 		return j.Error(err, "failed to retrieve for 5 minutes")
 	}
@@ -144,7 +144,7 @@ func (s *ActionScript) download(j *job.Job, claims *api.Claims, resourceID strin
 	j.InProgress("retrieving download link")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	resp, err := s.api.ExportResourceContent(ctx, claims, resourceID, itemID)
+	resp, err := s.api.ExportResourceContent(ctx, claims, resourceID, itemID, "")
 	if err != nil {
 		return j.Error(err, "failed to retrieve for 30 seconds")
 	}

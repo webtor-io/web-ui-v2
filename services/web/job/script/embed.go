@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"io"
+	"net/http"
 	"regexp"
 	"time"
 
@@ -21,9 +23,10 @@ var (
 
 type EmbedSettings struct {
 	StreamSettings
-	Version string `json:"version"`
-	Magnet  string `json:"magnet"`
-	Referer string `json:"referer"`
+	Version    string `json:"version"`
+	Magnet     string `json:"magnet"`
+	TorrentURL string `json:"torrentUrl"`
+	Referer    string `json:"referer"`
 }
 
 type EmbedScript struct {
@@ -33,9 +36,10 @@ type EmbedScript struct {
 	file     string
 	tb       template.Builder
 	c        *gin.Context
+	hCl      *http.Client
 }
 
-func NewEmbedScript(tb template.Builder, c *gin.Context, api *api.Api, claims *api.Claims, settings *EmbedSettings, file string) *EmbedScript {
+func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, claims *api.Claims, settings *EmbedSettings, file string) *EmbedScript {
 	return &EmbedScript{
 		api:      api,
 		claims:   claims,
@@ -43,13 +47,35 @@ func NewEmbedScript(tb template.Builder, c *gin.Context, api *api.Api, claims *a
 		file:     file,
 		tb:       tb,
 		c:        c,
+		hCl:      hCl,
 	}
 }
 
+func (s *EmbedScript) makeLoadArgs(settings *EmbedSettings) (*LoadArgs, error) {
+	la := &LoadArgs{}
+	if settings.TorrentURL != "" {
+		resp, err := s.hCl.Get(settings.TorrentURL)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		la.File = body
+	} else if settings.Magnet != "" {
+		la.Query = settings.Magnet
+	}
+	return la, nil
+}
+
 func (s *EmbedScript) Run(j *job.Job) (err error) {
-	ls, _, err := Load(s.api, s.claims, &LoadArgs{
-		Query: s.settings.Magnet,
-	})
+	args, err := s.makeLoadArgs(s.settings)
+	if err != nil {
+		return
+	}
+	ls, _, err := Load(s.api, s.claims, args)
 	if err != nil {
 		return err
 	}
@@ -116,8 +142,8 @@ func (s *EmbedScript) findBestItem(l *ra.ListResponse) *ra.ListItem {
 	return nil
 }
 
-func Embed(tb template.Builder, c *gin.Context, api *api.Api, claims *api.Claims, settings *EmbedSettings, file string) (r job.Runnable, hash string, err error) {
+func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, claims *api.Claims, settings *EmbedSettings, file string) (r job.Runnable, hash string, err error) {
 	hash = fmt.Sprintf("%x", sha1.Sum([]byte(claims.Role+"/"+fmt.Sprintf("%+v", settings))))
-	r = NewEmbedScript(tb, c, api, claims, settings, file)
+	r = NewEmbedScript(tb, hCl, c, api, claims, settings, file)
 	return
 }

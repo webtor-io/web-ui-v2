@@ -53,22 +53,24 @@ func (s *Helper) Has(obj any, fieldName string) bool {
 }
 
 type Helper struct {
-	assetsHost string
-	assetsPath string
-	useAuth    bool
-	domain     string
-	demoMagnet string
-	ah         *AssetHashes
+	assetsHost  string
+	assetsPath  string
+	useAuth     bool
+	domain      string
+	demoMagnet  string
+	demoTorrent string
+	ah          *AssetHashes
 }
 
 func NewHelper(c *cli.Context) *Helper {
 	return &Helper{
-		demoMagnet: c.String(services.DemoMagnetFlag),
-		assetsHost: c.String(static.AssetsHostFlag),
-		assetsPath: c.String(static.AssetsPathFlag),
-		useAuth:    c.Bool(auth.UseAuthFlag),
-		domain:     c.String(services.DomainFlag),
-		ah:         NewAssetHashes(c.String(static.AssetsPathFlag)),
+		demoMagnet:  c.String(services.DemoMagnetFlag),
+		demoTorrent: c.String(services.DemoTorrentFlag),
+		assetsHost:  c.String(static.AssetsHostFlag),
+		assetsPath:  c.String(static.AssetsPathFlag),
+		useAuth:     c.Bool(auth.UseAuthFlag),
+		domain:      c.String(services.DomainFlag),
+		ah:          NewAssetHashes(c.String(static.AssetsPathFlag)),
 	}
 }
 
@@ -89,6 +91,10 @@ func (s *Helper) Domain() string {
 
 func (s *Helper) DemoMagnet() template.URL {
 	return template.URL(s.demoMagnet)
+}
+
+func (s *Helper) DemoTorrent() template.URL {
+	return template.URL(s.demoTorrent)
 }
 
 func (s *Helper) IsDemoMagnet(m string) bool {

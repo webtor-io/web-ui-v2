@@ -174,7 +174,7 @@ func serve(c *cli.Context) error {
 	wee.RegisterHandler(c, r, tm)
 
 	// Setting EmbedHandler
-	we.RegisterHandler(c, r, tm, jobs, ds)
+	we.RegisterHandler(c, cl, r, tm, jobs, ds)
 
 	// Render templates
 	err = tm.Init()
