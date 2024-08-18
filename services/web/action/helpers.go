@@ -2,12 +2,12 @@ package action
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"strconv"
 
 	ra "github.com/webtor-io/rest-api/services"
 	"github.com/webtor-io/web-ui-v2/services/api"
 	m "github.com/webtor-io/web-ui-v2/services/models"
-	"github.com/webtor-io/web-ui-v2/services/web/job/script"
 	"golang.org/x/text/language"
 )
 
@@ -33,7 +33,7 @@ func (s *Helper) GetDurationSec(mp *api.MediaProbe) string {
 	return mp.Format.Duration
 }
 
-func (s *Helper) HasControls(settings *script.StreamSettings) bool {
+func (s *Helper) HasControls(settings *m.StreamSettings) bool {
 	if settings.Controls == nil {
 		return true
 	}
@@ -78,18 +78,16 @@ func (s *Helper) GetAudioTracks(ud *m.VideoStreamUserData, mp *api.MediaProbe) [
 	return s.selectListItem(s.canoninizeSrcLangs(res), ud.AudioID, ud)
 }
 
+type langIndex map[language.Tag]int
+
 func (s *Helper) selectListItem(lis []ListItem, id string, ud *m.VideoStreamUserData) []ListItem {
 	if len(lis) == 0 {
 		return lis
 	}
-	var langs []language.Tag
 	for i, li := range lis {
 		if li.ID == id {
 			lis[i].Default = true
 			return lis
-		}
-		if t, err := language.Parse(li.SrcLang); err == nil {
-			langs = append(langs, t)
 		}
 	}
 	for _, li := range lis {
@@ -97,19 +95,42 @@ func (s *Helper) selectListItem(lis []ListItem, id string, ud *m.VideoStreamUser
 			return lis
 		}
 	}
+
+	index, err := s.matchLang(lis, ud)
+	if err != nil {
+		lis[0].Default = true
+		return lis
+	}
+	lis[index].Default = true
+	return lis
+}
+
+func (s *Helper) matchLang(lis []ListItem, ud *m.VideoStreamUserData) (lIndex int, err error) {
+	lx := langIndex{}
+	for i, li := range lis {
+		if t, err := language.Parse(li.SrcLang); err == nil {
+			if _, ok := lx[t]; !ok {
+				lx[t] = i
+			}
+		}
+	}
+	langs := []language.Tag{}
+	for t, _ := range lx {
+		langs = append(langs, t)
+	}
 	matcher := language.NewMatcher(langs)
 	_, index, confidence := matcher.Match(ud.AcceptLangTags...)
 	if confidence > language.No {
-		lis[index].Default = true
-		return lis
+		lIndex = lx[langs[index]]
+		return
 	}
 	_, index, confidence = matcher.Match(ud.FallbackLangTag)
 	if confidence > language.No {
-		lis[index].Default = true
-		return lis
+		lIndex = lx[langs[index]]
+		return
 	}
-	lis[0].Default = true
-	return lis
+	err = errors.New("no accept lang")
+	return
 }
 
 func (s *Helper) canoninizeSrcLangs(lis []ListItem) []ListItem {

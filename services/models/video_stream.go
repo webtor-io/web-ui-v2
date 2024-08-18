@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/text/language"
@@ -15,13 +14,15 @@ type VideoStreamUserData struct {
 	AudioID         string
 	AcceptLangTags  []language.Tag
 	FallbackLangTag language.Tag
+	Settings        *StreamSettings
 }
 
-func NewVideoStreamUserData(resourceID string, itemID string) *VideoStreamUserData {
+func NewVideoStreamUserData(resourceID string, itemID string, settings *StreamSettings) *VideoStreamUserData {
 	return &VideoStreamUserData{
 		ResourceID:      resourceID,
 		ItemID:          itemID,
 		FallbackLangTag: language.English,
+		Settings:        settings,
 	}
 }
 
@@ -37,6 +38,9 @@ func (s *VideoStreamUserData) FetchSessionData(c *gin.Context) {
 		audioID = session.Get(audioKey).(string)
 	}
 	accept := c.GetHeader("Accept-Language")
+	if s.Settings.UserLang != "" {
+		accept = s.Settings.UserLang
+	}
 	tags, _, err := language.ParseAcceptLanguage(accept)
 	if err != nil {
 		tags = []language.Tag{language.English}

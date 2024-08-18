@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"github.com/webtor-io/web-ui-v2/services/models"
 	"io"
 	"net/http"
 	"regexp"
@@ -21,25 +22,17 @@ var (
 	sampleReg = regexp.MustCompile("/sample/i")
 )
 
-type EmbedSettings struct {
-	StreamSettings
-	Version    string `json:"version"`
-	Magnet     string `json:"magnet"`
-	TorrentURL string `json:"torrentUrl"`
-	Referer    string `json:"referer"`
-}
-
 type EmbedScript struct {
 	api      *api.Api
 	claims   *api.Claims
-	settings *EmbedSettings
+	settings *models.EmbedSettings
 	file     string
 	tb       template.Builder
 	c        *gin.Context
 	hCl      *http.Client
 }
 
-func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, claims *api.Claims, settings *EmbedSettings, file string) *EmbedScript {
+func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, claims *api.Claims, settings *models.EmbedSettings, file string) *EmbedScript {
 	return &EmbedScript{
 		api:      api,
 		claims:   claims,
@@ -51,7 +44,7 @@ func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *
 	}
 }
 
-func (s *EmbedScript) makeLoadArgs(settings *EmbedSettings) (*LoadArgs, error) {
+func (s *EmbedScript) makeLoadArgs(settings *models.EmbedSettings) (*LoadArgs, error) {
 	la := &LoadArgs{}
 	if settings.TorrentURL != "" {
 		resp, err := s.hCl.Get(settings.TorrentURL)
@@ -142,7 +135,7 @@ func (s *EmbedScript) findBestItem(l *ra.ListResponse) *ra.ListItem {
 	return nil
 }
 
-func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, claims *api.Claims, settings *EmbedSettings, file string) (r job.Runnable, hash string, err error) {
+func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, claims *api.Claims, settings *models.EmbedSettings, file string) (r job.Runnable, hash string, err error) {
 	hash = fmt.Sprintf("%x", sha1.Sum([]byte(claims.Role+"/"+fmt.Sprintf("%+v", settings))))
 	r = NewEmbedScript(tb, hCl, c, api, claims, settings, file)
 	return

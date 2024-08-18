@@ -14,7 +14,6 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/job"
 	"github.com/webtor-io/web-ui-v2/services/template"
 	wj "github.com/webtor-io/web-ui-v2/services/web/job"
-	"github.com/webtor-io/web-ui-v2/services/web/job/script"
 )
 
 type PostArgs struct {
@@ -65,7 +64,7 @@ func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager, jobs *
 			c.Error(err)
 			return
 		}
-		vsud := m.NewVideoStreamUserData(a.ResourceID, a.ItemID)
+		vsud := m.NewVideoStreamUserData(a.ResourceID, a.ItemID, nil)
 		vsud.SubtitleID = a.ID
 		if err := vsud.UpdateSessionData(c); err != nil {
 			c.Error(err)
@@ -77,7 +76,7 @@ func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager, jobs *
 			c.Error(err)
 			return
 		}
-		vsud := m.NewVideoStreamUserData(a.ResourceID, a.ItemID)
+		vsud := m.NewVideoStreamUserData(a.ResourceID, a.ItemID, nil)
 		vsud.AudioID = a.ID
 		if err := vsud.UpdateSessionData(c); err != nil {
 			c.Error(err)
@@ -117,7 +116,7 @@ func (s *Handler) post(c *gin.Context, action string) {
 	}
 	d.Args = args
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Minute)
-	job, err = s.jobs.Action(ctx, c, args.Claims, args.ResourceID, args.ItemID, action, &script.StreamSettings{})
+	job, err = s.jobs.Action(ctx, c, args.Claims, args.ResourceID, args.ItemID, action, &m.StreamSettings{})
 	if err != nil {
 		postTpl.HTMLWithErr(errors.Wrap(err, "failed to start downloading"), http.StatusBadRequest, c, d)
 		return

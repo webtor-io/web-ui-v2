@@ -2,6 +2,7 @@ package embed
 
 import (
 	"encoding/json"
+	"github.com/webtor-io/web-ui-v2/services/models"
 	"net/http"
 	"net/url"
 
@@ -9,25 +10,24 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/api"
 	"github.com/webtor-io/web-ui-v2/services/embed"
 	"github.com/webtor-io/web-ui-v2/services/job"
-	"github.com/webtor-io/web-ui-v2/services/web/job/script"
 )
 
 type PostArgs struct {
 	ID            string
-	EmbedSettings *script.EmbedSettings
+	EmbedSettings *models.EmbedSettings
 	Claims        *api.Claims
 }
 
 type PostData struct {
 	ID             string
-	EmbedSettings  *script.EmbedSettings
+	EmbedSettings  *models.EmbedSettings
 	DomainSettings *embed.DomainSettingsData
 	Job            *job.Job
 }
 
 func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 	rawSettings := c.PostForm("settings")
-	var settings script.EmbedSettings
+	var settings models.EmbedSettings
 	err := json.Unmarshal([]byte(rawSettings), &settings)
 	if err != nil {
 		return nil, err

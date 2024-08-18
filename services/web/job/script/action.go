@@ -24,35 +24,11 @@ type StreamContent struct {
 	MediaProbe          *api.MediaProbe
 	OpenSubtitles       []api.OpenSubtitleTrack
 	VideoStreamUserData *m.VideoStreamUserData
-	Settings            *StreamSettings
+	Settings            *m.StreamSettings
 	ExternalData        *m.ExternalData
 }
 
-type SettingsTrack struct {
-	Src     string  `json:"src"`
-	SrcLang string  `json:"srclang,omitempty"`
-	Label   string  `json:"label,omitempty"`
-	Default *string `json:"default,omitempty"`
-}
-
-type StreamSettings struct {
-	BaseURL   string          `json:"baseUrl"`
-	Width     string          `json:"width"`
-	Height    string          `json:"height"`
-	Mode      string          `json:"mode"`
-	Subtitles []SettingsTrack `json:"subtitles"`
-	Poster    string          `json:"poster"`
-	Header    bool            `json:"header"`
-	Title     string          `json:"title"`
-	ImdbID    string          `json:"imdbId"`
-	Lang      string          `json:"lang"`
-	I18n      struct{}        `json:"i18n"`
-	Features  map[string]bool `json:"features"`
-	El        struct{}        `json:"el"`
-	Controls  *bool           `json:"controls"`
-}
-
-func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, template string, settings *StreamSettings) (err error) {
+func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, template string, settings *m.StreamSettings) (err error) {
 	sc := &StreamContent{
 		Settings:     settings,
 		ExternalData: &m.ExternalData{},
@@ -86,7 +62,7 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 		}
 	}
 	if resp.Source.MediaFormat == ra.Video {
-		vsud := m.NewVideoStreamUserData(resourceID, itemID)
+		vsud := m.NewVideoStreamUserData(resourceID, itemID, settings)
 		vsud.FetchSessionData(c)
 		sc.VideoStreamUserData = vsud
 		j.InProgress("loading OpenSubtitles")
@@ -117,15 +93,15 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 	return
 }
 
-func (s *ActionScript) previewImage(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *StreamSettings) error {
+func (s *ActionScript) previewImage(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings) error {
 	return s.streamContent(j, c, claims, resourceID, itemID, "preview_image", settings)
 }
 
-func (s *ActionScript) streamAudio(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *StreamSettings) error {
+func (s *ActionScript) streamAudio(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings) error {
 	return s.streamContent(j, c, claims, resourceID, itemID, "stream_audio", settings)
 }
 
-func (s *ActionScript) streamVideo(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *StreamSettings) error {
+func (s *ActionScript) streamVideo(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings) error {
 	return s.streamContent(j, c, claims, resourceID, itemID, "stream_video", settings)
 }
 
@@ -225,7 +201,7 @@ type ActionScript struct {
 	itemId     string
 	action     string
 	tb         template.Builder
-	settings   *StreamSettings
+	settings   *m.StreamSettings
 }
 
 func (s *ActionScript) Run(j *job.Job) (err error) {
@@ -242,7 +218,7 @@ func (s *ActionScript) Run(j *job.Job) (err error) {
 	return
 }
 
-func Action(tb template.Builder, api *api.Api, claims *api.Claims, c *gin.Context, resourceID string, itemID string, action string, settings *StreamSettings) (r job.Runnable, id string) {
+func Action(tb template.Builder, api *api.Api, claims *api.Claims, c *gin.Context, resourceID string, itemID string, action string, settings *m.StreamSettings) (r job.Runnable, id string) {
 	id = fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+claims.Role+"/"+fmt.Sprintf("%+v", settings))))
 	return &ActionScript{
 		tb:         tb,
