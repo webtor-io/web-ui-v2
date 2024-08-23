@@ -6,4 +6,7 @@ type EmbedSettings struct {
 	Magnet     string `json:"magnet"`
 	TorrentURL string `json:"torrentUrl"`
 	Referer    string `json:"referer"`
+	PWD        string `json:"pwd"`
+	File       string `json:"file"`
+	Path       string `json:"path"`
 }

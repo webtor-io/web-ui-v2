@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -77,7 +78,7 @@ func (s *EmbedScript) Run(j *job.Job) (err error) {
 		return err
 	}
 	id := j.Context.Value("respID").(string)
-	i, err := s.getBestItem(j, id)
+	i, err := s.getBestItem(j, id, s.settings)
 	if err != nil {
 		return err
 	}
@@ -95,19 +96,33 @@ func (s *EmbedScript) Run(j *job.Job) (err error) {
 	return
 }
 
-func (s *EmbedScript) getBestItem(j *job.Job, id string) (i *ra.ListItem, err error) {
+func (s *EmbedScript) getBestItem(j *job.Job, id string, settings *models.EmbedSettings) (i *ra.ListItem, err error) {
 	j.InProgress("searching for stream content")
 	ctx, cancel := context.WithTimeout(j.Context, 10*time.Second)
 	defer cancel()
+	pwd := settings.PWD
+	file := settings.File
+	if settings.Path != "" {
+		parts := strings.Split(settings.Path, "/")
+		file = parts[len(parts)-1]
+		pwd = strings.Join(parts[:len(parts)-1], "/")
+	}
 	l, err := s.api.ListResourceContent(ctx, s.claims, id, &api.ListResourceContentArgs{
+		Path:   pwd,
 		Output: api.OutputTree,
 	})
 	if err != nil {
 		return nil, j.Error(err, "failed to list resource content")
 	}
-	i = s.findBestItem(l)
-	if err != nil {
-		return nil, j.Error(err, "failed to find stream content")
+	if file != "" {
+		for _, f := range l.Items {
+			if f.Name == file {
+				i = &f
+				break
+			}
+		}
+	} else {
+		i = s.findBestItem(l)
 	}
 	if i == nil {
 		return nil, j.Error(err, "failed to find stream content")

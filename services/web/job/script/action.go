@@ -28,7 +28,7 @@ type StreamContent struct {
 	ExternalData        *m.ExternalData
 }
 
-func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, template string, settings *m.StreamSettings) (err error) {
+func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, template string, settings *m.StreamSettings, vsud *m.VideoStreamUserData) (err error) {
 	sc := &StreamContent{
 		Settings:     settings,
 		ExternalData: &m.ExternalData{},
@@ -62,8 +62,6 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 		}
 	}
 	if resp.Source.MediaFormat == ra.Video {
-		vsud := m.NewVideoStreamUserData(resourceID, itemID, settings)
-		vsud.FetchSessionData(c)
 		sc.VideoStreamUserData = vsud
 		j.InProgress("loading OpenSubtitles")
 		subs, err := s.api.GetOpenSubtitles(ctx, resp.ExportItems["subtitles"].URL)
@@ -93,16 +91,16 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 	return
 }
 
-func (s *ActionScript) previewImage(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings) error {
-	return s.streamContent(j, c, claims, resourceID, itemID, "preview_image", settings)
+func (s *ActionScript) previewImage(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings, vsud *m.VideoStreamUserData) error {
+	return s.streamContent(j, c, claims, resourceID, itemID, "preview_image", settings, vsud)
 }
 
-func (s *ActionScript) streamAudio(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings) error {
-	return s.streamContent(j, c, claims, resourceID, itemID, "stream_audio", settings)
+func (s *ActionScript) streamAudio(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings, vsud *m.VideoStreamUserData) error {
+	return s.streamContent(j, c, claims, resourceID, itemID, "stream_audio", settings, vsud)
 }
 
-func (s *ActionScript) streamVideo(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings) error {
-	return s.streamContent(j, c, claims, resourceID, itemID, "stream_video", settings)
+func (s *ActionScript) streamVideo(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings, vsud *m.VideoStreamUserData) error {
+	return s.streamContent(j, c, claims, resourceID, itemID, "stream_video", settings, vsud)
 }
 
 func (s *ActionScript) renderActionTemplate(j *job.Job, c *gin.Context, sc *StreamContent, name string) error {
@@ -202,6 +200,7 @@ type ActionScript struct {
 	action     string
 	tb         template.Builder
 	settings   *m.StreamSettings
+	vsud       *m.VideoStreamUserData
 }
 
 func (s *ActionScript) Run(j *job.Job) (err error) {
@@ -209,17 +208,21 @@ func (s *ActionScript) Run(j *job.Job) (err error) {
 	case "download":
 		return s.download(j, s.claims, s.resourceId, s.itemId)
 	case "preview-image":
-		return s.previewImage(j, s.c, s.claims, s.resourceId, s.itemId, s.settings)
+		return s.previewImage(j, s.c, s.claims, s.resourceId, s.itemId, s.settings, s.vsud)
 	case "stream-audio":
-		return s.streamAudio(j, s.c, s.claims, s.resourceId, s.itemId, s.settings)
+		return s.streamAudio(j, s.c, s.claims, s.resourceId, s.itemId, s.settings, s.vsud)
 	case "stream-video":
-		return s.streamVideo(j, s.c, s.claims, s.resourceId, s.itemId, s.settings)
+		return s.streamVideo(j, s.c, s.claims, s.resourceId, s.itemId, s.settings, s.vsud)
 	}
 	return
 }
 
 func Action(tb template.Builder, api *api.Api, claims *api.Claims, c *gin.Context, resourceID string, itemID string, action string, settings *m.StreamSettings) (r job.Runnable, id string) {
-	id = fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+claims.Role+"/"+fmt.Sprintf("%+v", settings))))
+	vsud := m.NewVideoStreamUserData(resourceID, itemID, settings)
+	vsud.FetchSessionData(c)
+	vsudID := vsud.AudioID + "/" + vsud.SubtitleID + "/" + fmt.Sprintf("%+v", vsud.AcceptLangTags)
+	settingsID := fmt.Sprintf("%+v", settings)
+	id = fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+claims.Role+"/"+settingsID+"/"+vsudID)))
 	return &ActionScript{
 		tb:         tb,
 		api:        api,
@@ -229,5 +232,6 @@ func Action(tb template.Builder, api *api.Api, claims *api.Claims, c *gin.Contex
 		itemId:     itemID,
 		action:     action,
 		settings:   settings,
+		vsud:       vsud,
 	}, id
 }
