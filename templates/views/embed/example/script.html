@@ -1,0 +1,11 @@
+{{ define "main" }}
+<div id="player" class="webtor" />
+<script>
+    window.webtor = window.webtor || [];
+    window.webtor.push({
+        id: 'player',
+        magnet: '{{ demoMagnet }}',
+        baseUrl: '{{ domain }}',
+    });
+</script>
+{{ end}}
