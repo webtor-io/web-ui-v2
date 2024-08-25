@@ -14,8 +14,8 @@ func (s *Handler) Load(claims *api.Claims, args *script.LoadArgs) (j *job.Job, e
 	if err != nil {
 		return
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Minute)
-	j = s.q.GetOrCreate("load").Enqueue(ctx, hash, job.NewScript(func(j *job.Job) (err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	j = s.q.GetOrCreate("load").Enqueue(ctx, cancel, hash, job.NewScript(func(j *job.Job) (err error) {
 		err = ls.Run(j)
 		if err != nil {
 			return

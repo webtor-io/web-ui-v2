@@ -114,8 +114,8 @@ func (s *Helper) matchLang(lis []ListItem, ud *m.VideoStreamUserData) (lIndex in
 			}
 		}
 	}
-	langs := []language.Tag{}
-	for t, _ := range lx {
+	var langs []language.Tag
+	for t := range lx {
 		langs = append(langs, t)
 	}
 	matcher := language.NewMatcher(langs)

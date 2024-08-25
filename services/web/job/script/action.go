@@ -104,13 +104,13 @@ func (s *ActionScript) streamVideo(j *job.Job, c *gin.Context, claims *api.Claim
 }
 
 func (s *ActionScript) renderActionTemplate(j *job.Job, c *gin.Context, sc *StreamContent, name string) error {
-	template := "action/" + name
-	tpl := s.tb.Build(template).WithLayoutBody(`{{ template "main" . }}`)
+	actionTemplate := "action/" + name
+	tpl := s.tb.Build(actionTemplate).WithLayoutBody(`{{ template "main" . }}`)
 	str, err := tpl.ToString(c, sc)
 	if err != nil {
 		return err
 	}
-	j.RenderTemplate(template, strings.TrimSpace(str))
+	j.RenderTemplate(actionTemplate, strings.TrimSpace(str))
 	return nil
 }
 
@@ -171,7 +171,9 @@ func (s *ActionScript) warmUp(j *job.Job, m string, u string, su string, size in
 	if err != nil {
 		return j.Error(err, "failed to start download")
 	}
-	defer b.Close()
+	defer func(b io.ReadCloser) {
+		_ = b.Close()
+	}(b)
 
 	_, err = io.Copy(io.Discard, b)
 
@@ -180,7 +182,9 @@ func (s *ActionScript) warmUp(j *job.Job, m string, u string, su string, size in
 		if err != nil {
 			return j.Error(err, "failed to start download")
 		}
-		defer b2.Close()
+		defer func(b2 io.ReadCloser) {
+			_ = b2.Close()
+		}(b2)
 		_, err = io.Copy(io.Discard, b2)
 	}
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"github.com/pkg/errors"
 	"strings"
 	"time"
 
@@ -43,6 +44,9 @@ func (s *LoadScript) Run(j *job.Job) (err error) {
 	if err != nil {
 		return err
 	}
+	if res == nil {
+		return errors.New("resource not found")
+	}
 	j.Context = context.WithValue(j.Context, "respID", res.ID)
 	return
 }
@@ -61,11 +65,11 @@ func (s *LoadScript) storeFile(j *job.Job, file []byte) (res *ra.ResourceRespons
 
 func (s *LoadScript) storeQuery(j *job.Job, query string) (res *ra.ResourceResponse, err error) {
 	j.InProgress("checking magnet")
-	sha1 := services.SHA1R.Find([]byte(query))
-	if sha1 == nil {
+	sha1Hash := services.SHA1R.Find([]byte(query))
+	if sha1Hash == nil {
 		return nil, j.Error(err, "wrong resource provided")
 	}
-	hash := strings.ToLower(string(sha1))
+	hash := strings.ToLower(string(sha1Hash))
 	if !strings.HasPrefix(query, "magnet:") {
 		query = "magnet:?xt=urn:btih:" + hash
 	}

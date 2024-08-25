@@ -189,7 +189,7 @@ func (s *Job) log(l LogItem) error {
 }
 
 func (s *Job) Info(message string) *Job {
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level:   Info,
 		Message: message,
 	})
@@ -198,7 +198,7 @@ func (s *Job) Info(message string) *Job {
 
 func (s *Job) Warn(err error, message string) *Job {
 	log.WithError(err).Error("got job warning")
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level:   Warn,
 		Message: message,
 		Tag:     s.cur,
@@ -208,7 +208,7 @@ func (s *Job) Warn(err error, message string) *Job {
 
 func (s *Job) Error(err error, message string) error {
 	log.WithError(err).Error("got job error")
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level:   Error,
 		Message: message,
 		Tag:     s.cur,
@@ -218,7 +218,7 @@ func (s *Job) Error(err error, message string) error {
 
 func (s *Job) InProgress(message string) *Job {
 	s.cur = message
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level:   InProgress,
 		Message: message,
 		Tag:     s.cur,
@@ -227,7 +227,7 @@ func (s *Job) InProgress(message string) *Job {
 }
 
 func (s *Job) StatusUpdate(message string) *Job {
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level:   StatusUpdate,
 		Message: message,
 		Tag:     s.cur,
@@ -236,14 +236,14 @@ func (s *Job) StatusUpdate(message string) *Job {
 }
 
 func (s *Job) Done() *Job {
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level: Done,
 		Tag:   s.cur,
 	})
 	return s
 }
 func (s *Job) Finish() *Job {
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level:   Finish,
 		Message: "success!",
 	})
@@ -251,7 +251,7 @@ func (s *Job) Finish() *Job {
 }
 
 func (s *Job) Download(url string) *Job {
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level:    Download,
 		Location: url,
 	})
@@ -259,7 +259,7 @@ func (s *Job) Download(url string) *Job {
 }
 
 func (s *Job) Redirect(url string) *Job {
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level:    Redirect,
 		Location: url,
 	})
@@ -267,7 +267,7 @@ func (s *Job) Redirect(url string) *Job {
 }
 
 func (s *Job) RenderTemplate(name string, body string) *Job {
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level:    RenderTemplate,
 		Template: name,
 		Body:     body,
@@ -276,7 +276,7 @@ func (s *Job) RenderTemplate(name string, body string) *Job {
 }
 
 func (s *Job) FinishWithMessage(m string) *Job {
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level:   Finish,
 		Message: m,
 	})
@@ -290,7 +290,7 @@ func (s *Job) Close() {
 		return
 	}
 	s.closed = true
-	s.log(LogItem{
+	_ = s.log(LogItem{
 		Level: Close,
 	})
 }
@@ -310,7 +310,7 @@ func newJobs(queue string, storage Storage) *Jobs {
 	}
 }
 
-func (s *Jobs) Enqueue(ctx context.Context, id string, r Runnable) *Job {
+func (s *Jobs) Enqueue(ctx context.Context, cancel context.CancelFunc, id string, r Runnable) *Job {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	if _, ok := s.jobs[id]; ok {
@@ -319,6 +319,7 @@ func (s *Jobs) Enqueue(ctx context.Context, id string, r Runnable) *Job {
 	j := New(ctx, id, s.queue, r, s.storage)
 	s.jobs[id] = j
 	go func() {
+		defer cancel()
 		err := j.Run(ctx)
 		if err != nil {
 			log.WithError(err).Error("got job error")
@@ -336,17 +337,14 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 	c = make(chan LogItem)
 	j, ok := s.jobs[id]
 	if !ok {
-		var state *JobState
+		var state *State
 		state, err = s.storage.GetState(ctx, id)
 		if err != nil || state == nil {
 			close(c)
 			return
 		}
-		jCtx := context.Background()
-		if (state.TTL) > 0 {
-			jCtx, _ = context.WithTimeout(context.Background(), state.TTL)
-		}
-		j = s.Enqueue(jCtx, id, nil)
+		jCtx, cancel := context.WithTimeout(context.Background(), state.TTL)
+		j = s.Enqueue(jCtx, cancel, id, nil)
 	}
 	go func() {
 		o := j.ObserveLog()

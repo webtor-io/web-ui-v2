@@ -10,7 +10,7 @@ import (
 func (s *Handler) log(c *gin.Context) {
 	l, err := s.q.GetOrCreate(c.Param("queue_id")).Log(c.Request.Context(), c.Param("job_id"))
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		_ = c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 

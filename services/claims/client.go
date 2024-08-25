@@ -2,12 +2,12 @@ package claims
 
 import (
 	"fmt"
+	"google.golang.org/grpc/credentials/insecure"
 	"sync"
 
 	"github.com/urfave/cli"
 	proto "github.com/webtor-io/claims-provider/proto"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -51,7 +51,7 @@ func NewClient(c *cli.Context) *Client {
 func (s *Client) Get() (proto.ClaimsProviderClient, error) {
 	s.once.Do(func() {
 		addr := fmt.Sprintf("%s:%d", s.host, s.port)
-		conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			s.err = err
 			return

@@ -41,7 +41,7 @@ func (s *Redis) Pub(ctx context.Context, id string, l *LogItem) (err error) {
 	return
 }
 
-func (s *Redis) GetState(ctx context.Context, id string) (state *JobState, err error) {
+func (s *Redis) GetState(ctx context.Context, id string) (state *State, err error) {
 	key := s.makeKey(id)
 	ttlCmd := s.cl.TTL(ctx, key)
 	if ttlCmd.Err() != nil {
@@ -55,7 +55,7 @@ func (s *Redis) GetState(ctx context.Context, id string) (state *JobState, err e
 	if val > 0 {
 		dur = val
 	}
-	return &JobState{
+	return &State{
 		ID:  id,
 		TTL: dur,
 	}, nil
@@ -119,7 +119,9 @@ func (s *Redis) subRaw(ctx context.Context, id string) (res chan string, err err
 			res <- i
 		}
 		ps := s.cl.Subscribe(ctx, key)
-		defer ps.Close()
+		defer func(ps *redis.PubSub) {
+			_ = ps.Close()
+		}(ps)
 
 		if err = ps.Ping(ctx); err != nil {
 			return

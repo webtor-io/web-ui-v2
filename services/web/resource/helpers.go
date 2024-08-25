@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	h "github.com/dustin/go-humanize"
-	"github.com/urfave/cli"
 	ra "github.com/webtor-io/rest-api/services"
 	w "github.com/webtor-io/web-ui-v2/services/web"
 )
@@ -167,6 +166,6 @@ func (s *Helper) MakePagination(lr *ra.ListResponse, page uint, pageSize uint) [
 type Helper struct {
 }
 
-func NewHelper(c *cli.Context) *Helper {
+func NewHelper() *Helper {
 	return &Helper{}
 }

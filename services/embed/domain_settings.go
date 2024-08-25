@@ -1,6 +1,7 @@
 package embed
 
 import (
+	"github.com/pkg/errors"
 	"time"
 
 	"github.com/go-pg/pg/v10"
@@ -37,7 +38,7 @@ func (s *DomainSettings) get(domain string) (*DomainSettingsData, error) {
 	db := s.pg.Get()
 	em := &models.EmbedDomain{}
 	err := db.Model(em).Where("domain = ?", domain).Select()
-	if err == pg.ErrNoRows {
+	if errors.Is(err, pg.ErrNoRows) {
 		return &DomainSettingsData{Ads: true}, nil
 	} else if err != nil {
 		return nil, err

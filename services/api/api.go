@@ -238,12 +238,12 @@ func New(c *cli.Context, cl *http.Client) *Api {
 		}
 	}
 	log.Infof("api endpoint %v", u)
-	url, _ := url.Parse(c.String(services.DomainFlag))
+	apiURL, _ := url.Parse(c.String(services.DomainFlag))
 	return &Api{
 		url:            u,
 		cl:             cl,
 		prepareRequest: prepareRequest,
-		domain:         url.Host,
+		domain:         apiURL.Host,
 	}
 }
 
@@ -343,6 +343,10 @@ func (s *Api) Download(ctx context.Context, u string) (io.ReadCloser, error) {
 
 func (s *Api) DownloadWithRange(ctx context.Context, u string, start int, end int) (io.ReadCloser, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
+	if err != nil {
+		log.WithError(err).Error("failed to make new request")
+		return nil, err
+	}
 	if start != 0 || end != -1 {
 		startStr := strconv.Itoa(start)
 		endStr := ""
@@ -350,10 +354,6 @@ func (s *Api) DownloadWithRange(ctx context.Context, u string, start int, end in
 			endStr = strconv.Itoa(end)
 		}
 		req.Header.Set("Range", fmt.Sprintf("bytes=%v-%v", startStr, endStr))
-	}
-	if err != nil {
-		log.WithError(err).Error("failed to make new request")
-		return nil, err
 	}
 	res, err := s.cl.Do(req)
 	if err != nil {
@@ -379,7 +379,9 @@ func (s *Api) GetOpenSubtitles(ctx context.Context, u string) ([]OpenSubtitleTra
 		return nil, errors.Wrap(err, "failed to do request")
 	}
 	b := res.Body
-	defer b.Close()
+	defer func(b io.ReadCloser) {
+		_ = b.Close()
+	}(b)
 	var esubs []ExtSubtitle
 	var subs []OpenSubtitleTrack
 	data, err := io.ReadAll(b)
@@ -414,7 +416,9 @@ func (s *Api) GetMediaProbe(ctx context.Context, u string) (*MediaProbe, error) 
 		return nil, errors.Wrap(err, "failed to do request")
 	}
 	b := res.Body
-	defer b.Close()
+	defer func(b io.ReadCloser) {
+		_ = b.Close()
+	}(b)
 	mb := MediaProbe{}
 	data, err := io.ReadAll(b)
 	if err != nil {
@@ -534,7 +538,7 @@ func getRemoteAddress(r *http.Request) string {
 	return ip
 }
 
-type ApiClaimsContext struct{}
+type ClaimsContext struct{}
 
 func (s *Api) MakeClaimsFromContext(c *gin.Context) (*Claims, error) {
 	sess, _ := c.Cookie("session")
@@ -566,18 +570,17 @@ func (s *Api) MakeClaimsFromContext(c *gin.Context) (*Claims, error) {
 }
 
 func GetClaimsFromContext(c *gin.Context) *Claims {
-	return c.Request.Context().Value(ApiClaimsContext{}).(*Claims)
+	return c.Request.Context().Value(ClaimsContext{}).(*Claims)
 }
 
-func (s *Api) RegisterHandler(c *cli.Context, r *gin.Engine) error {
+func (s *Api) RegisterHandler(r *gin.Engine) {
 	r.Use(func(c *gin.Context) {
 		ac, err := s.MakeClaimsFromContext(c)
 		if err != nil {
 			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
-		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), ApiClaimsContext{}, ac))
+		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), ClaimsContext{}, ac))
 		c.Next()
 	})
-	return nil
 }

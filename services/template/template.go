@@ -40,7 +40,7 @@ type View struct {
 }
 
 func (s *View) makeTemplate() (t *template.Template, err error) {
-	templates := []string{}
+	var templates []string
 	if s.LayoutBody != "" {
 		t, err = template.New(s.Name).Parse(s.LayoutBody)
 		if err != nil {
@@ -95,7 +95,7 @@ type Context struct {
 	Err  error
 }
 
-func NewContext(c *gin.Context, obj any, err error) any {
+func NewContext(_ *gin.Context, obj any, err error) any {
 	return &Context{
 		Data: obj,
 		Err:  err,
@@ -159,7 +159,7 @@ func (s *Manager) getFiles(pattern string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	res := []string{}
+	var res []string
 	for _, l := range g {
 		f, _ := os.Stat(l)
 		if f.IsDir() {
@@ -316,12 +316,12 @@ func (s *Template) HTML(code int, context *gin.Context, obj any) {
 	s.HTMLWithErr(nil, code, context, obj)
 }
 
-func (s *Template) HTMLWithErr(err error, code int, context *gin.Context, obj any) {
+func (s *Template) HTMLWithErr(err error, code int, c *gin.Context, obj any) {
 	var name string
 	var rerr error
-	if context.GetHeader("X-Requested-With") == "XMLHttpRequest" {
-		if context.GetHeader("X-Layout") != "" {
-			name, rerr = s.tm.RenderViewByNameAndLayoutBody(s.name, context.GetHeader("X-Layout"))
+	if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
+		if c.GetHeader("X-Layout") != "" {
+			name, rerr = s.tm.RenderViewByNameAndLayoutBody(s.name, c.GetHeader("X-Layout"))
 			if rerr != nil {
 				panic(rerr)
 			}
@@ -332,8 +332,8 @@ func (s *Template) HTMLWithErr(err error, code int, context *gin.Context, obj an
 			panic(rerr)
 		}
 	}
-	context.Header("X-Template", name)
-	context.HTML(code, name, s.tm.contextWrapper(context, obj, err))
+	c.Header("X-Template", name)
+	c.HTML(code, name, s.tm.contextWrapper(c, obj, err))
 }
 
 func (s *Template) ToString(c *gin.Context, obj any) (res string, err error) {
@@ -397,9 +397,9 @@ type Builder interface {
 	Build(name string) *Template
 }
 
-func (m *Manager) WithLayout(name string) *BuilderWithLayout {
+func (s *Manager) WithLayout(name string) *BuilderWithLayout {
 	return &BuilderWithLayout{
-		tm:     m,
+		tm:     s,
 		layout: name,
 	}
 

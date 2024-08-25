@@ -63,11 +63,11 @@ func (s *Handler) post(c *gin.Context) {
 	}
 	pd.EmbedSettings = args.EmbedSettings
 	pd.DomainSettings = dsd
-	job, err := s.jobs.Embed(c, s.hCl, args.Claims, args.EmbedSettings)
+	embedJob, err := s.jobs.Embed(c, s.hCl, args.Claims, args.EmbedSettings)
 	if err != nil {
 		tpl.HTMLWithErr(err, http.StatusBadRequest, c, pd)
 		return
 	}
-	pd.Job = job
+	pd.Job = embedJob
 	tpl.HTML(http.StatusAccepted, c, pd)
 }

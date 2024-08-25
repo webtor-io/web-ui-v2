@@ -166,7 +166,7 @@ func GetUserFromContext(c *gin.Context) *User {
 			u.Email = *userInfo.Email
 		}
 	}
-	if err := c.Request.Context().Value(AuthErrorContext{}); err != nil {
+	if err := c.Request.Context().Value(ErrorContext{}); err != nil {
 		if defaultErrors.As(err.(error), &errors.TryRefreshTokenError{}) {
 			u.Expired = true
 		}
@@ -174,13 +174,13 @@ func GetUserFromContext(c *gin.Context) *User {
 	return u
 }
 
-type AuthErrorContext struct{}
+type ErrorContext struct{}
 
 func myVerifySession(options *sessmodels.VerifySessionOptions, otherHandler http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		session, err := session.GetSession(r, w, options)
+	return func(w http.ResponseWriter, r *http.Request) {
+		sess, err := session.GetSession(r, w, options)
 		if err != nil {
-			ctx := context.WithValue(r.Context(), AuthErrorContext{}, err)
+			ctx := context.WithValue(r.Context(), ErrorContext{}, err)
 			r := r.WithContext(ctx)
 			if defaultErrors.As(err, &errors.TryRefreshTokenError{}) {
 				if r.Header.Get("X-Requested-With") != "XMLHttpRequest" {
@@ -214,13 +214,13 @@ func myVerifySession(options *sessmodels.VerifySessionOptions, otherHandler http
 			}
 			return
 		}
-		if session != nil {
-			ctx := context.WithValue(r.Context(), sessmodels.SessionContext, session)
+		if sess != nil {
+			ctx := context.WithValue(r.Context(), sessmodels.SessionContext, sess)
 			otherHandler(w, r.WithContext(ctx))
 		} else {
 			otherHandler(w, r)
 		}
-	})
+	}
 }
 
 func verifySession(options *sessmodels.VerifySessionOptions) gin.HandlerFunc {

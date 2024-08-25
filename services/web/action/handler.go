@@ -1,16 +1,12 @@
 package action
 
 import (
-	"context"
-	"net/http"
-	"time"
-
 	m "github.com/webtor-io/web-ui-v2/services/models"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"github.com/urfave/cli"
-	api "github.com/webtor-io/web-ui-v2/services/api"
+	"github.com/webtor-io/web-ui-v2/services/api"
 	"github.com/webtor-io/web-ui-v2/services/job"
 	"github.com/webtor-io/web-ui-v2/services/template"
 	wj "github.com/webtor-io/web-ui-v2/services/web/job"
@@ -38,7 +34,7 @@ type Handler struct {
 	tb   template.Builder
 }
 
-func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager, jobs *wj.Handler) {
+func RegisterHandler(r *gin.Engine, tm *template.Manager, jobs *wj.Handler) {
 	h := &Handler{
 		tb:   tm.MustRegisterViews("action/*").WithHelper(NewHelper()),
 		jobs: jobs,
@@ -61,25 +57,25 @@ func RegisterHandler(c *cli.Context, r *gin.Engine, tm *template.Manager, jobs *
 	r.PUT("/stream-video/subtitle", func(c *gin.Context) {
 		a := TrackPutArgs{}
 		if err := c.BindJSON(&a); err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 		vsud := m.NewVideoStreamUserData(a.ResourceID, a.ItemID, nil)
 		vsud.SubtitleID = a.ID
 		if err := vsud.UpdateSessionData(c); err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 		}
 	})
 	r.PUT("/stream-video/audio", func(c *gin.Context) {
 		a := TrackPutArgs{}
 		if err := c.BindJSON(&a); err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 			return
 		}
 		vsud := m.NewVideoStreamUserData(a.ResourceID, a.ItemID, nil)
 		vsud.AudioID = a.ID
 		if err := vsud.UpdateSessionData(c); err != nil {
-			c.Error(err)
+			_ = c.Error(err)
 		}
 	})
 }
@@ -103,10 +99,10 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 
 func (s *Handler) post(c *gin.Context, action string) {
 	var (
-		d    PostData
-		err  error
-		args *PostArgs
-		job  *job.Job
+		d         PostData
+		err       error
+		args      *PostArgs
+		actionJob *job.Job
 	)
 	postTpl := s.tb.Build("action/post")
 	args, err = s.bindPostArgs(c)
@@ -115,12 +111,11 @@ func (s *Handler) post(c *gin.Context, action string) {
 		return
 	}
 	d.Args = args
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Minute)
-	job, err = s.jobs.Action(ctx, c, args.Claims, args.ResourceID, args.ItemID, action, &m.StreamSettings{})
+	actionJob, err = s.jobs.Action(c, args.Claims, args.ResourceID, args.ItemID, action, &m.StreamSettings{})
 	if err != nil {
 		postTpl.HTMLWithErr(errors.Wrap(err, "failed to start downloading"), http.StatusBadRequest, c, d)
 		return
 	}
-	d.Job = job
+	d.Job = actionJob
 	postTpl.HTML(http.StatusOK, c, d)
 }

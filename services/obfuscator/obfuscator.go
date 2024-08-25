@@ -4,7 +4,6 @@ package obfuscator
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -44,30 +43,10 @@ func (o Obfuscator) encodeIt() string {
 
 	for _, c := range o.code {
 		parsed := strconv.FormatInt(int64(c)+int64(o.interval), o.option)
-		str += fmt.Sprint(o.hashIt(string(parsed)), string(o.mask[o.option]))
+		str += fmt.Sprint(o.hashIt(parsed), string(o.mask[o.option]))
 	}
 
 	return str
-}
-
-func cleanJs(code string) string {
-	searchPatterns := []*regexp.Regexp{
-		regexp.MustCompile(`/\>[^\S ]+/s`),
-		regexp.MustCompile(`/[^\S ]+\</s`),
-		regexp.MustCompile(`/(\s)+/s`),
-		regexp.MustCompile(`/<!--(.|\s)*?-->/`)}
-
-	replacePatterns := []string{
-		`>`,
-		`<`,
-		`\\1`,
-		``}
-
-	for i, sp := range searchPatterns {
-		code = sp.ReplaceAllString(code, replacePatterns[i])
-	}
-
-	return code
 }
 
 func getMask() string {

@@ -122,8 +122,8 @@ func (s *Helper) Asset(in string) template.HTML {
 	}
 	path := s.assetsHost + "/assets/" + in
 	if !s.Dev() {
-		h, _ := s.ah.Get(in)
-		path += "?" + h
+		hash, _ := s.ah.Get(in)
+		path += "?" + hash
 	}
 	return template.HTML(fmt.Sprintf(t, path))
 }
@@ -132,7 +132,7 @@ func (s *Helper) DevAsset(in string) template.HTML {
 	if s.Dev() {
 		return s.Asset("dev/" + in)
 	}
-	return template.HTML("")
+	return ""
 }
 
 type AssetHashes struct {
@@ -145,11 +145,11 @@ func (s *AssetHashes) get(name string) (hash string, err error) {
 	if err != nil {
 		return "", err
 	}
-	h := md5.New()
-	if _, err := io.Copy(h, f); err != nil {
+	md5Hash := md5.New()
+	if _, err := io.Copy(md5Hash, f); err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(h.Sum(nil)), nil
+	return hex.EncodeToString(md5Hash.Sum(nil)), nil
 }
 
 func (s *AssetHashes) Get(name string) (string, error) {

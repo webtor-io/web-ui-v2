@@ -7,7 +7,7 @@ import (
 	cs "github.com/webtor-io/common-services"
 )
 
-type JobState struct {
+type State struct {
 	ID  string
 	TTL time.Duration
 }
@@ -15,20 +15,20 @@ type JobState struct {
 type Storage interface {
 	Pub(ctx context.Context, id string, l *LogItem) error
 	Sub(ctx context.Context, id string) (res chan LogItem, err error)
-	GetState(ctx context.Context, id string) (state *JobState, err error)
+	GetState(ctx context.Context, id string) (state *State, err error)
 }
 
 type NilStorage struct{}
 
-func (s *NilStorage) Pub(ctx context.Context, id string, l *LogItem) error {
+func (s *NilStorage) Pub(_ context.Context, _ string, _ *LogItem) error {
 	return nil
 }
 
-func (s *NilStorage) Sub(ctx context.Context, id string) (res chan LogItem, err error) {
+func (s *NilStorage) Sub(_ context.Context, _ string) (res chan LogItem, err error) {
 	return
 }
 
-func (s *NilStorage) GetState(ctx context.Context, id string) (state *JobState, err error) {
+func (s *NilStorage) GetState(_ context.Context, _ string) (state *State, err error) {
 	return nil, nil
 }
 

@@ -56,7 +56,7 @@ func (s *Handler) bindGetArgs(c *gin.Context) (*GetArgs, error) {
 }
 
 func (s *Handler) getList(ctx context.Context, args *GetArgs) (l *ra.ListResponse, err error) {
-	limit := uint(args.PageSize)
+	limit := args.PageSize
 	offset := (args.Page - 1) * args.PageSize
 	l, err = s.api.ListResourceContent(ctx, args.Claims, args.ID, &api.ListResourceContentArgs{
 		Output: api.OutputTree,

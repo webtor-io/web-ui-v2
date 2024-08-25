@@ -72,7 +72,7 @@ func serve(c *cli.Context) error {
 	// redis := cs.NewRedisClient(c)
 	// defer redis.Close()
 
-	servers := []cs.Servable{}
+	var servers []cs.Servable
 	// Setting Probe
 	probe := cs.NewProbe(c)
 	servers = append(servers, probe)
@@ -110,7 +110,7 @@ func serve(c *cli.Context) error {
 	cl := http.DefaultClient
 
 	// Setting Api
-	api := api.New(c, cl)
+	sapi := api.New(c, cl)
 
 	// Setting Helper
 	helper := w.NewHelper(c)
@@ -125,7 +125,7 @@ func serve(c *cli.Context) error {
 	queues := job.NewQueues(job.NewStorage(redis, gin.Mode()))
 
 	// Setting JobHandler
-	jobs := wj.New(queues, tm, api)
+	jobs := wj.New(queues, tm, sapi)
 
 	jobs.RegisterHandler(r)
 
@@ -138,7 +138,7 @@ func serve(c *cli.Context) error {
 			return err
 		}
 		a.RegisterHandler(r)
-		wau.RegisterHandler(c, r, tm)
+		wau.RegisterHandler(r, tm)
 	}
 
 	// Setting Claims Client
@@ -149,32 +149,32 @@ func serve(c *cli.Context) error {
 	uc := claims.New(c, cpCl)
 	if uc != nil {
 		// Setting UserClaimsHandler
-		uc.RegisterHandler(c, r)
+		uc.RegisterHandler(r)
 	}
 
 	// Setting DomainSettings
 	ds := embed.NewDomainSettings(pg, uc)
 
 	// Setting ApiClaimsHandler
-	api.RegisterHandler(c, r)
+	sapi.RegisterHandler(r)
 
 	// Setting ResourceHandler
-	wr.RegisterHandler(c, r, tm, api, jobs)
+	wr.RegisterHandler(r, tm, sapi, jobs)
 
 	// Setting IndexHandler
-	wi.RegisterHandler(c, r, tm)
+	wi.RegisterHandler(r, tm)
 
 	// Setting ActionHandler
-	wa.RegisterHandler(c, r, tm, jobs)
+	wa.RegisterHandler(r, tm, jobs)
 
 	// Setting ProfileHandler
-	p.RegisterHandler(c, r, tm)
+	p.RegisterHandler(r, tm)
 
 	// Setting EmbedExamplesHandler
-	wee.RegisterHandler(c, r, tm)
+	wee.RegisterHandler(r, tm)
 
 	// Setting EmbedHandler
-	we.RegisterHandler(c, cl, r, tm, jobs, ds)
+	we.RegisterHandler(cl, r, tm, jobs, ds)
 
 	// Render templates
 	err = tm.Init()

@@ -2,6 +2,7 @@ package resource
 
 import (
 	"io"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -43,7 +44,9 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer f.Close()
+		defer func(f multipart.File) {
+			_ = f.Close()
+		}(f)
 		fd, err = io.ReadAll(f)
 		if err != nil {
 			return nil, err
@@ -65,10 +68,10 @@ type PostData struct {
 func (s *Handler) post(c *gin.Context) {
 	indexTpl := s.tb.Build("index")
 	var (
-		d    PostData
-		err  error
-		args *PostArgs
-		job  *job.Job
+		d       PostData
+		err     error
+		args    *PostArgs
+		loadJob *job.Job
 	)
 	args, err = s.bindPostArgs(c)
 	d.Args = args
@@ -76,7 +79,7 @@ func (s *Handler) post(c *gin.Context) {
 		indexTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)
 		return
 	}
-	job, err = s.jobs.Load(args.Claims, &script.LoadArgs{
+	loadJob, err = s.jobs.Load(args.Claims, &script.LoadArgs{
 		Query: args.Query,
 		File:  args.File,
 	})
@@ -84,6 +87,6 @@ func (s *Handler) post(c *gin.Context) {
 		indexTpl.HTMLWithErr(errors.Wrap(err, "failed to load resource"), http.StatusInternalServerError, c, d)
 		return
 	}
-	d.Job = job
+	d.Job = loadJob
 	indexTpl.HTML(http.StatusAccepted, c, d)
 }

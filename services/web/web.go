@@ -58,7 +58,7 @@ func (s *Web) Close() {
 		log.Info("Web closed")
 	}()
 	if s.ln != nil {
-		s.ln.Close()
+		_ = s.ln.Close()
 	}
 }
 

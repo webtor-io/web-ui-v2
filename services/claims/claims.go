@@ -10,7 +10,7 @@ import (
 	"github.com/webtor-io/lazymap"
 
 	proto "github.com/webtor-io/claims-provider/proto"
-	auth "github.com/webtor-io/web-ui-v2/services/auth"
+	"github.com/webtor-io/web-ui-v2/services/auth"
 )
 
 const (
@@ -81,24 +81,23 @@ func (s *Claims) MakeUserClaimsFromContext(c *gin.Context) (*Data, error) {
 	return r, nil
 }
 
-type ClaimsContext struct{}
+type Context struct{}
 
 func GetFromContext(c *gin.Context) *Data {
-	if r := c.Request.Context().Value(ClaimsContext{}); r != nil {
+	if r := c.Request.Context().Value(Context{}); r != nil {
 		return r.(*Data)
 	}
 	return nil
 }
 
-func (s *Claims) RegisterHandler(c *cli.Context, r *gin.Engine) error {
+func (s *Claims) RegisterHandler(r *gin.Engine) {
 	r.Use(func(c *gin.Context) {
 		r, err := s.MakeUserClaimsFromContext(c)
 		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
-		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), ClaimsContext{}, r))
+		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), Context{}, r))
 		c.Next()
 	})
-	return nil
 }
