@@ -1,0 +1,16 @@
+{{ define "main" }}
+<div id="player" class="webtor"></div>
+<script>
+    window.webtor = window.webtor || [];
+    window.webtor.push({
+        id: 'player',
+        magnet: '{{ demoMagnet }}',
+        baseUrl: '{{ domain }}',
+        on: function(e) {
+            if (e.name === window.webtor.INITED) {
+                console.log('inited!', e);
+            }
+        }
+    });
+</script>
+{{ end}}

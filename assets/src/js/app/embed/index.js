@@ -11,8 +11,8 @@ window.addEventListener('load', async () => {
     const el = document.createElement('div');
     const initProgressLog = (await import('../../lib/progressLog')).initProgressLog;
     initProgressLog(progress, function(ev) {
-        if (ev.level != 'rendertemplate') return;
-        window.addEventListener('player_ready', function(e) {
+        if (ev.level !== 'rendertemplate') return;
+        window.addEventListener('player_ready', function() {
             window.removeEventListener('resize', setHeight);
             document.body.style.height = 'auto';
             progress.classList.add('hidden');
@@ -38,4 +38,5 @@ window.addEventListener('load', async () => {
         document.body.style.backgroundImage = 'url(' + window._embedSettings.poster + ')';
         document.body.style.backgroundSize = 'cover';
     }
+    message.send('inited');
 });

@@ -31,7 +31,7 @@ Some features to mention:
 - [ ] Chrome extension integration
 - [x] Embed support
   - [x] Base version
-  - [ ] Extended version
+  - [x] Extended version
 - [ ] 🚀Switch webtor.io to web-ui-v2
 
 
