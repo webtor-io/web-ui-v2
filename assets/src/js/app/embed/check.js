@@ -1,4 +1,6 @@
 import message from './message';
+import {makeDebug} from '../../lib/debug';
+const debug = await makeDebug('webtor:embed:check');
 const sha1 = require('sha1');
 message.send('init');
 const data = await message.receiveOnce('init');
@@ -34,7 +36,9 @@ function initPlaceholder(data) {
 async function check() {
     message.send('inject', window._checkScript);
     const check = await message.receiveOnce('check');
-    return sha1(window._id + check) == _checkHash;
+    const hash = sha1(window._id + check)
+    debug('check window._id=%o check=%o hash=%o _checkHash=%o', window._id, check, hash, _checkHash);
+    return hash  === _checkHash;
 }
 
 function initEmbed(data) {

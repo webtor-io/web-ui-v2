@@ -38,10 +38,21 @@ module.exports = async (env, options) => {
         },
         devServer: {
             port: 8082,
+            client: {
+                webSocketURL: 'auto://0.0.0.0:0/ws',
+            },
             static: './assets/dist',
+            allowedHosts: ['all'],
             devMiddleware: {
                 publicPath: '/assets',
+                index: false,
             },
+            proxy: [
+                {
+                    context: () => true,
+                    target: 'http://localhost:8080',
+                },
+            ],
             watchFiles: ['templates/*.html', 'assets/src/*'],
         },
         optimization: {
