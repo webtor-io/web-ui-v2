@@ -10,6 +10,7 @@ if (c) {
     window.addEventListener('click', async () => {
         initEmbed(data);
     }, { once: true });
+    message.send('inited');
 }
 
 function initPlaceholder(data) {

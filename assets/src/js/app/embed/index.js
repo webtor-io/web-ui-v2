@@ -38,5 +38,4 @@ window.addEventListener('load', async () => {
         document.body.style.backgroundImage = 'url(' + window._embedSettings.poster + ')';
         document.body.style.backgroundSize = 'cover';
     }
-    message.send('inited');
 });
