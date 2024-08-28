@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>loading magnet... | webtor.io</title>
+        <script>
+            window._CSRF = "{{ .CSRF }}";
+            window._sessionID = "{{ .SessionID }}";
+            window._magnet = {{ .Data.Magnet }};
+        </script>
+        {{ "ext/magnet.js" | asset }}
+    </head>
+</html>

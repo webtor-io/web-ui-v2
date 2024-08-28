@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>loading torrent | webtor.io</title>
+        <script>
+            window._CSRF = "{{ .CSRF }}";
+            window._sessionID = "{{ .SessionID }}";
+            window._downloadID = {{ .Data.DownloadID }};
+        </script>
+        {{ "ext/download.js" | asset }}
+    </head>
+</html>

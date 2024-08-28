@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/webtor-io/web-ui-v2/services/web/ext"
 	"net/http"
 
 	"github.com/gin-contrib/multitemplate"
@@ -175,6 +176,9 @@ func serve(c *cli.Context) error {
 
 	// Setting EmbedHandler
 	we.RegisterHandler(cl, r, tm, jobs, ds)
+
+	// Setting ExtHandler
+	ext.RegisterHandler(r, tm)
 
 	// Render templates
 	err = tm.Init()

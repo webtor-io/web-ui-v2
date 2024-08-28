@@ -27,8 +27,12 @@ Some features to mention:
   - [x] Passwordless authentication
   - [x] Patreon account linking
 - [x] Ads and statistic integration support
-- [ ] Feedback form
-- [ ] Chrome extension integration
+- [ ] Tools
+  - [ ] Torrent => DDL
+  - [ ] Magnet => DDL
+  - [ ] Magnet => Torrent
+  - [ ] Feedback form
+- [x] Chrome extension integration
 - [x] Embed support
   - [x] Base version
   - [x] Extended version
