@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="night" style="background-color: rgb(15, 23, 42);">
+<html lang="en" data-theme="night">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -22,15 +22,18 @@
     <body>
         <script>document.body.style.display = 'none';</script>
         <progress id="progress" class="progress fixed progress-accent h-1"></progress>
-        <nav async-get="/" async-layout="{{`{{ template "nav" . }}`}}">{{ template "nav" . }}</nav>
+        <header class="pb-3">
+            <nav async-get="/" async-layout="{{`{{ template "nav" . }}`}}">{{ template "nav" . }}</nav>
+        </header>
         <div id="wrapper" class="flex flex-col w-full px-8 items-center">
             <div class="min-w-80 w-full max-w-3xl">
-                <div class="text-center py-12 font-baskerville text-7xl">
-                    <a href="/" class="group" async-target="main"><span class="group-hover:text-primary-focus transition duration-200">web</span><span class="group-hover:text-accent-focus text-accent transition duration-200">tor</span></a>
-                </div>
                 <main id="main" async-layout="{{`{{ template "main" . }}`}}">
                 {{ template "main" . }}
                 </main>
+                <footer>
+
+
+                </footer>
             </div>
         </div>
     </body>

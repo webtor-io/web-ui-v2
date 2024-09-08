@@ -1,4 +1,9 @@
 {{ define "main" }}
+<div class="text-center py-12 font-baskerville text-7xl">
+    <a href="/" async-target="main">
+        <span>web</span><span class="text-accent">tor</span>
+    </a>
+</div>
 {{ if .Err }}
 <div class="progress-alert progress-alert-oneline mb-10 closeable">
     <pre>{{ .Err | log | shortErr }}</pre>
@@ -14,13 +19,9 @@
     </div>
 </form>
 {{ end }}
-<form action="/" method="post" enctype="multipart/form-data" async-target="main">
-    <div class="form-control">
-        <div class="input-group">
-            <input type="text" name="resource" value="{{ if has . "Args" }}{{ .Args.Query }}{{ end }}" placeholder="Magnet-uri...?  Infohash...?" class="input input-bordered w-full" />
-            <button type="submit" class="btn btn-accent btn-outline">Search</button>
-        </div>
-    </div>
+<form action="/" method="post" enctype="multipart/form-data" class="join w-full" async-target="main">
+    <input type="text" name="resource" value="{{ if has . "Args" }}{{ .Args.Query }}{{ end }}" placeholder="Magnet-uri...?  Infohash...?" class="input input-bordered w-full join-item" />
+    <button type="submit" class="btn btn-accent btn-outline join-item">Search</button>
 </form>
 <div class="divider h-12">OR</div>
 <form class="dropzone" action="/" method="post" enctype="multipart/form-data" class="flex justify-center items-center w-full" async-target="main">
@@ -30,7 +31,7 @@
             <p class="mb-2 text-m text-accent group-hover:text-accent-focus transition duration-200"><span class="font-semibold">Drop torrent file here</span> or click to select...</p>
             <p class="text-xs uppercase">(No torrent size limit)</p>
         </div>
-        <input class="dropzone-input" name="resource" type="file" class="hidden" />
+        <input class="dropzone-input hidden" name="resource" type="file" />
     </label>
 </form>
 <div class="divider h-12">OR</div>
@@ -38,6 +39,7 @@
     <input type="hidden" name="resource" value="{{ demoMagnet }}" />
     <button type="submit" class="btn btn-accent btn-outline">Try demo!</button>
 </form>
-{{ end }}
 {{ "index.js" | asset }}
+{{ template "about" }}
+{{ end }}
 {{ end }}

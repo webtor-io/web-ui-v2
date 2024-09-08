@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/webtor-io/web-ui-v2/services/web/donate"
 	"github.com/webtor-io/web-ui-v2/services/web/ext"
 	"net/http"
 
@@ -179,6 +180,9 @@ func serve(c *cli.Context) error {
 
 	// Setting ExtHandler
 	ext.RegisterHandler(r, tm)
+
+	// Setting Donate
+	donate.RegisterHandler(r)
 
 	// Render templates
 	err = tm.Init()

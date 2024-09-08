@@ -31,7 +31,9 @@ Some features to mention:
   - [ ] Torrent => DDL
   - [ ] Magnet => DDL
   - [ ] Magnet => Torrent
+- [ ] Misc
   - [ ] Feedback form
+  - [ ] Allow magnet-url as query string
 - [x] Chrome extension integration
 - [x] Embed support
   - [x] Base version
