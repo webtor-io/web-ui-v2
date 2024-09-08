@@ -3,7 +3,7 @@ FROM alpine:latest as certs
 # getting certs
 RUN apk update && apk upgrade && apk add --no-cache ca-certificates
 
-FROM node:20 as build_assets
+FROM node:22 as build_assets
 
 WORKDIR /app
 

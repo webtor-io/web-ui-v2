@@ -34,6 +34,7 @@ Some features to mention:
 - [ ] Misc
   - [ ] Feedback form
   - [ ] Allow magnet-url as query string
+  - [x] Add dark/light theme switch
 - [x] Chrome extension integration
 - [x] Embed support
   - [x] Base version
