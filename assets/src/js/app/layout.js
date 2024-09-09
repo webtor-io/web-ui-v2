@@ -7,27 +7,18 @@ function hideProgress() {
     progress.classList.add('hidden');
 }
 
+
+
 window.progress = {
     show: showProgress,
     hide: hideProgress,
 };
 
 import {bindAsync} from '../lib/async';
-import {themeChange} from 'theme-change';
-themeChange();
+import themeSelector from "../lib/themeSelector";
 
 function onLoad() {
-    let currentTheme = window.localStorage.getItem('theme');
-    const themeSelector = document.querySelector('[data-toggle-theme]');
-    const [darkTheme, lightTheme] = themeSelector.getAttribute('data-toggle-theme').split(',').map((t) => t.trim());
-    if (currentTheme === null) {
-        currentTheme = darkTheme;
-        if (window.matchMedia && !window.matchMedia('(prefers-color-scheme: dark)')) {
-            currentTheme = lightTheme;
-        }
-    }
-    if (currentTheme === lightTheme) themeSelector.checked = true;
-    document.querySelector('html').setAttribute('data-theme', currentTheme);
+    themeSelector(document.querySelector('[data-toggle-theme]'));
     document.body.style.display = 'block';
     hideProgress();
     bindAsync({
