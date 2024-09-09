@@ -40,7 +40,6 @@
     "supertokens-web-js": "^0.13.0",
     "tailwindcss": "^3.4.10",
     "terser-webpack-plugin": "^5.3.10",
-    "theme-change": "^2.5.0",
     "webpack": "^5.94.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.1.0"
