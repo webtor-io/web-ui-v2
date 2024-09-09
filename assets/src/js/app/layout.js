@@ -13,7 +13,7 @@ window.progress = {
 };
 
 import {bindAsync} from '../lib/async';
-import { themeChange } from 'theme-change';
+import {themeChange} from 'theme-change';
 themeChange();
 
 function onLoad() {
