@@ -3,7 +3,7 @@ window.submitLoginForm = function(target, e) {
         const initProgressLog = (await import('../../lib/progressLog')).initProgressLog;
         const pl = initProgressLog(document.querySelector('.progress-alert'));
         pl.clear();
-        pl.inProgress('sending magic link to ' + data.email, 'login');
+        const e = pl.inProgress('login','sending magic link to ' + data.email);
         const supertokens = (await import('../../lib/supertokens'));
         const closeable = document.querySelector('.closeable');
         if (closeable) {
@@ -11,19 +11,19 @@ window.submitLoginForm = function(target, e) {
             initCloseable(closeable);
         }
         try {
-            const resp = await supertokens.sendMagicLink(data, window._CSRF);
-            pl.done('login');
-            pl.finish('magic link sent to ' + data.email);
+            await supertokens.sendMagicLink(data, window._CSRF);
+            e.done('magic link sent to ' + data.email);
         } catch (err) {
             console.log(err);
             if (err.statusText) {
-                pl.error(err.statusText.toLowerCase(), 'login');
+                e.error(err.statusText.toLowerCase());
             } else if (err.message) {
-                pl.error(err.message.toLowerCase(), 'login');
+                e.error(err.message.toLowerCase());
             } else {
-                pl.error('unknown error', 'login');
+                e.error('unknown error');
             }
         }
+        e.close();
     })({
         email: target.querySelector('input[name=email]').value,
     });

@@ -1,0 +1,45 @@
+{{ define "main" }}
+    <form class="hidden progress-alert progress-alert-block mt-5 closeable test-info">
+        <div class="log-target"></div>
+    </form>
+    <form class="hidden progress-alert progress-alert-block mt-5 closeable test-progress">
+        <div class="log-target"></div>
+    </form>
+    <form class="hidden progress-alert progress-alert-block mt-5 closeable test-status">
+        <div class="log-target"></div>
+    </form>
+    <form class="hidden progress-alert progress-alert-block mt-5 closeable test-dynamic-status">
+        <div class="log-target"></div>
+    </form>
+    <form class="hidden progress-alert progress-alert-block mt-5 closeable test-done-message">
+        <div class="log-target"></div>
+    </form>
+    <form class="hidden progress-alert progress-alert-block mt-5 closeable test-warn-message">
+        <div class="log-target"></div>
+    </form>
+    <form class="hidden progress-alert progress-alert-block mt-5 closeable test-error-message">
+        <div class="log-target"></div>
+        <div class="pt-3 flex justify-end hidden alert-close-wrapper">
+            <a class="close closeable-close">got it!</a>
+        </div>
+    </form>
+    <form class="hidden progress-alert progress-alert-block mt-5 closeable test-error-message-with-extra">
+        <div class="log-target"></div>
+        <div class="pt-3 flex justify-end hidden alert-close-wrapper">
+            <div class="error hidden">
+                <a class="close closeable-close">Error button?!</a>
+            </div>
+            <a class="close closeable-close">got it!</a>
+        </div>
+    </form>
+    <form class="hidden progress-alert progress-alert-block mt-5 closeable test-done-with-extra">
+        <div class="log-target"></div>
+        <div class="pt-3 flex justify-end hidden alert-close-wrapper">
+            <div class="error hidden">
+                <a class="close closeable-close">Error button?!</a>
+            </div>
+            <a class="close closeable-close">got it!</a>
+        </div>
+    </form>
+    {{ "tests/progress_log.js" | asset }}
+{{ end }}

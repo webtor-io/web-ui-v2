@@ -73,7 +73,6 @@ var levelMap = map[LogItemLevel]log.Level{
 	Warn:           log.WarnLevel,
 	Done:           log.InfoLevel,
 	InProgress:     log.InfoLevel,
-	Finish:         log.InfoLevel,
 	Download:       log.InfoLevel,
 	Redirect:       log.InfoLevel,
 	StatusUpdate:   log.InfoLevel,
@@ -84,6 +83,7 @@ var levelMap = map[LogItemLevel]log.Level{
 type LogItem struct {
 	Level     LogItemLevel `json:"level,omitempty"`
 	Message   string       `json:"message,omitempty"`
+	Status    string       `json:"status,omitempty"`
 	Tag       string       `json:"tag,omitempty"`
 	Location  string       `json:"location,omitempty"`
 	Template  string       `json:"template,omitempty"`
@@ -162,9 +162,6 @@ func (s *Job) log(l LogItem) error {
 	if l.Level == Done {
 		message = "done"
 	}
-	if l.Level == Finish {
-		message = "finish"
-	}
 	if l.Level == Redirect {
 		message = "redirect"
 	}
@@ -226,11 +223,11 @@ func (s *Job) InProgress(message string) *Job {
 	return s
 }
 
-func (s *Job) StatusUpdate(message string) *Job {
+func (s *Job) StatusUpdate(status string) *Job {
 	_ = s.log(LogItem{
-		Level:   StatusUpdate,
-		Message: message,
-		Tag:     s.cur,
+		Level:  StatusUpdate,
+		Status: status,
+		Tag:    s.cur,
 	})
 	return s
 }
@@ -242,17 +239,11 @@ func (s *Job) Done() *Job {
 	})
 	return s
 }
-func (s *Job) Finish() *Job {
-	_ = s.log(LogItem{
-		Level:   Finish,
-		Message: "success!",
-	})
-	return s
-}
 
 func (s *Job) Download(url string) *Job {
 	_ = s.log(LogItem{
 		Level:    Download,
+		Message:  "success! download should start right now!",
 		Location: url,
 	})
 	return s
@@ -261,6 +252,7 @@ func (s *Job) Download(url string) *Job {
 func (s *Job) Redirect(url string) *Job {
 	_ = s.log(LogItem{
 		Level:    Redirect,
+		Message:  "success! redirecting",
 		Location: url,
 	})
 	return s

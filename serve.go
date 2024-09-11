@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/webtor-io/web-ui-v2/services/web/donate"
 	"github.com/webtor-io/web-ui-v2/services/web/ext"
+	"github.com/webtor-io/web-ui-v2/services/web/tests"
 	"net/http"
 
 	"github.com/gin-contrib/multitemplate"
@@ -183,6 +184,9 @@ func serve(c *cli.Context) error {
 
 	// Setting Donate
 	donate.RegisterHandler(r)
+
+	// Setting Tests
+	tests.RegisterHandler(r, tm)
 
 	// Render templates
 	err = tm.Init()

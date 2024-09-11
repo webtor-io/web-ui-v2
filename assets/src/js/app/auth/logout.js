@@ -4,23 +4,23 @@ av(target, 'auth/logout', async function() {
     const initProgressLog = (await import('../../lib/progressLog')).initProgressLog;
     const pl = initProgressLog(target.querySelector('.progress-alert'));
     pl.clear();
-    pl.inProgress('logging out', 'logout' );
+    const e = pl.inProgress('logout', 'logging out');
     const supertokens = (await import('../../lib/supertokens'));
     try {
         await supertokens.logout(window._CSRF);
-        pl.done('logout');
-        pl.finish('logout successful');
+        e.done('logout successful');
         window.dispatchEvent(new CustomEvent('auth'));
     } catch (err) {
         console.log(err);
         if (err.statusText) {
-            pl.error(err.statusText.toLowerCase(), 'logout');
+            e.error(err.statusText.toLowerCase());
         } else if (err.message) {
-            pl.error(err.message.toLowerCase(), 'logout');
+            e.error(err.message.toLowerCase());
         } else {
-            pl.error('unknown error', 'logout');
+            e.error('unknown error');
         }
     }
+    e.close();
 });
 
 export {}

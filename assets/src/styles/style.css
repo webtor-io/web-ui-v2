@@ -4,12 +4,11 @@
 
 .loading-elipsis::after {
   overflow: hidden;
-  display: inline-block;
-  vertical-align: bottom;
   animation: ellipsis steps(4, end) 1500ms infinite;
   content: "...";
   width: 0;
-  margin-left: 0.15rem;
+  display: inline-block;
+  vertical-align: bottom;
 }
 
 @keyframes ellipsis {
@@ -49,16 +48,47 @@
         @apply shrink-0;
       }
 
-      &.in-progress {
-        @apply loading-elipsis;
-      }
-
-      &.error-summary {
+      &.error-summary, &.warn-summary {
         @apply px-5 bg-warning text-warning-content;
       }
 
-      &.done-summary {
+      &.done-summary, &.download-summary, &.redirect-summary {
         @apply px-5 bg-success text-success-content;
+      }
+
+      &.inprogress, &.statusupdate {
+        span.loader {
+          @apply pl-1;
+          @apply loading-elipsis;
+        }
+      }
+
+      &.statusupdate {
+        span.status {
+          @apply pl-1;
+
+          &::before {
+            content: "(";
+          }
+
+          &::after {
+            content: ")";
+          }
+        }
+      }
+
+      &.done, &.error, &.warn {
+        span.status {
+          @apply pl-1;
+
+          &::before {
+            content: "...[";
+          }
+
+          &::after {
+            content: "]";
+          }
+        }
       }
     }
 
