@@ -181,6 +181,7 @@ func (s *Job) log(l LogItem) error {
 		"Location": l.Location,
 		"Template": l.Template,
 		"Body":     l.Body,
+		"Status":   l.Status,
 	}).Log(levelMap[l.Level], message)
 	return nil
 }
@@ -329,14 +330,22 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 	c = make(chan LogItem)
 	j, ok := s.jobs[id]
 	if !ok {
+		log.Infof("unable to find local job with id=%v", id)
 		var state *State
 		state, err = s.storage.GetState(ctx, id)
-		if err != nil || state == nil {
+		log.Infof("got storage state=%+v for id=%+v err=%+v", state, id, err)
+		if err != nil {
 			close(c)
+			return
+		}
+		if state == nil {
+			log.Warnf("state is empty for id=%+v", id)
 			return
 		}
 		jCtx, cancel := context.WithTimeout(context.Background(), state.TTL)
 		j = s.Enqueue(jCtx, cancel, id, nil)
+	} else {
+		log.Infof("found local job with id=%+v", id)
 	}
 	go func() {
 		o := j.ObserveLog()
