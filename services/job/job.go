@@ -59,16 +59,17 @@ const (
 	Warn           LogItemLevel = "warn"
 	Done           LogItemLevel = "done"
 	InProgress     LogItemLevel = "inprogress"
-	Finish         LogItemLevel = "finish"
 	Redirect       LogItemLevel = "redirect"
 	Download       LogItemLevel = "download"
 	RenderTemplate LogItemLevel = "rendertemplate"
 	StatusUpdate   LogItemLevel = "statusupdate"
 	Close          LogItemLevel = "close"
+	Open           LogItemLevel = "open"
 )
 
 var levelMap = map[LogItemLevel]log.Level{
 	Info:           log.InfoLevel,
+	Open:           log.InfoLevel,
 	Error:          log.ErrorLevel,
 	Warn:           log.WarnLevel,
 	Done:           log.InfoLevel,
@@ -124,6 +125,7 @@ func (s *Job) Run(ctx context.Context) (err error) {
 		}
 		return
 	}
+	s.Open()
 	if s.runnable != nil {
 		return s.runnable.Run(s)
 	}
@@ -174,6 +176,9 @@ func (s *Job) log(l LogItem) error {
 	if l.Level == Close {
 		message = "close"
 	}
+	if l.Level == Open {
+		message = "open"
+	}
 	log.WithFields(log.Fields{
 		"ID":       s.ID,
 		"Queue":    s.Queue,
@@ -184,6 +189,13 @@ func (s *Job) log(l LogItem) error {
 		"Status":   l.Status,
 	}).Log(levelMap[l.Level], message)
 	return nil
+}
+
+func (s *Job) Open() *Job {
+	_ = s.log(LogItem{
+		Level: Open,
+	})
+	return s
 }
 
 func (s *Job) Info(message string) *Job {
@@ -268,14 +280,6 @@ func (s *Job) RenderTemplate(name string, body string) *Job {
 	return s
 }
 
-func (s *Job) FinishWithMessage(m string) *Job {
-	_ = s.log(LogItem{
-		Level:   Finish,
-		Message: m,
-	})
-	return s
-}
-
 func (s *Job) Close() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
@@ -340,6 +344,7 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 		}
 		if state == nil {
 			log.Warnf("state is empty for id=%+v", id)
+			close(c)
 			return
 		}
 		jCtx, cancel := context.WithTimeout(context.Background(), state.TTL)
