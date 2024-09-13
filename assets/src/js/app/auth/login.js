@@ -5,11 +5,6 @@ window.submitLoginForm = function(target, e) {
         pl.clear();
         const e = pl.inProgress('login','sending magic link to ' + data.email);
         const supertokens = (await import('../../lib/supertokens'));
-        const closeable = document.querySelector('.closeable');
-        if (closeable) {
-            const initCloseable = (await import('../../lib/closeable')).initCloseable;
-            initCloseable(closeable);
-        }
         try {
             await supertokens.sendMagicLink(data, window._CSRF);
             e.done('magic link sent to ' + data.email);

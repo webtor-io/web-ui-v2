@@ -6,12 +6,6 @@ av(target, 'index', async function() {
         const initDrop = (await import('../lib/drop')).initDrop;
         initDrop(dropzone);
     }
-
-    const closeable = target.querySelector('.closeable');
-    if (closeable) {
-        const initCloseable = (await import('../lib/closeable')).initCloseable;
-        initCloseable(closeable);
-    }
     const progress = this.querySelector('.progress-alert');
     if (progress != null) {
         const initProgressLog = (await import('../lib/progressLog')).initProgressLog;

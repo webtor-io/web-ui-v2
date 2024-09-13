@@ -7,8 +7,6 @@ function hideProgress() {
     progress.classList.add('hidden');
 }
 
-
-
 window.progress = {
     show: showProgress,
     hide: hideProgress,
