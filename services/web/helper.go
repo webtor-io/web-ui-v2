@@ -10,6 +10,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/urfave/cli"
@@ -167,4 +168,8 @@ func NewAssetHashes(path string) *AssetHashes {
 		LazyMap: lazymap.New(&lazymap.Config{}),
 		path:    path,
 	}
+}
+
+func (s *Helper) Now() time.Time {
+	return time.Now()
 }

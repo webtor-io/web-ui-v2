@@ -17,7 +17,7 @@ import themeSelector from "../lib/themeSelector";
 
 function onLoad() {
     themeSelector(document.querySelector('[data-toggle-theme]'));
-    document.body.style.display = 'block';
+    document.body.style.display = 'flex';
     hideProgress();
     bindAsync({
         async fetch(f, url, fetchParams) {

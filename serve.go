@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/webtor-io/web-ui-v2/services/web/donate"
 	"github.com/webtor-io/web-ui-v2/services/web/ext"
+	"github.com/webtor-io/web-ui-v2/services/web/legal"
 	"github.com/webtor-io/web-ui-v2/services/web/tests"
 	"net/http"
 
@@ -160,6 +161,9 @@ func serve(c *cli.Context) error {
 
 	// Setting ApiClaimsHandler
 	sapi.RegisterHandler(r)
+
+	// Setting Legal
+	legal.RegisterHandler(r, tm)
 
 	// Setting ResourceHandler
 	wr.RegisterHandler(r, tm, sapi, jobs)

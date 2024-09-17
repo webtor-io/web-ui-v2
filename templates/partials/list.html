@@ -22,7 +22,7 @@
   {{ else if and (not $Args.File) (eq .Type "directory") }}
   <li class="text-accent py-1 hover:text-accent-focus"><a href="/{{ $Resource.ID }}?pwd={{ .PathStr }}" async-target="main">{{ .Name }}</a></li>
   {{ else if and ($Item) (eq .PathStr $Item.PathStr) }}
-  <li class="py-1 text-accent-focus"># {{ .Name }}</li>
+  <li class="py-1 text-accent-focus">> {{ .Name }}</li>
   {{ else }}
   <li class="text-accent py-1 hover:text-accent-focus"><a href="/{{ $Resource.ID }}?pwd={{ $List.ListItem.PathStr }}&file={{ .PathStr }}{{ if not (eq $Args.Page 1) }}&page={{ $Args.Page }}{{ end }}" async-target="main">{{ .Name }}</a></li>
   {{ end }}
