@@ -2,34 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-.loading-elipsis::after {
-  overflow: hidden;
-  animation: ellipsis steps(4, end) 1500ms infinite;
-  content: "...";
-  width: 0;
-  display: inline-block;
-  vertical-align: bottom;
-}
-
-@keyframes ellipsis {
-  to {
-    width: 2.25em;
-  }
-}
-
-.popin {
-  animation: popin 200ms;
-}
-
-@keyframes popin {
-  from {
-    transform: scaleX(0.95);
-    opacity: 0;
+@layer utilities {
+  .loading-elipsis::after {
+    overflow: hidden;
+    animation: ellipsis steps(4, end) 1500ms infinite;
+    content: "...";
+    width: 0;
+    display: inline-block;
+    vertical-align: bottom;
   }
 
-  to {
-    transform: scaleX(1);
-    opacity: 1;
+  @keyframes ellipsis {
+    to {
+      width: 2.25em;
+    }
+  }
+
+  .popin {
+    animation: popin 200ms;
+  }
+
+  @keyframes popin {
+    from {
+      transform: scaleX(0.95);
+      opacity: 0;
+    }
+
+    to {
+      transform: scaleX(1);
+      opacity: 1;
+    }
   }
 }
 

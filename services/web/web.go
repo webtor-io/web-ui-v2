@@ -48,14 +48,14 @@ func (s *Web) Serve() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to web listen to tcp connection")
 	}
-	log.Infof("serving Web at %v", addr)
+	log.Infof("serving web at %v", addr)
 	return http.Serve(s.ln, s.r)
 }
 
 func (s *Web) Close() {
-	log.Info("closing Web")
+	log.Info("closing web")
 	defer func() {
-		log.Info("Web closed")
+		log.Info("web closed")
 	}()
 	if s.ln != nil {
 		_ = s.ln.Close()

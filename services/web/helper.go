@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/webtor-io/web-ui-v2/services/abuse_store"
 	"html/template"
 	"io"
 	"os"
@@ -54,24 +55,26 @@ func (s *Helper) Has(obj any, fieldName string) bool {
 }
 
 type Helper struct {
-	assetsHost  string
-	assetsPath  string
-	useAuth     bool
-	domain      string
-	demoMagnet  string
-	demoTorrent string
-	ah          *AssetHashes
+	assetsHost    string
+	assetsPath    string
+	useAuth       bool
+	domain        string
+	demoMagnet    string
+	demoTorrent   string
+	ah            *AssetHashes
+	useAbuseStore bool
 }
 
 func NewHelper(c *cli.Context) *Helper {
 	return &Helper{
-		demoMagnet:  c.String(services.DemoMagnetFlag),
-		demoTorrent: c.String(services.DemoTorrentFlag),
-		assetsHost:  c.String(static.AssetsHostFlag),
-		assetsPath:  c.String(static.AssetsPathFlag),
-		useAuth:     c.Bool(auth.UseAuthFlag),
-		domain:      c.String(services.DomainFlag),
-		ah:          NewAssetHashes(c.String(static.AssetsPathFlag)),
+		demoMagnet:    c.String(services.DemoMagnetFlag),
+		demoTorrent:   c.String(services.DemoTorrentFlag),
+		assetsHost:    c.String(static.AssetsHostFlag),
+		assetsPath:    c.String(static.AssetsPathFlag),
+		useAuth:       c.Bool(auth.UseFlag),
+		useAbuseStore: c.Bool(abuse_store.UseFlag),
+		domain:        c.String(services.DomainFlag),
+		ah:            NewAssetHashes(c.String(static.AssetsPathFlag)),
 	}
 }
 
@@ -84,6 +87,10 @@ func (s *Helper) HasAds(c *claims.Data) bool {
 
 func (s *Helper) UseAuth() bool {
 	return s.useAuth
+}
+
+func (s *Helper) UseAbuseStore() bool {
+	return s.useAbuseStore
 }
 
 func (s *Helper) Domain() string {

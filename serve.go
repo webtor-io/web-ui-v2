@@ -1,9 +1,11 @@
 package main
 
 import (
+	as "github.com/webtor-io/web-ui-v2/services/abuse_store"
 	"github.com/webtor-io/web-ui-v2/services/web/donate"
 	"github.com/webtor-io/web-ui-v2/services/web/ext"
 	"github.com/webtor-io/web-ui-v2/services/web/legal"
+	"github.com/webtor-io/web-ui-v2/services/web/support"
 	"github.com/webtor-io/web-ui-v2/services/web/tests"
 	"net/http"
 
@@ -57,7 +59,7 @@ func configureServe(c *cli.Command) {
 	c.Flags = sess.RegisterFlags(c.Flags)
 	c.Flags = sta.RegisterFlags(c.Flags)
 	c.Flags = cs.RegisterRedisClientFlags(c.Flags)
-	// c.Flags = cs.RegisterRedisClientFlags(c.Flags)
+	c.Flags = as.RegisterFlags(c.Flags)
 }
 
 func serve(c *cli.Context) error {
@@ -71,10 +73,6 @@ func serve(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-
-	// Setting Redis
-	// redis := cs.NewRedisClient(c)
-	// defer redis.Close()
 
 	var servers []cs.Servable
 	// Setting Probe
@@ -124,6 +122,7 @@ func serve(c *cli.Context) error {
 
 	// Setting Redis
 	redis := cs.NewRedisClient(c)
+	defer redis.Close()
 
 	// Setting JobQueues
 	queues := job.NewQueues(job.NewStorage(redis, gin.Mode()))
@@ -145,6 +144,18 @@ func serve(c *cli.Context) error {
 		wau.RegisterHandler(r, tm)
 	}
 
+	// Setting AbuseStore
+	asc := as.New(c)
+
+	if asc != nil {
+		defer asc.Close()
+		// Setting Support
+		support.RegisterHandler(r, tm, asc)
+
+		// Setting Legal
+		legal.RegisterHandler(r, tm)
+	}
+
 	// Setting Claims Client
 	cpCl := claims.NewClient(c)
 	defer cpCl.Close()
@@ -161,9 +172,6 @@ func serve(c *cli.Context) error {
 
 	// Setting ApiClaimsHandler
 	sapi.RegisterHandler(r)
-
-	// Setting Legal
-	legal.RegisterHandler(r, tm)
 
 	// Setting ResourceHandler
 	wr.RegisterHandler(r, tm, sapi, jobs)

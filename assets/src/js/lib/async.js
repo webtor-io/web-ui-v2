@@ -8,11 +8,11 @@ async function asyncFetch(url, targetSelector, fetchParams, params) {
     } else {
         throw `Wrong type of target ${targetSelector}`;
     }
+    let layout = target.getAttribute('data-async-layout');
     if (!target) {
         target = document.querySelector(params.fallback.selector);
         layout = params.fallback.layout;
     }
-    const layout = target.getAttribute('async-layout');
     if (!fetchParams) fetchParams = {};
     if (!fetchParams.headers) fetchParams.headers = {};
     fetchParams.headers = Object.assign(fetchParams.headers, {
@@ -36,7 +36,7 @@ async function async(selector, params = {}, scope = null) {
     if (!scope) {
         scope = document;
         window.addEventListener('popstate', async function(e) {
-            if (e.state && e.state.targetSelector && e.state.url && e.state.layout && e.state.context && params.history && e.state.context == params.history.context) {
+            if (e.state && e.state.targetSelector && e.state.url && e.state.layout && e.state.context && params.history && e.state.context === params.history.context) {
                 await asyncFetch(
                     e.state.url,
                     e.state.targetSelector,
@@ -60,17 +60,17 @@ async function async(selector, params = {}, scope = null) {
             const res = await el.reload();
             el.reloadResolve(res);
         }
-        if (!el.getAttribute('async-target')) continue;
+        if (!el.getAttribute('data-async-target')) continue;
         el.addEventListener(params.event, async function(e) {
             e.preventDefault();
             e.stopPropagation();
             let history = true;
-            if (el.getAttribute('async-push-state') && el.getAttribute('async-push-state') == 'false') {
+            if (el.getAttribute('data-async-push-state') && el.getAttribute('data-async-push-state') === 'false') {
                 history = false;
             }
-            const targetSelector = this.getAttribute('async-target');
+            const targetSelector = this.getAttribute('data-async-target');
             const target = document.querySelector(targetSelector);
-            const layout = target.getAttribute('async-layout');
+            const layout = target.getAttribute('data-async-layout');
             let {url, fetchParams} = params.fetchParams.call(this);
             const push = function(url, fetchParams) {
                 if (!history) return;
@@ -99,7 +99,7 @@ function asyncForms(p = {}) {
             context: 'forms',
             async wrap(fetch, push, url, fetchParams) {
                 const res = await fetch();
-                if (res.status == 200) {
+                if (res.status === 200) {
                     const u = new URL(res.url);
                     push(u.pathname + u.search, {
                         headers: fetchParams.headers,
@@ -157,11 +157,11 @@ function asyncLinks(p = {}) {
 function asyncGet(p = {}) {
     const params = Object.assign({
         fetchParams() {
-            const url = this.getAttribute('async-get');
+            const url = this.getAttribute('data-async-get');
             return {url};
         },
     }, p)
-    async('*[async-get]', params);
+    async('*[data-async-get]', params);
 }
 
 

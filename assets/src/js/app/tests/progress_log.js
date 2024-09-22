@@ -49,3 +49,5 @@ initProgressLog(document.querySelector('.test-done-with-extra'))
     .done()
     .close();
 
+initProgressLog(document.querySelector('.test-oneline'));
+

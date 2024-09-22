@@ -3,9 +3,9 @@
     <div class="log-target"></div>
     <div class="pt-3 flex justify-end hidden alert-close-wrapper">
         <div class="error hidden">
-            <a async-target="main" class="close" href="/login">login again</a>
+            <a data-async-target="main" class="close" href="/login">login again</a>
         </div>
-        <a async-target="main" class="close closeable-close" href="/">go home</a>
+        <a data-async-target="main" class="close closeable-close" href="/">go home</a>
     </div>
 </form>
 {{ "auth/verify.js" | asset }}

@@ -14,13 +14,13 @@ import (
 )
 
 const (
-	UseClaimsFlag = "use-claims"
+	UseFlag = "use-claims"
 )
 
 func RegisterFlags(f []cli.Flag) []cli.Flag {
 	return append(f,
 		cli.BoolFlag{
-			Name:   UseClaimsFlag,
+			Name:   UseFlag,
 			Usage:  "use claims",
 			EnvVar: "USE_CLAIMS",
 		},
@@ -35,7 +35,7 @@ type Claims struct {
 type Data = proto.GetResponse
 
 func New(c *cli.Context, cl *Client) *Claims {
-	if !c.Bool(UseClaimsFlag) {
+	if !c.Bool(UseFlag) {
 		return nil
 	}
 	return &Claims{

@@ -1,7 +1,7 @@
 {{ define "main" }}
 {{ with .Data }}
 {{ if .Item }}
-<div id="file" async-layout="{{`{{ template "file" . }}`}}">
+<div id="file" data-async-layout="{{`{{ template "file" . }}`}}">
   {{ template "file" $ }}
 </div>
 {{ end }}
@@ -9,7 +9,7 @@
 <div class="divider h-0"></div>
 {{ end }}
 {{ if .List }}
-<div id="list" async-layout="{{`{{ template "list" . }}`}}">
+<div id="list" data-async-layout="{{`{{ template "list" . }}`}}">
 {{ template "list" $ }}
 </div>
 {{ end }}

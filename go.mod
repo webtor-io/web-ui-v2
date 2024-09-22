@@ -26,6 +26,10 @@ require (
 )
 
 require (
+	github.com/webtor-io/abuse-store v0.0.0-20230514145349-23cc55871d7e // indirect
+)
+
+require (
 	code.cloudfoundry.org/bytefmt v0.0.0-20240528171252-bec775193611 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect

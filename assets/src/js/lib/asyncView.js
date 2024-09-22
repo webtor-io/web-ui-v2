@@ -2,7 +2,7 @@ import MD5 from "crypto-js/md5";
 import {makeDebug} from './debug';
 const debug = await makeDebug('webtor:embed:message');
 export function initAsyncView(target, name, init, destroy) {
-    const layout = target.getAttribute('async-layout');
+    const layout = target.getAttribute('data-async-layout');
     if (layout) {
         name = name + '_' + MD5(layout).toString();
     }

@@ -9,9 +9,9 @@ function loadAsyncView(target, body, template) {
     for (const el of els) {
         const t = el.getAttribute('async-template');
         if (!t) continue;
-        const listener = (e) => {
+        const listener = () => {
             counter++;
-            if (counter == els.length) {
+            if (counter === els.length) {
                 renderBody(target, body, template);
             }
         }
@@ -22,7 +22,7 @@ function loadAsyncView(target, body, template) {
         const event = new CustomEvent(`async:${t}_destroy`, { detail });
         window.dispatchEvent(event);
     }
-    if (els.length == 0) {
+    if (els.length === 0) {
         renderBody(target, body, template);
     }
 }

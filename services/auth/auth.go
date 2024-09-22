@@ -28,7 +28,7 @@ import (
 const (
 	supertokensHostFlag = "supertokens-host"
 	supertokensPortFlag = "supertokens-port"
-	UseAuthFlag         = "use-auth"
+	UseFlag             = "use-auth"
 )
 
 func RegisterFlags(f []cli.Flag) []cli.Flag {
@@ -45,7 +45,7 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 			EnvVar: "SUPERTOKENS_SERVICE_PORT",
 		},
 		cli.BoolFlag{
-			Name:   UseAuthFlag,
+			Name:   UseFlag,
 			Usage:  "use auth",
 			EnvVar: "USE_AUTH",
 		},
@@ -63,7 +63,7 @@ type Auth struct {
 }
 
 func New(c *cli.Context) *Auth {
-	if !c.Bool(UseAuthFlag) {
+	if !c.Bool(UseFlag) {
 		return nil
 	}
 	return &Auth{
