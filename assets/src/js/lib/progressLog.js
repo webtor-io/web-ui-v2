@@ -84,7 +84,7 @@ export function initProgressLog(el, func) {
         // onMessageWithSkip.call(this, el, data, lt, func);
     }
 
-    const url = el.getAttribute('async-progress-log');
+    const url = el.getAttribute('data-async-progress-log');
     if (url) {
         const src = new EventSource(url, {
             withCredentials: true,
