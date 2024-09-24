@@ -25,3 +25,4 @@ assets/dist/*
 .env
 
 templates/partials/extend.html
+/.idea/dataSources.xml

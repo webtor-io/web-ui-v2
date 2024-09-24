@@ -32,9 +32,9 @@ Some features to mention:
   - [x] Magnet => DDL
   - [x] Magnet => Torrent
   - [x] Torrent => ZIP
-- [ ] Misc
+- [x] Misc
   - [x] Feedback form
-  - [ ] Allow magnet-url as query string
+  - [x] Allow magnet-url as query string
   - [x] Add dark/light theme switch
 - [x] Chrome extension integration
 - [x] Embed support

@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	sv "github.com/webtor-io/web-ui-v2/services"
@@ -20,13 +21,14 @@ type PostArgs struct {
 	Claims      *api.Claims
 }
 
-func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
+func (s *Handler) bindArgs(c *gin.Context) (*PostArgs, error) {
 	file, _ := c.FormFile("resource")
 	instruction, _ := c.GetPostForm("instruction")
-	r, ok := c.GetPostFormArray("resource")
-	query := ""
-	if ok {
-		query = r[0]
+	query, _ := c.GetPostForm("resource")
+	if query == "" && strings.HasPrefix(c.Request.URL.Path, "/magnet") {
+		query = strings.TrimPrefix(c.Request.URL.Path, "/") + c.Request.URL.RawQuery
+	}
+	if query != "" {
 		sha1 := sv.SHA1R.Find([]byte(query))
 		if sha1 == nil {
 			return &PostArgs{Query: query}, errors.Errorf("wrong resource provided query=%v", query)
@@ -75,7 +77,7 @@ func (s *Handler) post(c *gin.Context) {
 		args    *PostArgs
 		loadJob *job.Job
 	)
-	args, err = s.bindPostArgs(c)
+	args, err = s.bindArgs(c)
 	if err != nil {
 		indexTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)
 	}
