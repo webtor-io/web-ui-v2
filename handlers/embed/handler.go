@@ -1,12 +1,12 @@
 package embed
 
 import (
+	j "github.com/webtor-io/web-ui-v2/handlers/job"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/webtor-io/web-ui-v2/services/embed"
 	"github.com/webtor-io/web-ui-v2/services/template"
-	j "github.com/webtor-io/web-ui-v2/services/web/job"
 )
 
 type Handler struct {

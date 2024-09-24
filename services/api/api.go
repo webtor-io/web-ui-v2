@@ -257,6 +257,15 @@ func (s *Api) GetResource(ctx context.Context, c *Claims, infohash string) (e *r
 	return
 }
 
+func (s *Api) GetTorrent(ctx context.Context, c *Claims, infohash string) (closer io.ReadCloser, err error) {
+	u := s.url + "/resource/" + infohash + ".torrent"
+	res, err := s.doRequestRaw(ctx, c, u, "GET", nil)
+	if err != nil {
+		return nil, err
+	}
+	return res.Body, nil
+}
+
 func (s *Api) StoreResource(ctx context.Context, c *Claims, resource []byte) (e *ra.ResourceResponse, err error) {
 	u := s.url + "/resource"
 	e = &ra.ResourceResponse{}
@@ -274,7 +283,7 @@ func (s *Api) ListResourceContent(ctx context.Context, c *Claims, infohash strin
 	return
 }
 
-func (s *Api) doRequest(ctx context.Context, c *Claims, url string, method string, data []byte, v any) error {
+func (s *Api) doRequestRaw(ctx context.Context, c *Claims, url string, method string, data []byte) (res *http.Response, err error) {
 	var payload io.Reader
 
 	if data != nil {
@@ -283,16 +292,25 @@ func (s *Api) doRequest(ctx context.Context, c *Claims, url string, method strin
 	req, err := http.NewRequestWithContext(ctx, method, url, payload)
 
 	if err != nil {
-		return err
+		return
 	}
 
 	req, err = s.prepareRequest(req, c)
 
 	if err != nil {
-		return err
+		return
 	}
 
-	res, err := s.cl.Do(req)
+	res, err = s.cl.Do(req)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (s *Api) doRequest(ctx context.Context, c *Claims, url string, method string, data []byte, v any) error {
+	res, err := s.doRequestRaw(ctx, c, url, method, data)
 	if err != nil {
 		return err
 	}
@@ -300,10 +318,12 @@ func (s *Api) doRequest(ctx context.Context, c *Claims, url string, method strin
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(res.Body)
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
+
 	if res.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, v)
 		if err != nil {
@@ -318,7 +338,7 @@ func (s *Api) doRequest(ctx context.Context, c *Claims, url string, method strin
 		var e ra.ErrorResponse
 		err = json.Unmarshal(body, &e)
 		if err != nil {
-			return errors.Wrapf(err, "failed to parse status=%v body=%v url=%v", res.StatusCode, body, req.URL)
+			return errors.Wrapf(err, "failed to parse status=%v body=%v url=%v", res.StatusCode, body, url)
 		}
 		return errors.New(e.Error)
 	}

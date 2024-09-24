@@ -2,6 +2,7 @@ package job
 
 import (
 	"context"
+	"github.com/webtor-io/web-ui-v2/handlers/job/script"
 	"github.com/webtor-io/web-ui-v2/services/models"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 
 	"github.com/webtor-io/web-ui-v2/services/api"
 	"github.com/webtor-io/web-ui-v2/services/job"
-	"github.com/webtor-io/web-ui-v2/services/web/job/script"
 )
 
 func (s *Handler) Action(c *gin.Context, claims *api.Claims, resourceID string, itemID string, action string, settings *models.StreamSettings) (j *job.Job, err error) {

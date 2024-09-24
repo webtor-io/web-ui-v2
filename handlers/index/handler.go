@@ -2,12 +2,14 @@ package index
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/webtor-io/web-ui-v2/services/template"
 )
 
 type Data struct {
+	Instruction string
 }
 
 type Handler struct {
@@ -19,8 +21,14 @@ func RegisterHandler(r *gin.Engine, tm *template.Manager) {
 		tb: tm.MustRegisterViews("*").WithLayout("main"),
 	}
 	r.GET("/", h.index)
+	r.GET("/torrent-to-ddl", h.index)
+	r.GET("/torrent-to-zip", h.index)
+	r.GET("/magnet-to-ddl", h.index)
+	r.GET("/magnet-to-torrent", h.index)
 }
 
 func (s *Handler) index(c *gin.Context) {
-	s.tb.Build("index").HTML(http.StatusOK, c, &Data{})
+	s.tb.Build("index").HTML(http.StatusOK, c, &Data{
+		Instruction: strings.TrimPrefix(c.Request.URL.Path, "/"),
+	})
 }

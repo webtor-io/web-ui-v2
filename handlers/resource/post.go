@@ -1,28 +1,28 @@
 package resource
 
 import (
+	"github.com/pkg/errors"
+	"github.com/webtor-io/web-ui-v2/handlers/job/script"
 	"io"
 	"mime/multipart"
 	"net/http"
 
-	"github.com/pkg/errors"
-
 	"github.com/gin-gonic/gin"
 	sv "github.com/webtor-io/web-ui-v2/services"
-	"github.com/webtor-io/web-ui-v2/services/job"
-	"github.com/webtor-io/web-ui-v2/services/web/job/script"
-
 	"github.com/webtor-io/web-ui-v2/services/api"
+	"github.com/webtor-io/web-ui-v2/services/job"
 )
 
 type PostArgs struct {
-	File   []byte
-	Query  string
-	Claims *api.Claims
+	File        []byte
+	Query       string
+	Instruction string
+	Claims      *api.Claims
 }
 
 func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 	file, _ := c.FormFile("resource")
+	instruction, _ := c.GetPostForm("instruction")
 	r, ok := c.GetPostFormArray("resource")
 	query := ""
 	if ok {
@@ -54,15 +54,17 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 	}
 
 	return &PostArgs{
-		File:   fd,
-		Query:  query,
-		Claims: api.GetClaimsFromContext(c),
+		File:        fd,
+		Query:       query,
+		Claims:      api.GetClaimsFromContext(c),
+		Instruction: instruction,
 	}, nil
 }
 
 type PostData struct {
-	Job  *job.Job
-	Args *PostArgs
+	Job         *job.Job
+	Args        *PostArgs
+	Instruction string
 }
 
 func (s *Handler) post(c *gin.Context) {
@@ -74,7 +76,11 @@ func (s *Handler) post(c *gin.Context) {
 		loadJob *job.Job
 	)
 	args, err = s.bindPostArgs(c)
+	if err != nil {
+		indexTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)
+	}
 	d.Args = args
+	d.Instruction = args.Instruction
 	if err != nil {
 		indexTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)
 		return

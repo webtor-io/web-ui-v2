@@ -1,12 +1,23 @@
 package main
 
 import (
+	wa "github.com/webtor-io/web-ui-v2/handlers/action"
+	wau "github.com/webtor-io/web-ui-v2/handlers/auth"
+	"github.com/webtor-io/web-ui-v2/handlers/donate"
+	we "github.com/webtor-io/web-ui-v2/handlers/embed"
+	wee "github.com/webtor-io/web-ui-v2/handlers/embed/example"
+	"github.com/webtor-io/web-ui-v2/handlers/ext"
+	wi "github.com/webtor-io/web-ui-v2/handlers/index"
+	wj "github.com/webtor-io/web-ui-v2/handlers/job"
+	"github.com/webtor-io/web-ui-v2/handlers/legal"
+	wm "github.com/webtor-io/web-ui-v2/handlers/migration"
+	p "github.com/webtor-io/web-ui-v2/handlers/profile"
+	wr "github.com/webtor-io/web-ui-v2/handlers/resource"
+	sess "github.com/webtor-io/web-ui-v2/handlers/session"
+	sta "github.com/webtor-io/web-ui-v2/handlers/static"
+	"github.com/webtor-io/web-ui-v2/handlers/support"
+	"github.com/webtor-io/web-ui-v2/handlers/tests"
 	as "github.com/webtor-io/web-ui-v2/services/abuse_store"
-	"github.com/webtor-io/web-ui-v2/services/web/donate"
-	"github.com/webtor-io/web-ui-v2/services/web/ext"
-	"github.com/webtor-io/web-ui-v2/services/web/legal"
-	"github.com/webtor-io/web-ui-v2/services/web/support"
-	"github.com/webtor-io/web-ui-v2/services/web/tests"
 	"net/http"
 
 	"github.com/gin-contrib/multitemplate"
@@ -23,17 +34,6 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/job"
 	"github.com/webtor-io/web-ui-v2/services/template"
 	w "github.com/webtor-io/web-ui-v2/services/web"
-	wa "github.com/webtor-io/web-ui-v2/services/web/action"
-	wau "github.com/webtor-io/web-ui-v2/services/web/auth"
-	we "github.com/webtor-io/web-ui-v2/services/web/embed"
-	wee "github.com/webtor-io/web-ui-v2/services/web/embed/example"
-	wi "github.com/webtor-io/web-ui-v2/services/web/index"
-	wj "github.com/webtor-io/web-ui-v2/services/web/job"
-	wm "github.com/webtor-io/web-ui-v2/services/web/migration"
-	p "github.com/webtor-io/web-ui-v2/services/web/profile"
-	wr "github.com/webtor-io/web-ui-v2/services/web/resource"
-	sess "github.com/webtor-io/web-ui-v2/services/web/session"
-	sta "github.com/webtor-io/web-ui-v2/services/web/static"
 )
 
 func makeServeCMD() cli.Command {

@@ -1,9 +1,11 @@
 package script
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"github.com/anacrolix/torrent/metainfo"
 	"io"
 	"strings"
 	"time"
@@ -26,6 +28,13 @@ type StreamContent struct {
 	VideoStreamUserData *m.VideoStreamUserData
 	Settings            *m.StreamSettings
 	ExternalData        *m.ExternalData
+}
+
+type TorrentDownload struct {
+	Data     []byte
+	Infohash string
+	Name     string
+	Size     int
 }
 
 func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, template string, settings *m.StreamSettings, vsud *m.VideoStreamUserData) (err error) {
@@ -134,6 +143,48 @@ func (s *ActionScript) download(j *job.Job, claims *api.Claims, resourceID strin
 	return
 }
 
+func (s *ActionScript) downloadTorrent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string) (err error) {
+	j.InProgress("retrieving torrent")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	resp, err := s.api.GetTorrent(ctx, claims, resourceID)
+	if err != nil {
+		return j.Error(err, "failed to retrieve for 30 seconds")
+	}
+	defer func(resp io.ReadCloser) {
+		_ = resp.Close()
+	}(resp)
+	torrent, err := io.ReadAll(resp)
+	if err != nil {
+		return j.Error(err, "failed to read torrent")
+	}
+	mi, err := metainfo.Load(bytes.NewBuffer(torrent))
+	if err != nil {
+		return j.Error(err, "failed to load torrent metainfo")
+	}
+	info, err := mi.UnmarshalInfo()
+	if err != nil {
+		return j.Error(err, "failed to unmarshal torrent metainfo")
+	}
+	j.DoneWithMessage("success! download should start right now!")
+	tpl := s.tb.Build("action/download_torrent").WithLayoutBody(`{{ template "main" . }}`)
+	name := info.Name
+	if name == "" {
+		name = resourceID
+	}
+	str, err := tpl.ToString(c, &TorrentDownload{
+		Data:     torrent,
+		Infohash: resourceID,
+		Name:     name + ".torrent",
+		Size:     len(torrent),
+	})
+	if err != nil {
+		return err
+	}
+	j.RenderTemplate("action/download_torrent", strings.TrimSpace(str))
+	return nil
+}
+
 func (s *ActionScript) warmUp(j *job.Job, m string, u string, su string, size int, limitStart int, limitEnd int, tagSuff string, useStatus bool) (err error) {
 	tag := "download"
 	if tagSuff != "" {
@@ -211,6 +262,8 @@ func (s *ActionScript) Run(j *job.Job) (err error) {
 	switch s.action {
 	case "download":
 		return s.download(j, s.claims, s.resourceId, s.itemId)
+	case "download-torrent":
+		return s.downloadTorrent(j, s.c, s.claims, s.resourceId)
 	case "preview-image":
 		return s.previewImage(j, s.c, s.claims, s.resourceId, s.itemId, s.settings, s.vsud)
 	case "stream-audio":

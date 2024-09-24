@@ -1,6 +1,7 @@
 package action
 
 import (
+	wj "github.com/webtor-io/web-ui-v2/handlers/job"
 	m "github.com/webtor-io/web-ui-v2/services/models"
 	"net/http"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/api"
 	"github.com/webtor-io/web-ui-v2/services/job"
 	"github.com/webtor-io/web-ui-v2/services/template"
-	wj "github.com/webtor-io/web-ui-v2/services/web/job"
 )
 
 type PostArgs struct {
@@ -44,6 +44,9 @@ func RegisterHandler(r *gin.Engine, tm *template.Manager, jobs *wj.Handler) {
 	})
 	r.POST("/download-dir", func(c *gin.Context) {
 		h.post(c, "download")
+	})
+	r.POST("/download-torrent", func(c *gin.Context) {
+		h.post(c, "download-torrent")
 	})
 	r.POST("/preview-image", func(c *gin.Context) {
 		h.post(c, "preview-image")

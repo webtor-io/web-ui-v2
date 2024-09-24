@@ -33,13 +33,13 @@ type Pagination struct {
 	Number bool
 }
 
-func (s *Helper) MakeButton(ctx *w.Context, gd *GetData, name string, icon string, endpoint string) *ButtonItem {
+func (s *Helper) MakeButton(ctx *w.Context, gd *GetData, name string, action string, endpoint string) *ButtonItem {
 	return &ButtonItem{
 		ID:         gd.Item.ID,
 		ItemID:     gd.Item.ID,
 		ResourceID: gd.Resource.ID,
 		Name:       name,
-		Action:     icon,
+		Action:     action,
 		Endpoint:   endpoint,
 		CSRF:       ctx.CSRF,
 	}
@@ -49,6 +49,18 @@ func (s *Helper) MakeDirButton(ctx *w.Context, gd *GetData, name string, action 
 	return &ButtonItem{
 		ID:         gd.List.ID,
 		ItemID:     gd.List.ID,
+		ResourceID: gd.Resource.ID,
+		Name:       name,
+		Action:     action,
+		Endpoint:   endpoint,
+		CSRF:       ctx.CSRF,
+	}
+}
+
+func (s *Helper) MakeResourceButton(ctx *w.Context, gd *GetData, name string, action string, endpoint string) *ButtonItem {
+	return &ButtonItem{
+		ID:         gd.Resource.ID,
+		ItemID:     gd.Resource.ID,
 		ResourceID: gd.Resource.ID,
 		Name:       name,
 		Action:     action,
@@ -93,6 +105,14 @@ func (s *Helper) MakeDirDownload(ctx *w.Context, gd *GetData) *ButtonItem {
 		fmt.Sprintf("Download Directory as ZIP [%v]", h.Bytes(uint64(gd.List.Size))),
 		"download",
 		"/download-dir",
+	)
+}
+
+func (s *Helper) MakeTorrentDownload(ctx *w.Context, gd *GetData) *ButtonItem {
+	return s.MakeResourceButton(ctx, gd,
+		fmt.Sprintf("Download Torrent File"),
+		"download",
+		"/download-torrent",
 	)
 }
 

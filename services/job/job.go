@@ -253,6 +253,15 @@ func (s *Job) Done() *Job {
 	return s
 }
 
+func (s *Job) DoneWithMessage(msg string) *Job {
+	_ = s.log(LogItem{
+		Level:   Done,
+		Tag:     s.cur,
+		Message: msg,
+	})
+	return s
+}
+
 func (s *Job) Download(url string) *Job {
 	_ = s.log(LogItem{
 		Level:    Download,

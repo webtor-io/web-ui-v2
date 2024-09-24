@@ -19,18 +19,19 @@ Some features to mention:
   - [x] Base player
   - [x] Subtitles support
   - [x] OpenSubtitles support
-  - [ ] Subtitle uploading support
   - [ ] Chromecast support
-  - [ ] Subtitle size control
   - [ ] Embed control
+  - [ ] Subtitle uploading support
+  - [ ] Subtitle size control
 - [x] Authentication
   - [x] Passwordless authentication
   - [x] Patreon account linking
 - [x] Ads and statistic integration support
-- [ ] Tools
-  - [ ] Torrent => DDL
-  - [ ] Magnet => DDL
-  - [ ] Magnet => Torrent
+- [x] Tools
+  - [x] Torrent => DDL
+  - [x] Magnet => DDL
+  - [x] Magnet => Torrent
+  - [x] Torrent => ZIP
 - [ ] Misc
   - [x] Feedback form
   - [ ] Allow magnet-url as query string

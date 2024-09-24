@@ -2,9 +2,11 @@ package web
 
 import (
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/webtor-io/web-ui-v2/handlers/static"
 	"github.com/webtor-io/web-ui-v2/services/abuse_store"
 	"html/template"
 	"io"
@@ -24,7 +26,6 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/claims"
 	"github.com/webtor-io/web-ui-v2/services/job"
 	"github.com/webtor-io/web-ui-v2/services/obfuscator"
-	"github.com/webtor-io/web-ui-v2/services/web/static"
 )
 
 func (s *Helper) MakeJobLogURL(j *job.Job) string {
@@ -111,6 +112,10 @@ func (s *Helper) IsDemoMagnet(m string) bool {
 
 func (s *Helper) Obfuscate(in string) string {
 	return obfuscator.Obfuscate(in)
+}
+
+func (s *Helper) Base64(in []byte) string {
+	return base64.StdEncoding.EncodeToString(in)
 }
 
 func (s *Helper) Json(in any) template.JS {

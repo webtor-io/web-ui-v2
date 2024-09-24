@@ -45,6 +45,7 @@ function renderBody(target, body, template) {
         const event = new CustomEvent('async:' + template, { detail });
         window.dispatchEvent(event);
     }
+    target.scrollIntoView();
 }
 
 export default loadAsyncView;
