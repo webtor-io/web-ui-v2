@@ -35,7 +35,10 @@ export function initAsyncView(target, name, init, destroy) {
         }
         window.dispatchEvent(event);
     } 
-    const key = `__async${name}_loaded`;
+    let keySuffix = '';
+    if (init) keySuffix += init.toString();
+    if (destroy) keySuffix += destroy.toString();
+    let key = `__async${name}_loaded_${MD5(keySuffix)}`;
     if (!window[key]) {
         window.addEventListener(`async:${name}`, onLoad);
         window.addEventListener(`async:${name}_destroy`, onDestroy);
