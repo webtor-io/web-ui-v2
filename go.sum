@@ -505,6 +505,8 @@ github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
+github.com/supertokens/supertokens-golang v0.20.0 h1:mQHfF38UF5AWqkRPXyt1CcDUHDt/LvMwY+FCbYez2eo=
+github.com/supertokens/supertokens-golang v0.20.0/go.mod h1:/n6zQ9461RscnnWB4Y4bWwzhPivnj8w79j/doqkLOs8=
 github.com/supertokens/supertokens-golang v0.25.0 h1:yTWBKD8tZFe6sYSQ5h1IYTsH/c3UQlqyqRvSFGVXx/o=
 github.com/supertokens/supertokens-golang v0.25.0/go.mod h1:/n6zQ9461RscnnWB4Y4bWwzhPivnj8w79j/doqkLOs8=
 github.com/swaggo/files v1.0.1 h1:J1bVJ4XHZNq0I46UU90611i9/YzdrF7x92oX1ig5IdE=
