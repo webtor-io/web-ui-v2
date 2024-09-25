@@ -13,13 +13,14 @@ window.progress = {
 };
 
 import {bindAsync} from '../lib/async';
-const av = (await import('../lib/asyncView')).initAsyncView;
+// const av = (await import('../lib/asyncView')).initAsyncView;
 import themeSelector from "../lib/themeSelector";
 
 function onLoad() {
-    av(document.querySelector('nav'), 'index', async function() {
-        themeSelector(document.querySelector('[data-toggle-theme]'));
-    });
+    themeSelector(document.querySelector('[data-toggle-theme]'));
+    // av(document.querySelector('nav'), 'index', async function() {
+    //     themeSelector(document.querySelector('[data-toggle-theme]'));
+    // });
     document.body.style.display = 'flex';
     hideProgress();
     bindAsync({
