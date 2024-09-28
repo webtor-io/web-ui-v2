@@ -1,12 +1,11 @@
-const target = document.currentScript.parentElement;
+import av from '../../lib/av';
 
 function ready() {
     const event = new CustomEvent('player_ready');
     window.dispatchEvent(event);
 }
 
-const av = (await import('../../lib/asyncView')).initAsyncView;
-av(target, 'action/stream_audio', async function() {
+av(async function() {
     const initPlayer = (await import('../../lib/mediaelement')).initPlayer;
     initPlayer(this, ready);
 }, async function() {

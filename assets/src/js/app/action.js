@@ -1,6 +1,5 @@
-const target = document.currentScript.parentElement;
-const av = (await import('../lib/asyncView')).initAsyncView;
-av(target, 'action/post', async function() {
+import av from '../lib/av';
+av(async function() {
     const self = this;
     const progress = self.querySelector('form');
     const el = document.createElement('div');

@@ -63,8 +63,8 @@
                 {{ if eq .Claims.Context.Tier.Name "free" }}donate{{ else }}{{ .Claims.Context.Tier.Name }}{{ end }}
                 {{ else }}donate{{ end }}
             </a>
-
         </div>
     </div>
 </div>
+{{ "nav.js" | asset }}
 {{ end }}

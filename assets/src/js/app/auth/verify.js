@@ -1,8 +1,7 @@
-const target = document.currentScript.parentElement;
-const av = (await import('../../lib/asyncView')).initAsyncView;
-av(target, 'auth/verify', async function() {
+import av from '../../lib/av';
+av( async function() {
     const initProgressLog = (await import('../../lib/progressLog')).initProgressLog;
-    const pl = initProgressLog(target.querySelector('.progress-alert'));
+    const pl = initProgressLog(this.querySelector('.progress-alert'));
     pl.clear();
     const e = pl.inProgress('verify', 'checking magic link');
     const supertokens = (await import('../../lib/supertokens'));

@@ -1,51 +1,40 @@
 import executeScriptElements from "./executeScriptElements";
-function loadAsyncView(target, body, template) {
-    const nodes = target.querySelectorAll('.async-view');
-    const els = [];
-    for (const n of nodes) {
-        els.push(n);
-    }
-    let counter = 0;
+function loadAsyncView(target, body) {
+    const els = target.querySelectorAll('[data-async-view]');
     for (const el of els) {
-        const t = el.getAttribute('async-template');
-        if (!t) continue;
-        const listener = () => {
-            counter++;
-            if (counter === els.length) {
-                renderBody(target, body, template);
-            }
-        }
-        window.addEventListener(`async:${t}_destroyed`, listener, { once: true });
+        const view = el.getAttribute('data-async-view');
         const detail = {
             target: el,
         };
-        const event = new CustomEvent(`async:${t}_destroy`, { detail });
+        const event = new CustomEvent(`async:${view}_destroy`, { detail });
         window.dispatchEvent(event);
     }
-    if (els.length === 0) {
-        renderBody(target, body, template);
-    }
+    renderBody(target, body);
 }
-function renderBody(target, body, template) {
+function renderBody(target, body) {
     target.innerHTML = body;
-    target.classList.add('async-loaded');
-    target.setAttribute('async-template', template);
-
     executeScriptElements(target);
     const detail = {
         target,
-        template,
     };
     // Update async elements
     const event = new CustomEvent('async', { detail });
     window.dispatchEvent(event);
 
-    // Process async views
-    if (template) {
-        const event = new CustomEvent('async:' + template, { detail });
+    const scripts = target.getElementsByTagName('script');
+    for (const script of scripts) {
+        if (script.src === "") continue;
+        const url = new URL(script.src);
+        const name = url.pathname.replace(/\.js$/, '');
+        const event = new CustomEvent('async:' + name, { detail });
         window.dispatchEvent(event);
     }
-    target.scrollIntoView();
+
+    // Process async views
+    const yOffset = -100;
+    const y = target.getBoundingClientRect().top + window.scrollY + yOffset;
+
+    window.scrollTo({ top: y });
 }
 
 export default loadAsyncView;

@@ -28,8 +28,7 @@ async function asyncFetch(url, targetSelector, fetchParams, params) {
     }
     const res = await fetchFunc(url, fetchParams);
     const text = await res.text();
-    const template = res.headers.get('X-Template');
-    loadAsyncView(target, text, template, layout);
+    loadAsyncView(target, text, params);
     return res;
 }
 async function async(selector, params = {}, scope = null) {
@@ -163,7 +162,6 @@ function asyncGet(p = {}) {
     }, p)
     async('*[data-async-get]', params);
 }
-
 
 export function bindAsync(params = {}) {
     asyncLinks(params);

@@ -1,5 +1,4 @@
-const target = document.currentScript.parentElement;
-const av = (await import('../lib/asyncView')).initAsyncView;
+import av from '../lib/av';
 
 function setRequied(input) {
     if (input.getAttribute('data-required') !== null)  {
@@ -29,8 +28,8 @@ function updateForm(select, inputs, submit) {
     }
 }
 
-av(target, 'support/form', async function() {
-    const form = target.querySelector('form');
+av(async function() {
+    const form = this.querySelector('form');
     const select = form.querySelector('select');
     const inputs = form.querySelectorAll('input, textarea');
     const submit = form.querySelector('button');

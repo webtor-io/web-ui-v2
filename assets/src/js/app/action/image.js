@@ -1,4 +1,4 @@
-const target = document.currentScript.parentElement;
+import av from '../../lib/av';
 
 function ready() {
     const event = new CustomEvent('player_ready');
@@ -6,8 +6,7 @@ function ready() {
 }
 
 
-const av = (await import('../../lib/asyncView')).initAsyncView;
-av(target, 'action/preview_image', () => {
+av(() => {
     ready();
 });
 

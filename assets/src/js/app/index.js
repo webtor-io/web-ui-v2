@@ -1,7 +1,6 @@
-const target = document.currentScript.parentElement;
-const av = (await import('../lib/asyncView')).initAsyncView;
-av(target, 'index', async function() {
-    const dropzone = target.querySelector('.dropzone');
+import av from '../lib/av';
+av(async function() {
+    const dropzone = this.querySelector('.dropzone');
     if (dropzone) {
         const initDrop = (await import('../lib/drop')).initDrop;
         initDrop(dropzone);

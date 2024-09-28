@@ -4,7 +4,6 @@
 <audio class="player"
        crossorigin="anonymous"
        preload="{{ .Preload }}"
-       {{ if .Poster }}poster="{{ .Poster }}" {{ end }}
        {{ if $MediaProbe }}data-duration="{{ $MediaProbe | getDurationSec }}" {{ end }}
        controls
        autoplay
@@ -15,5 +14,5 @@
 </audio>
 {{ end }}
 {{ "mediaelement.css" | asset }}
-{{ "action/audio.js" | asset }}
+{{ "action/stream.js" | asset }}
 {{ end }}

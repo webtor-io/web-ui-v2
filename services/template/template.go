@@ -332,7 +332,6 @@ func (s *Template) HTMLWithErr(err error, code int, c *gin.Context, obj any) {
 			panic(rerr)
 		}
 	}
-	c.Header("X-Template", name)
 	c.HTML(code, name, s.tm.contextWrapper(c, obj, err))
 }
 
