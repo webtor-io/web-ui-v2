@@ -30,6 +30,9 @@ function onLoad() {
             hideProgress();
             return res;
         },
+        update(key, val) {
+            if (key === 'title') document.querySelector('title').innerText = val;
+        },
         fallback: {
             selector: 'main',
             layout: 'async',

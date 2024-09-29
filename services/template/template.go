@@ -326,6 +326,18 @@ func (s *Template) HTMLWithErr(err error, code int, c *gin.Context, obj any) {
 				panic(rerr)
 			}
 		}
+		for name, vals := range c.Request.Header {
+			if !strings.HasPrefix(name, "X-Update") {
+				continue
+			}
+			tpl := s.tm.Build(s.name).WithLayoutBody(vals[0])
+			str, rerr := tpl.ToString(c, obj)
+			if rerr != nil {
+				panic(rerr)
+			}
+			c.Header(name, str)
+		}
+
 	} else {
 		name, rerr = s.tm.RenderViewByNameAndLayout(s.name, s.layout)
 		if rerr != nil {

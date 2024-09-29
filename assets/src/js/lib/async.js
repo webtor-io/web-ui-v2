@@ -13,12 +13,19 @@ async function asyncFetch(url, targetSelector, fetchParams, params) {
         target = document.querySelector(params.fallback.selector);
         layout = params.fallback.layout;
     }
+    const updateHeaders = {};
+    for (const an of target.getAttributeNames()) {
+        if (an.startsWith('data-async-update-')) {
+            const key = 'X-Update-' + an.replace('data-async-update-', '');
+            updateHeaders[key] = target.getAttribute(an);
+        }
+    }
     if (!fetchParams) fetchParams = {};
     if (!fetchParams.headers) fetchParams.headers = {};
     fetchParams.headers = Object.assign(fetchParams.headers, {
         'X-Requested-With': 'XMLHttpRequest',
         'X-Layout': layout,
-    });
+    }, updateHeaders);
     let fetchFunc = fetch;
     if (params.fetch) {
         const oldFetch = fetch;
@@ -29,6 +36,11 @@ async function asyncFetch(url, targetSelector, fetchParams, params) {
     const res = await fetchFunc(url, fetchParams);
     const text = await res.text();
     loadAsyncView(target, text, params);
+    for (const [h, val] of res.headers.entries()) {
+        if (!h.startsWith('x-update-')) continue;
+        const key = h.replace('x-update-', '');
+        params.update(key, val);
+    }
     return res;
 }
 async function async(selector, params = {}, scope = null) {

@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title>Download and play torrents | Webtor.io</title>
+        <title>{{ template "title" . }} | Webtor.io</title>
         <meta name="description" content="Download and play torrents with free online torrent web player and downloader. Just paste the magnet link or open the torrent file and start downloading or watching torrent content safely and anonymously through your web browser. Works instantly without client and registration!">
         <script>
             window._CSRF = "{{ .CSRF }}";
@@ -27,7 +27,7 @@
         </header>
         <div id="wrapper" class="flex flex-col w-full px-4 sm:px-8 items-center mb-5 sm:mb-10">
             <div class="min-w-80 w-full max-w-3xl">
-                <main id="main" data-async-layout="{{`{{ template "main" . }}`}}">
+                <main id="main" data-async-layout="{{`{{ template "main" . }}`}}" data-async-update-title="{{`{{ template "title" . }} | Webtor.io`}}">
                 {{ template "main" . }}
                 </main>
             </div>
