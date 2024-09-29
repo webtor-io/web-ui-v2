@@ -25,6 +25,8 @@
     "css-minimizer-webpack-plugin": "^7.0.0",
     "daisyui": "^4.12.10",
     "debug": "4.3.5",
+    "favicons": "^7.2.0",
+    "favicons-webpack-plugin": "^6.0.1",
     "hls.js": "^1.5.15",
     "iframe-resizer": "^4.3.11",
     "mediaelement": "^7.0.5",

@@ -3,6 +3,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 
 const fs = require('fs');
 
@@ -16,6 +17,23 @@ function getEntries(path, ext, prefix = '') {
             resolve(entries);
         });
     })
+}
+
+function makeFavicons(theme) {
+    return new FaviconsWebpackPlugin({
+        logo: `./assets/src/images/logo-${theme}.svg`,
+        prefix: `${theme}/`,
+        favicons: {
+            icons: {
+                android: false,
+                appleIcon: false,
+                appleStartup: false,
+                favicons: true,
+                windows: false,
+                yandex: false,
+            },
+        },
+    });
 }
 
 module.exports = async (env, options) => {
@@ -101,6 +119,8 @@ module.exports = async (env, options) => {
                     { from: 'node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js', to: 'lib/iframeResizer.contentWindow.min.js'},
                 ],
             }),
+            makeFavicons('lofi'),
+            makeFavicons('night'),
         ],
     };
 }
