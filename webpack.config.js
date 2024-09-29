@@ -7,6 +7,9 @@ const FaviconsWebpackPlugin = require('favicons-webpack-plugin');
 
 const fs = require('fs');
 
+const tailwindConfig = require('./tailwind.config');
+const themes = tailwindConfig.daisyui.themes;
+
 function getEntries(path, ext, prefix = '') {
     return new Promise((resolve) => {
         fs.readdir(path, { recursive: true }, (err, files) => {
@@ -19,28 +22,45 @@ function getEntries(path, ext, prefix = '') {
     })
 }
 
-function makeFavicons(theme) {
-    return new FaviconsWebpackPlugin({
-        logo: `./assets/src/images/logo-${theme}.svg`,
-        prefix: `${theme}/`,
-        favicons: {
-            icons: {
-                android: false,
-                appleIcon: false,
-                appleStartup: false,
-                favicons: true,
-                windows: false,
-                yandex: false,
-            },
-        },
-    });
-}
 
 module.exports = async (env, options) => {
     const jsEntries = await getEntries('./assets/src/js/app', '.js');
     const styleEntries = await getEntries('./assets/src/styles', '.css');
     const devMode = options.mode !== 'production';
     const devEntries = devMode ? await getEntries('./assets/src/js/dev', '.js', 'dev/') : {};
+    const plugins = [
+        new MiniCssExtractPlugin({
+            filename: '[name].css',
+        }),
+        new CopyPlugin({
+            patterns: [
+                { from: 'node_modules/mediaelement/build/mejs-controls.svg', to: 'mejs-controls.svg' },
+                { from: 'node_modules/hls.js/dist/hls.min.js', to: 'lib/hls.min.js'},
+                { from: 'node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js', to: 'lib/iframeResizer.contentWindow.min.js'},
+            ],
+        }),
+    ];
+    for (const t of themes) {
+        plugins.push(new FaviconsWebpackPlugin({
+            logo: `./assets/src/images/logo-${t}.svg`,
+            prefix: `${t}/`,
+            favicons: {
+                icons: {
+                    android: false,
+                    appleIcon: false,
+                    appleStartup: false,
+                    favicons: true,
+                    windows: false,
+                    yandex: false,
+                },
+            },
+        }));
+        plugins.push(new CopyPlugin({
+            patterns: [
+                { from: `assets/src/images/logo-${t}.svg`, to: `${t}/favicon.svg` },
+            ],
+        }));
+    }
     return {
         entry: {
             ...jsEntries,
@@ -108,19 +128,6 @@ module.exports = async (env, options) => {
                 },
             ]
         },
-        plugins: [
-            new MiniCssExtractPlugin({
-                filename: '[name].css',
-            }),
-            new CopyPlugin({
-                patterns: [
-                    { from: 'node_modules/mediaelement/build/mejs-controls.svg', to: 'mejs-controls.svg' },
-                    { from: 'node_modules/hls.js/dist/hls.min.js', to: 'lib/hls.min.js'},
-                    { from: 'node_modules/iframe-resizer/js/iframeResizer.contentWindow.min.js', to: 'lib/iframeResizer.contentWindow.min.js'},
-                ],
-            }),
-            makeFavicons('lofi'),
-            makeFavicons('night'),
-        ],
+        plugins,
     };
 }
