@@ -2,6 +2,7 @@ import '../../styles/mediaelement.css';
 import 'mediaelement';
 import './mediaelement-plugins/availableprogress';
 import './mediaelement-plugins/advancedtracks';
+import './mediaelement-plugins/chromecast';
 
 const {MediaElementPlayer} = global;
 
@@ -106,6 +107,7 @@ export function initPlayer(target, ready) {
         'advancedtracks',
         'volume',
         'fullscreen',
+        'chromecast'
     ];
     if (duration > 0) {
         features.push('availableprogress');

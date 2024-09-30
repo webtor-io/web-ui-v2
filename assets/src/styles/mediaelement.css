@@ -13,3 +13,11 @@
   position: absolute;
   bottom: 0;
 }
+
+.mejs__cast-button {
+  position: absolute;
+  top: 4px;
+  right: 9px;
+  z-index: 999999999;
+  cursor: pointer;
+}

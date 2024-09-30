@@ -19,7 +19,7 @@ Some features to mention:
   - [x] Base player
   - [x] Subtitles support
   - [x] OpenSubtitles support
-  - [ ] Chromecast support
+  - [x] Chromecast support
   - [ ] Embed control
   - [ ] Subtitle uploading support
   - [ ] Subtitle size control
