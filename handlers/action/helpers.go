@@ -143,6 +143,18 @@ func (s *Helper) canoninizeSrcLangs(lis []ListItem) []ListItem {
 	return lis
 }
 
+func (s *Helper) FilterSubtitlesByProvider(subs []ListItem, provider string, exclude bool) []ListItem {
+	var res []ListItem
+	for _, s := range subs {
+		if s.Provider == provider && !exclude {
+			res = append(res, s)
+		} else if s.Provider != provider && exclude {
+			res = append(res, s)
+		}
+	}
+	return res
+}
+
 func (s *Helper) GetSubtitles(ud *m.VideoStreamUserData, mp *api.MediaProbe, tag *ra.ExportTag, opensubs []api.OpenSubtitleTrack, ext *m.ExternalData) []ListItem {
 	var res []ListItem
 	res = append(res, ListItem{

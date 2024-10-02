@@ -14,11 +14,8 @@ Object.assign(MediaElementPlayer.prototype, {
         const tracksContainer = document.createElement('div');
         player.tracksLayer.appendChild(tracksContainer);
         const playLayer = layers.querySelector(`.${this.options.classPrefix}overlay-play`);
-        // playLayer.style.display = 'none';
 
         layers.insertBefore(player.tracksLayer, playLayer);
-        // player.tracksLayer.style.width = '100%';
-        // player.tracksLayer.style.height = '100%';
         const t = () => {
             const checkbox = document.getElementById('subtitles-checkbox');
             checkbox.checked = !checkbox.checked;

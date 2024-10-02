@@ -49,6 +49,7 @@ type Job struct {
 	Context   context.Context
 	storage   Storage
 	main      bool
+	purge     bool
 }
 
 type LogItemLevel string
@@ -92,7 +93,7 @@ type LogItem struct {
 	Timestamp time.Time    `json:"timestamp,omitempty"`
 }
 
-func New(ctx context.Context, id string, queue string, runnable Runnable, storage Storage) *Job {
+func New(ctx context.Context, id string, queue string, runnable Runnable, storage Storage, purge bool) *Job {
 	return &Job{
 		ID:        id,
 		Queue:     queue,
@@ -102,34 +103,43 @@ func New(ctx context.Context, id string, queue string, runnable Runnable, storag
 		observers: []*Observer{},
 		storage:   storage,
 		main:      true,
+		purge:     purge,
 	}
 }
 
-func (s *Job) Run(ctx context.Context) (err error) {
+func (s *Job) Run(ctx context.Context) error {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Errorf("job panic: %v", r)
 		}
 	}()
-	items, err := s.storage.Sub(ctx, s.ID)
-	if err != nil {
-		return err
-	}
-	if items != nil {
-		s.main = false
-		for i := range items {
-			err = s.log(i)
-			if err != nil {
-				return err
-			}
+	if !s.purge {
+		items, err := s.storage.Sub(ctx, s.ID)
+		if err != nil {
+			return err
 		}
-		return
+		if items != nil {
+			s.main = false
+			for i := range items {
+				err = s.log(i)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	} else {
+		err := s.storage.Drop(ctx, s.ID)
+		if err != nil {
+			return err
+		}
 	}
+
 	s.Open()
 	if s.runnable != nil {
 		return s.runnable.Run(s)
 	}
-	return
+	return nil
 }
 
 func (s *Job) ObserveLog() *Observer {
@@ -316,13 +326,13 @@ func newJobs(queue string, storage Storage) *Jobs {
 	}
 }
 
-func (s *Jobs) Enqueue(ctx context.Context, cancel context.CancelFunc, id string, r Runnable) *Job {
+func (s *Jobs) Enqueue(ctx context.Context, cancel context.CancelFunc, id string, r Runnable, purge bool) *Job {
 	s.mux.Lock()
 	defer s.mux.Unlock()
-	if _, ok := s.jobs[id]; ok {
+	if _, ok := s.jobs[id]; ok && !purge {
 		return s.jobs[id]
 	}
-	j := New(ctx, id, s.queue, r, s.storage)
+	j := New(ctx, id, s.queue, r, s.storage, purge)
 	s.jobs[id] = j
 	go func() {
 		defer cancel()
@@ -357,7 +367,7 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 			return
 		}
 		jCtx, cancel := context.WithTimeout(context.Background(), state.TTL)
-		j = s.Enqueue(jCtx, cancel, id, nil)
+		j = s.Enqueue(jCtx, cancel, id, nil, false)
 	} else {
 		log.Infof("found local job with id=%+v", id)
 	}

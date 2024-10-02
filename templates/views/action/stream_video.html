@@ -24,7 +24,10 @@
     </video>
     <input type="checkbox" id="subtitles-checkbox" class="modal-toggle" />
     <div class="modal absolute w-full h-full" id="subtitles" data-csrf="{{ $.CSRF }}" data-resource-id="{{ .VideoStreamUserData.ResourceID }}" data-item-id="{{ .VideoStreamUserData.ItemID }}">
-        <div class="modal-box w-11/12 max-w-5xl">
+        {{ $subs := getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles .ExternalData }}
+        {{ $openSubs := filterSubtitlesByProvider $subs "OpenSubtitles" false }}
+        {{ $otherSubs := filterSubtitlesByProvider $subs "OpenSubtitles" true }}
+        <div class="modal-box w-full sm:w-11/12 max-w-5xl">
             <div class="flex" id="embedded">
                 <div class="flex-1">
                     <h3 class="font-bold text-lg">Audio</h3>
@@ -37,10 +40,8 @@
                 <div class="flex-1">
                     <h3 class="font-bold text-lg">Subtitles</h3>
                     <ul class="flex flex-wrap">
-                        {{ range getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles .ExternalData }}
-                        {{ if ne .Provider "OpenSubtitles" }}
+                        {{ range $otherSubs }}
                         <li data-id="{{ .ID }}" data-mp-id="{{ .MPID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="subtitle cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}" onclick="setSubtitle(this)">{{ .Label }}</li>
-                        {{ end }}
                         {{ end }}
                     </ul>
                 </div>
@@ -49,17 +50,30 @@
                 <div class="flex-1">
                     <h3 class="font-bold text-lg">OpenSubtitles</h3>
                     <ul class="flex flex-wrap">
-                        {{ range getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles .ExternalData }}
-                        {{ if eq .Provider "OpenSubtitles" }}
+                        {{ range $openSubs }}
                         <li data-id="{{ .ID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="subtitle cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}" onclick="setSubtitle(this)">{{ .Label }}</li>
-                        {{ end }}
                         {{ end }}
                     </ul>
                 </div>
             </div>
             <div class="modal-action">
-                <label class="btn btn-accent btn-outline" onclick="toggleOpenSubtitles(this)">OpenSubtitles</label>
+                {{ if $openSubs }}<label class="btn btn-accent btn-outline" onclick="toggleOpenSubtitles(this)">OpenSubtitles</label>{{ end }}
                 <label for="subtitles-checkbox" class="btn btn-accent btn-outline">Close</label>
+            </div>
+        </div>
+    </div>
+    <input type="checkbox" id="embed-checkbox" class="modal-toggle" />
+    <div class="modal absolute w-full h-full" id="embed">
+        <div class="modal-box w-full sm:w-11/12 max-w-5xl">
+            <div class="flex">
+                <textarea name="description" class="textarea textarea-bordered w-full" readonly><video controls src="{{ .Resource.MagnetURI }}" data-path="{{ .Item.PathStr }}"></video><script src="https://cdn.jsdelivr.net/npm/@webtor/player-sdk-js/dist/index.min.js" charset="utf-8" async></script></textarea>
+            </div>
+            <div class="modal-action">
+                <div class="flex-grow text-sm flex items-center">
+                    <p>See <a class="link" href="https://github.com/webtor-io/embed-sdk-js">embed-sdk</a> for advanced usage</p>
+                </div>
+                <label class="btn btn-accent btn-outline" onclick="copyToClipboard(this)">Copy</label>
+                <label for="embed-checkbox" class="btn btn-accent btn-outline">Close</label>
             </div>
         </div>
     </div>

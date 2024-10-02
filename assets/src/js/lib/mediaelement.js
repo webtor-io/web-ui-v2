@@ -3,8 +3,17 @@ import 'mediaelement';
 import './mediaelement-plugins/availableprogress';
 import './mediaelement-plugins/advancedtracks';
 import './mediaelement-plugins/chromecast';
+import './mediaelement-plugins/embed';
 
 const {MediaElementPlayer} = global;
+
+window.copyToClipboard = function(e) {
+    const el = document.getElementById('embed');
+    const code = el.querySelector('textarea').value;
+    navigator.clipboard.writeText(code);
+    const checkbox = document.getElementById('embed-checkbox');
+    checkbox.checked = !checkbox.checked;
+}
 
 window.toggleOpenSubtitles = function(e) {
     const el = document.getElementById('opensubtitles');
@@ -107,7 +116,8 @@ export function initPlayer(target, ready) {
         'advancedtracks',
         'volume',
         'fullscreen',
-        'chromecast'
+        'chromecast',
+        'embed',
     ];
     if (duration > 0) {
         features.push('availableprogress');

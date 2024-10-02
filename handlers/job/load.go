@@ -22,6 +22,6 @@ func (s *Handler) Load(claims *api.Claims, args *script.LoadArgs) (j *job.Job, e
 		}
 		j.Redirect("/" + j.Context.Value("respID").(string))
 		return
-	}))
+	}), false)
 	return
 }

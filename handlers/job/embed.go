@@ -18,6 +18,6 @@ func (s *Handler) Embed(c *gin.Context, hCl *http.Client, claims *api.Claims, se
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	j = s.q.GetOrCreate("embded").Enqueue(ctx, cancel, hash, es)
+	j = s.q.GetOrCreate("embded").Enqueue(ctx, cancel, hash, es, false)
 	return
 }

@@ -21,3 +21,21 @@
   z-index: 999999999;
   cursor: pointer;
 }
+
+.mejs__embed-button button {
+  background: none;
+  color: #fff;
+  font-size: .8rem;
+  white-space: nowrap;
+  letter-spacing: .1rem;
+  transform: scaleY(1.8);
+  overflow: visible;
+  position: relative;
+  left: -.2rem;
+  .slash {
+    padding-left: .07rem;
+    padding-right: .07rem;
+    position: relative;
+    bottom: -.04rem;
+  }
+}

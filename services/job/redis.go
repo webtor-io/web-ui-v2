@@ -16,6 +16,15 @@ type Redis struct {
 	prefix string
 }
 
+func (s *Redis) Drop(ctx context.Context, id string) (err error) {
+	key := s.makeKey(id)
+	cmd := s.cl.Del(ctx, key)
+	if cmd.Err() != nil {
+		return cmd.Err()
+	}
+	return nil
+}
+
 func NewRedis(cl redis.UniversalClient, prefix string) *Redis {
 	return &Redis{
 		prefix: prefix,

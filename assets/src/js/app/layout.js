@@ -14,7 +14,7 @@ window.progress = {
 
 import {bindAsync} from '../lib/async';
 import initAsyncView from '../lib/asyncView';
-initAsyncView();
+
 
 const initTheme = (await import('../lib/themeSelector')).initTheme;
 function onLoad() {
@@ -38,6 +38,7 @@ function onLoad() {
             layout: 'async',
         },
     });
+    initAsyncView();
 }
 
 if (document.readyState !== 'loading') {

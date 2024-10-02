@@ -16,6 +16,7 @@ type PostArgs struct {
 	ResourceID string
 	ItemID     string
 	Claims     *api.Claims
+	Purge      bool
 }
 
 type TrackPutArgs struct {
@@ -93,9 +94,15 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 		return nil, errors.Errorf("no item id provided")
 	}
 
+	purge := false
+	if v, ok := c.GetPostForm("purge"); ok && v == "true" {
+		purge = true
+	}
+
 	return &PostArgs{
 		ResourceID: rID[0],
 		ItemID:     iID[0],
+		Purge:      purge,
 		Claims:     api.GetClaimsFromContext(c),
 	}, nil
 }
@@ -114,7 +121,7 @@ func (s *Handler) post(c *gin.Context, action string) {
 		return
 	}
 	d.Args = args
-	actionJob, err = s.jobs.Action(c, args.Claims, args.ResourceID, args.ItemID, action, &m.StreamSettings{})
+	actionJob, err = s.jobs.Action(c, args.Claims, args.ResourceID, args.ItemID, action, &m.StreamSettings{}, args.Purge)
 	if err != nil {
 		postTpl.HTMLWithErr(errors.Wrap(err, "failed to start downloading"), http.StatusBadRequest, c, d)
 		return

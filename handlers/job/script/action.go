@@ -23,6 +23,8 @@ import (
 
 type StreamContent struct {
 	ExportTag           *ra.ExportTag
+	Resource            *ra.ResourceResponse
+	Item                *ra.ListItem
 	MediaProbe          *api.MediaProbe
 	OpenSubtitles       []api.OpenSubtitleTrack
 	VideoStreamUserData *m.VideoStreamUserData
@@ -42,26 +44,36 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 		Settings:     settings,
 		ExternalData: &m.ExternalData{},
 	}
-	j.InProgress("retrieving stream url")
+	j.InProgress("retrieving resource data")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
-	resp, err := s.api.ExportResourceContent(ctx, claims, resourceID, itemID, settings.ImdbID)
+	resourceResponse, err := s.api.GetResource(ctx, claims, resourceID)
 	if err != nil {
 		return j.Error(err, "failed to retrieve for 5 minutes")
 	}
 	j.Done()
-	sc.ExportTag = resp.ExportItems["stream"].Tag
-	se := resp.ExportItems["stream"]
+	sc.Resource = resourceResponse
+	j.InProgress("retrieving stream url")
+	ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel2()
+	exportResponse, err := s.api.ExportResourceContent(ctx2, claims, resourceID, itemID, settings.ImdbID)
+	if err != nil {
+		return j.Error(err, "failed to retrieve for 5 minutes")
+	}
+	j.Done()
+	sc.ExportTag = exportResponse.ExportItems["stream"].Tag
+	sc.Item = &exportResponse.Source
+	se := exportResponse.ExportItems["stream"]
 	if !se.ExportMetaItem.Meta.Cache {
-		if err = s.warmUp(j, "warming up torrent client", resp.ExportItems["download"].URL, resp.ExportItems["torrent_client_stat"].URL, int(resp.Source.Size), 1_000_000, 500_000, "file", true); err != nil {
+		if err = s.warmUp(j, "warming up torrent client", exportResponse.ExportItems["download"].URL, exportResponse.ExportItems["torrent_client_stat"].URL, int(exportResponse.Source.Size), 1_000_000, 500_000, "file", true); err != nil {
 			return
 		}
 		if se.Meta.Transcode {
-			if err = s.warmUp(j, "warming up transcoder", resp.ExportItems["stream"].URL, resp.ExportItems["torrent_client_stat"].URL, 0, -1, -1, "stream", false); err != nil {
+			if err = s.warmUp(j, "warming up transcoder", exportResponse.ExportItems["stream"].URL, exportResponse.ExportItems["torrent_client_stat"].URL, 0, -1, -1, "stream", false); err != nil {
 				return
 			}
 			j.InProgress("probing content media info")
-			mp, err := s.api.GetMediaProbe(ctx, resp.ExportItems["media_probe"].URL)
+			mp, err := s.api.GetMediaProbe(ctx, exportResponse.ExportItems["media_probe"].URL)
 			if err != nil {
 				return j.Error(err, "failed to get probe data")
 			}
@@ -70,10 +82,10 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 			j.Done()
 		}
 	}
-	if resp.Source.MediaFormat == ra.Video {
+	if exportResponse.Source.MediaFormat == ra.Video {
 		sc.VideoStreamUserData = vsud
 		j.InProgress("loading OpenSubtitles")
-		subs, err := s.api.GetOpenSubtitles(ctx, resp.ExportItems["subtitles"].URL)
+		subs, err := s.api.GetOpenSubtitles(ctx, exportResponse.ExportItems["subtitles"].URL)
 		if err != nil {
 			j.Warn(err, "failed to get OpenSubtitles")
 		} else {

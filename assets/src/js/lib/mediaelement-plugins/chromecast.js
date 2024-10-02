@@ -20,7 +20,6 @@ Object.assign(MediaElementPlayer.prototype, {
         player.castButton.innerHTML =
             `<google-cast-launcher id="castbutton"></google-cast-launcher>`;
         player.container.appendChild(player.castButton);
-        console.log(player.castButton);
     },
     /**
      *

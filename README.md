@@ -20,7 +20,7 @@ Some features to mention:
   - [x] Subtitles support
   - [x] OpenSubtitles support
   - [x] Chromecast support
-  - [ ] Embed control
+  - [x] Embed control
   - [ ] Subtitle uploading support
   - [ ] Subtitle size control
 - [x] Authentication
