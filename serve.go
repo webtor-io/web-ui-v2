@@ -60,6 +60,7 @@ func configureServe(c *cli.Command) {
 	c.Flags = sta.RegisterFlags(c.Flags)
 	c.Flags = cs.RegisterRedisClientFlags(c.Flags)
 	c.Flags = as.RegisterFlags(c.Flags)
+	c.Flags = cs.RegisterPprofFlags(c.Flags)
 }
 
 func serve(c *cli.Context) error {
@@ -79,6 +80,11 @@ func serve(c *cli.Context) error {
 	probe := cs.NewProbe(c)
 	servers = append(servers, probe)
 	defer probe.Close()
+
+	// Setting Pprof
+	pprof := cs.NewPprof(c)
+	servers = append(servers, pprof)
+	defer pprof.Close()
 
 	// Setting template renderer
 	re := multitemplate.NewRenderer()
