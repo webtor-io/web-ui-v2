@@ -1,4 +1,5 @@
 import message from './message';
+import initAsyncView from '../../lib/asyncView';
 
 function setHeight() {
     const width = document.body.offsetWidth;
@@ -38,4 +39,5 @@ window.addEventListener('load', async () => {
         document.body.style.backgroundImage = 'url(' + window._embedSettings.poster + ')';
         document.body.style.backgroundSize = 'cover';
     }
+    initAsyncView();
 });

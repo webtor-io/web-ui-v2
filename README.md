@@ -40,7 +40,7 @@ Some features to mention:
 - [x] Embed support
   - [x] Base version
   - [x] Extended version
-- [ ] 🚀Switch webtor.io to web-ui-v2
+- [x] 🚀Switch webtor.io to web-ui-v2
 
 
 ## Setting up connection to Webtor RestAPI

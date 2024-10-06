@@ -61,27 +61,8 @@ class SDK {
 }
 export function initProgressLog(el, func) {
     const r = new Renderer(el, func);
-    // function onMessageWithSkip(el, data, lt, func) {
-    //     const self = this;
-    //     if (['redirect'].includes(data.level) && self.skip === undefined) {
-    //         self.skip = true;
-    //         processMessage.call(self, el, data, lt, func);
-    //     } else {
-    //         if (self.skip === undefined) {
-    //             setTimeout(() => {
-    //                 if (self.skip === undefined) self.skip = false;
-    //                 if (self.skip !== true) {
-    //                     processMessage.call(self, el, data, lt, func);
-    //                 }
-    //             }, 100);
-    //         } else if (self.skip === false) {
-    //             processMessage.call(self, el, data, lt, func);
-    //         }
-    //     }
-    // }
     function onMessage(data) {
         r.renderMessage(data);
-        // onMessageWithSkip.call(this, el, data, lt, func);
     }
 
     const url = el.getAttribute('data-async-progress-log');
