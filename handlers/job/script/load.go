@@ -53,7 +53,7 @@ func (s *LoadScript) Run(j *job.Job) (err error) {
 
 func (s *LoadScript) storeFile(j *job.Job, file []byte) (res *ra.ResourceResponse, err error) {
 	j.InProgress("uploading file")
-	ctx, cancel := context.WithTimeout(j.Context, 10*time.Second)
+	ctx, cancel := context.WithTimeout(j.Context, 60*time.Second)
 	defer cancel()
 	res, err = s.api.StoreResource(ctx, s.claims, file)
 	if err != nil {
@@ -73,7 +73,7 @@ func (s *LoadScript) storeQuery(j *job.Job, query string) (res *ra.ResourceRespo
 	if !strings.HasPrefix(query, "magnet:") {
 		query = "magnet:?xt=urn:btih:" + hash
 	}
-	ctx, cancel := context.WithTimeout(j.Context, 10*time.Second)
+	ctx, cancel := context.WithTimeout(j.Context, 60*time.Second)
 	defer cancel()
 	res, err = s.api.GetResource(ctx, s.claims, hash)
 	if err != nil {
@@ -86,11 +86,11 @@ func (s *LoadScript) storeQuery(j *job.Job, query string) (res *ra.ResourceRespo
 	j.Done()
 	j.Info("sadly, we don't have torrent, so we have to magnetize it from peers")
 	j.InProgress("magnetizing")
-	ctx, cancel = context.WithTimeout(j.Context, 30*time.Second)
+	ctx, cancel = context.WithTimeout(j.Context, 60*time.Second)
 	defer cancel()
 	res, err = s.api.StoreResource(ctx, s.claims, []byte(query))
 	if err != nil || res == nil {
-		return nil, j.Error(err, "failed to magnetize, there were no peers for 30 seconds, try another magnet")
+		return nil, j.Error(err, "failed to magnetize, there were no peers for 60 seconds, try another magnet")
 	}
 	j.Done()
 	return
