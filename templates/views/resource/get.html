@@ -1,4 +1,12 @@
-{{ define "title" }}Watching file {{ .Data.Item.PathStr }} | {{ .Data.Resource.Name }}{{ end }}
+{{ define "title" }}
+    {{ with .Data }}
+        {{ if has . "Item" }}
+            Watching file {{ .Item.PathStr }} | {{ .Resource.Name }}
+        {{ else }}
+            {{ .Resource.Name }}
+        {{ end }}
+    {{ end }}
+{{ end }}
 {{ define "main" }}
 {{ with .Data }}
 {{ if .Item }}
