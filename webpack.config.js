@@ -75,7 +75,7 @@ module.exports = async (env, options) => {
             clean: true,
         },
         devServer: {
-            port: 8082,
+            port: 8083,
             client: {
                 webSocketURL: 'auto://0.0.0.0:0/ws',
             },

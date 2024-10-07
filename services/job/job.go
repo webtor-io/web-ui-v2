@@ -33,7 +33,7 @@ func (s *Observer) Push(v LogItem) {
 
 func NewObserver() *Observer {
 	return &Observer{
-		C: make(chan LogItem, 100),
+		C: make(chan LogItem),
 	}
 }
 
@@ -145,12 +145,14 @@ func (s *Job) Run(ctx context.Context) error {
 func (s *Job) ObserveLog() *Observer {
 	o := NewObserver()
 	s.observers = append(s.observers, o)
-	for _, i := range s.l {
-		o.Push(i)
-		if i.Level == Close {
-			o.Close()
+	go func() {
+		for _, i := range s.l {
+			o.Push(i)
+			if i.Level == Close {
+				o.Close()
+			}
 		}
-	}
+	}()
 	return o
 }
 
@@ -338,10 +340,10 @@ func (s *Jobs) Enqueue(ctx context.Context, cancel context.CancelFunc, id string
 		defer cancel()
 		err := j.Run(ctx)
 		if err != nil {
+			_ = s.storage.Drop(context.Background(), id)
 			log.WithError(err).Error("got job error")
 		}
 		j.Close()
-		<-ctx.Done()
 		s.mux.Lock()
 		defer s.mux.Unlock()
 		delete(s.jobs, id)
