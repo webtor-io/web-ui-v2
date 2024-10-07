@@ -71,26 +71,40 @@ func (s *Redis) GetState(ctx context.Context, id string) (state *State, err erro
 }
 
 func (s *Redis) Sub(ctx context.Context, id string) (res chan LogItem, err error) {
-	ch, err := s.subRaw(ctx, id)
+	cctx, cancel := context.WithCancel(ctx)
+	ch, err := s.subRaw(cctx, id)
 	if err != nil || ch == nil {
+		cancel()
 		return
 	}
 	res = make(chan LogItem)
 	go func() {
-		for i := range ch {
-			var li LogItem
-			err = json.Unmarshal([]byte(i), &li)
-			if err != nil {
-				res <- LogItem{
-					Level:   Error,
-					Message: err.Error(),
-				}
+		for {
+			select {
+			case <-cctx.Done():
 				close(res)
 				return
+			case i := <-ch:
+				var li LogItem
+				err = json.Unmarshal([]byte(i), &li)
+				if err != nil {
+					res <- LogItem{
+						Level:   Error,
+						Message: err.Error(),
+					}
+					cancel()
+					close(res)
+					return
+				}
+				res <- li
+				if li.Level == Close {
+					cancel()
+					close(res)
+					return
+				}
 			}
-			res <- li
+
 		}
-		close(res)
 	}()
 	return
 }
@@ -127,6 +141,9 @@ func (s *Redis) subRaw(ctx context.Context, id string) (res chan string, err err
 			}
 			res <- i
 		}
+		if ctx.Err() != nil {
+			return
+		}
 		ps := s.cl.Subscribe(ctx, key)
 		defer func(ps *redis.PubSub) {
 			_ = ps.Close()
@@ -135,11 +152,15 @@ func (s *Redis) subRaw(ctx context.Context, id string) (res chan string, err err
 		if err = ps.Ping(ctx); err != nil {
 			return
 		}
-
-		for m := range ps.Channel() {
-			res <- m.Payload
+		for {
+			select {
+			case <-ctx.Done():
+				close(res)
+				return
+			case msg := <-ps.Channel():
+				res <- msg.Payload
+			}
 		}
-		close(res)
 	}()
 	return
 }

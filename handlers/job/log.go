@@ -18,12 +18,20 @@ func (s *Handler) log(c *gin.Context) {
 	c.Header("Cache-Control", "no-cache,no-store,no-transform")
 	c.Header("Connection", "keep-alive")
 	c.Header("Access-Control-Allow-Origin", "*")
+	clientGone := c.Writer.CloseNotify()
 
 	c.Stream(func(w io.Writer) bool {
-		if msg, ok := <-l; ok {
+		select {
+		case <-clientGone:
+			return false
+		case <-c.Request.Context().Done():
+			return false
+		case msg, ok := <-l:
+			if !ok {
+				return false
+			}
 			c.SSEvent("message", msg)
 			return true
 		}
-		return false
 	})
 }

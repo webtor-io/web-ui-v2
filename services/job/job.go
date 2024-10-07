@@ -145,19 +145,19 @@ func (s *Job) Run(ctx context.Context) error {
 func (s *Job) ObserveLog() *Observer {
 	o := NewObserver()
 	s.observers = append(s.observers, o)
-	go func() {
-		for _, i := range s.l {
-			o.Push(i)
-			if i.Level == Close {
-				o.Close()
-			}
-		}
-	}()
 	return o
 }
 
 func (s *Job) log(l LogItem) error {
 	l.Timestamp = time.Now()
+	if l.Level == Close {
+		s.closed = true
+	}
+	if l.Level == InProgress {
+		s.cur = l.Tag
+	} else {
+		l.Tag = s.cur
+	}
 	s.l = append(s.l, l)
 	for _, o := range s.observers {
 		o.Push(l)
@@ -173,23 +173,8 @@ func (s *Job) log(l LogItem) error {
 	}
 
 	message := l.Message
-	if l.Level == Done {
-		message = "done"
-	}
-	if l.Level == Redirect {
-		message = "redirect"
-	}
-	if l.Level == StatusUpdate {
-		message = "statusupdate"
-	}
-	if l.Level == RenderTemplate {
-		message = "rendertemplate"
-	}
-	if l.Level == Close {
-		message = "close"
-	}
-	if l.Level == Open {
-		message = "open"
+	if message == "" {
+		message = string(l.Level)
 	}
 	log.WithFields(log.Fields{
 		"ID":       s.ID,
@@ -368,17 +353,33 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 			close(c)
 			return
 		}
-		jCtx, cancel := context.WithTimeout(context.Background(), state.TTL)
+		jCtx, cancel := context.WithTimeout(ctx, state.TTL)
 		j = s.Enqueue(jCtx, cancel, id, nil, false)
 	} else {
 		log.Infof("found local job with id=%+v", id)
 	}
 	go func() {
-		o := j.ObserveLog()
-		for i := range o.C {
+		for _, i := range j.l {
 			c <- i
 		}
-		close(c)
+		if j.closed {
+			close(c)
+		} else {
+			o := j.ObserveLog()
+			for {
+				select {
+				case <-ctx.Done():
+					close(c)
+					return
+				case i, okk := <-o.C:
+					if !okk {
+						close(c)
+						return
+					}
+					c <- i
+				}
+			}
+		}
 	}()
 	return
 }
