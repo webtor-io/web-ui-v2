@@ -18,6 +18,10 @@ func (s *Observer) Push(v LogItem) {
 	s.C <- v
 }
 
+func (s *Observer) Close() {
+	close(s.C)
+}
+
 func NewObserver() *Observer {
 	return &Observer{
 		C:  make(chan LogItem),
@@ -137,6 +141,13 @@ func (s *Job) ObserveLog() *Observer {
 	o := NewObserver()
 	s.observers[o.ID] = o
 	return o
+}
+
+func (s *Job) RemoveObserver(o *Observer) {
+	s.observersMux.Lock()
+	defer s.observersMux.Unlock()
+	delete(s.observers, o.ID)
+	o.Close()
 }
 
 func (s *Job) log(l LogItem) error {
@@ -358,13 +369,13 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 				select {
 				case <-ctx.Done():
 					close(c)
-					close(o.C)
+					j.RemoveObserver(o)
 					return
 				case i := <-o.C:
 					c <- i
 					if i.Level == Close {
 						close(c)
-						close(o.C)
+						j.RemoveObserver(o)
 						return
 					}
 				}
