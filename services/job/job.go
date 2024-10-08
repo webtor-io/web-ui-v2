@@ -150,6 +150,14 @@ func (s *Job) RemoveObserver(o *Observer) {
 	o.Close()
 }
 
+func (s *Job) PushToObservers(l LogItem) {
+	s.observersMux.Lock()
+	defer s.observersMux.Unlock()
+	for _, o := range s.observers {
+		o.Push(l)
+	}
+}
+
 func (s *Job) log(l LogItem) error {
 	l.Timestamp = time.Now()
 	if l.Level == Close {
@@ -161,9 +169,9 @@ func (s *Job) log(l LogItem) error {
 		l.Tag = s.cur
 	}
 	s.l = append(s.l, l)
-	for _, o := range s.observers {
-		o.Push(l)
-	}
+
+	s.PushToObservers(l)
+
 	if s.main {
 		err := s.storage.Pub(s.Context, s.ID, &l)
 		if err != nil {
