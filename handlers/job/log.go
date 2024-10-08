@@ -1,6 +1,7 @@
 package job
 
 import (
+	"context"
 	"io"
 	"net/http"
 
@@ -8,8 +9,10 @@ import (
 )
 
 func (s *Handler) log(c *gin.Context) {
-	l, err := s.q.GetOrCreate(c.Param("queue_id")).Log(c.Request.Context(), c.Param("job_id"))
+	ctx, cancel := context.WithCancel(c.Request.Context())
+	l, err := s.q.GetOrCreate(c.Param("queue_id")).Log(ctx, c.Param("job_id"))
 	if err != nil {
+		cancel()
 		_ = c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -23,11 +26,14 @@ func (s *Handler) log(c *gin.Context) {
 	c.Stream(func(w io.Writer) bool {
 		select {
 		case <-clientGone:
+			cancel()
 			return false
 		case <-c.Request.Context().Done():
+			cancel()
 			return false
 		case msg, ok := <-l:
 			if !ok {
+				cancel()
 				return false
 			}
 			c.SSEvent("message", msg)

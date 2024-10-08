@@ -2,6 +2,7 @@ package job
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"sync"
 	"time"
 
@@ -12,6 +13,7 @@ type Observer struct {
 	C      chan LogItem
 	mux    sync.Mutex
 	closed bool
+	ID     string
 }
 
 func (s *Observer) Close() {
@@ -33,7 +35,8 @@ func (s *Observer) Push(v LogItem) {
 
 func NewObserver() *Observer {
 	return &Observer{
-		C: make(chan LogItem),
+		C:  make(chan LogItem),
+		ID: uuid.New().String(),
 	}
 }
 
@@ -42,7 +45,7 @@ type Job struct {
 	Queue     string
 	l         []LogItem
 	runnable  Runnable
-	observers []*Observer
+	observers map[string]*Observer
 	closed    bool
 	mux       sync.Mutex
 	cur       string
@@ -100,7 +103,7 @@ func New(ctx context.Context, id string, queue string, runnable Runnable, storag
 		runnable:  runnable,
 		Context:   ctx,
 		l:         []LogItem{},
-		observers: []*Observer{},
+		observers: map[string]*Observer{},
 		storage:   storage,
 		main:      true,
 		purge:     purge,
@@ -142,9 +145,14 @@ func (s *Job) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *Job) ObserveLog() *Observer {
+func (s *Job) ObserveLog(ctx context.Context) *Observer {
 	o := NewObserver()
-	s.observers = append(s.observers, o)
+	s.observers[o.ID] = o
+	go func(o *Observer, s *Job) {
+		<-ctx.Done()
+		o.Close()
+		delete(s.observers, o.ID)
+	}(o, s)
 	return o
 }
 
@@ -365,7 +373,7 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 		if j.closed {
 			close(c)
 		} else {
-			o := j.ObserveLog()
+			o := j.ObserveLog(ctx)
 			for {
 				select {
 				case <-ctx.Done():
