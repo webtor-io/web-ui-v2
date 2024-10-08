@@ -131,17 +131,11 @@ func (s *Job) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *Job) ObserveLog(ctx context.Context) *Observer {
+func (s *Job) ObserveLog() *Observer {
 	s.observersMux.Lock()
 	defer s.observersMux.Unlock()
 	o := NewObserver()
 	s.observers[o.ID] = o
-	go func(o *Observer, s *Job) {
-		<-ctx.Done()
-		s.observersMux.Lock()
-		defer s.observersMux.Unlock()
-		delete(s.observers, o.ID)
-	}(o, s)
 	return o
 }
 
@@ -359,7 +353,7 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 		if j.closed {
 			close(c)
 		} else {
-			o := j.ObserveLog(ctx)
+			o := j.ObserveLog()
 			for {
 				select {
 				case <-ctx.Done():

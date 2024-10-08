@@ -224,8 +224,11 @@ func (s *ActionScript) warmUp(j *job.Job, m string, u string, su string, size in
 				log.WithError(err).Error("failed to get stats")
 				return
 			}
-			for ev := range ch {
+			select {
+			case ev := <-ch:
 				j.StatusUpdate(fmt.Sprintf("%v peers", ev.Peers))
+			case <-ctx2.Done():
+				return
 			}
 		}()
 	}
