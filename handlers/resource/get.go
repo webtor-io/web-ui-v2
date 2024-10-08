@@ -111,6 +111,9 @@ func (s *Handler) get(c *gin.Context) {
 		d.List = list
 	}
 	d.Item, err = s.getBestItem(ctx, list, args)
+	if len(list.Items) == 1 && d.Item == nil {
+		d.List = list
+	}
 	if err != nil {
 		indexTpl.HTMLWithErr(errors.Wrap(err, "failed to get item"), http.StatusInternalServerError, c, d)
 		return
