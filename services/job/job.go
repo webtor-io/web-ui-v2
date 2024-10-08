@@ -358,11 +358,13 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 				select {
 				case <-ctx.Done():
 					close(c)
+					close(o.C)
 					return
 				case i := <-o.C:
 					c <- i
 					if i.Level == Close {
 						close(c)
+						close(o.C)
 						return
 					}
 				}
