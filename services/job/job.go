@@ -10,32 +10,12 @@ import (
 )
 
 type Observer struct {
-	C      chan LogItem
-	mux    sync.Mutex
-	closed bool
-	ID     string
-}
-
-func (s *Observer) Close() {
-	s.mux.Lock()
-	defer s.mux.Unlock()
-	if !s.closed {
-		s.closed = true
-		close(s.C)
-	}
+	C  chan LogItem
+	ID string
 }
 
 func (s *Observer) Push(v LogItem) {
-	s.mux.Lock()
-	defer s.mux.Unlock()
-	if s.closed {
-		return
-	}
 	s.C <- v
-	if v.Level == Close {
-		close(s.C)
-		s.closed = true
-	}
 }
 
 func NewObserver() *Observer {
@@ -158,7 +138,6 @@ func (s *Job) ObserveLog(ctx context.Context) *Observer {
 	s.observers[o.ID] = o
 	go func(o *Observer, s *Job) {
 		<-ctx.Done()
-		o.Close()
 		s.observersMux.Lock()
 		defer s.observersMux.Unlock()
 		delete(s.observers, o.ID)
@@ -386,12 +365,12 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 				case <-ctx.Done():
 					close(c)
 					return
-				case i, okk := <-o.C:
-					if !okk {
+				case i := <-o.C:
+					c <- i
+					if i.Level == Close {
 						close(c)
 						return
 					}
-					c <- i
 				}
 			}
 		}
