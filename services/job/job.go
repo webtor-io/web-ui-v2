@@ -32,7 +32,7 @@ func (s *Observer) isClosed() bool {
 }
 
 func (s *Observer) Push(v LogItem) {
-	if !s.closed {
+	if !s.isClosed() {
 		s.C <- v
 	}
 }
