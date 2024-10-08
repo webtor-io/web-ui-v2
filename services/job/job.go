@@ -26,8 +26,6 @@ func (s *Observer) Close() {
 }
 
 func (s *Observer) Push(v LogItem) {
-	s.mux.Lock()
-	defer s.mux.Unlock()
 	if !s.closed {
 		s.C <- v
 	}
@@ -41,18 +39,19 @@ func NewObserver() *Observer {
 }
 
 type Job struct {
-	ID        string
-	Queue     string
-	l         []LogItem
-	runnable  Runnable
-	observers map[string]*Observer
-	closed    bool
-	mux       sync.Mutex
-	cur       string
-	Context   context.Context
-	storage   Storage
-	main      bool
-	purge     bool
+	ID           string
+	Queue        string
+	l            []LogItem
+	runnable     Runnable
+	observers    map[string]*Observer
+	observersMux sync.Mutex
+	closed       bool
+	mux          sync.Mutex
+	cur          string
+	Context      context.Context
+	storage      Storage
+	main         bool
+	purge        bool
 }
 
 type LogItemLevel string
@@ -146,11 +145,15 @@ func (s *Job) Run(ctx context.Context) error {
 }
 
 func (s *Job) ObserveLog(ctx context.Context) *Observer {
+	s.observersMux.Lock()
+	defer s.observersMux.Unlock()
 	o := NewObserver()
 	s.observers[o.ID] = o
 	go func(o *Observer, s *Job) {
 		<-ctx.Done()
 		o.Close()
+		s.observersMux.Lock()
+		defer s.observersMux.Unlock()
 		delete(s.observers, o.ID)
 	}(o, s)
 	return o
