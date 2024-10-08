@@ -20,20 +20,21 @@ func (s *Observer) Close() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	if !s.closed {
-		close(s.C)
 		s.closed = true
+		close(s.C)
 	}
 }
 
-func (s *Observer) isClosed() bool {
+func (s *Observer) Push(v LogItem) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
-	return s.closed
-}
-
-func (s *Observer) Push(v LogItem) {
-	if !s.isClosed() {
-		s.C <- v
+	if s.closed {
+		return
+	}
+	s.C <- v
+	if v.Level == Close {
+		close(s.C)
+		s.closed = true
 	}
 }
 
@@ -178,9 +179,6 @@ func (s *Job) log(l LogItem) error {
 	s.l = append(s.l, l)
 	for _, o := range s.observers {
 		o.Push(l)
-		if l.Level == Close {
-			o.Close()
-		}
 	}
 	if s.main {
 		err := s.storage.Pub(s.Context, s.ID, &l)
