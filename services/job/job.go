@@ -20,9 +20,15 @@ func (s *Observer) Close() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	if !s.closed {
-		s.closed = true
 		close(s.C)
+		s.closed = true
 	}
+}
+
+func (s *Observer) isClosed() bool {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	return s.closed
 }
 
 func (s *Observer) Push(v LogItem) {
