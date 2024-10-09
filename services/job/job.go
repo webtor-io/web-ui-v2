@@ -56,7 +56,6 @@ type Job struct {
 	storage      Storage
 	main         bool
 	purge        bool
-	onClose      chan any
 }
 
 type LogItemLevel string
@@ -111,7 +110,6 @@ func New(ctx context.Context, id string, queue string, runnable Runnable, storag
 		storage:   storage,
 		main:      true,
 		purge:     purge,
-		onClose:   make(chan any),
 	}
 }
 
@@ -163,10 +161,6 @@ func (s *Job) ObserveLog() *Observer {
 	defer s.observersMux.Unlock()
 	o := NewObserver()
 	s.observers[o.ID] = o
-	go func() {
-		<-s.onClose
-		o.Close()
-	}()
 	return o
 }
 
@@ -335,11 +329,15 @@ func (s *Job) close() {
 	if s.closed {
 		return
 	}
+	s.observersMux.Lock()
+	defer s.observersMux.Unlock()
+	for _, o := range s.observers {
+		o.Close()
+	}
 	s.closed = true
 	_ = s.log(LogItem{
 		Level: Close,
 	})
-	close(s.onClose)
 }
 
 type Jobs struct {
