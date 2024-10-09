@@ -22,14 +22,12 @@ func (s *Observer) Push(v LogItem) {
 	if s.closed {
 		return
 	}
-	go func() {
-		select {
-		case <-time.After(5 * time.Minute):
-			return
-		case s.C <- v:
-			return
-		}
-	}()
+	select {
+	case <-time.After(5 * time.Minute):
+		return
+	case s.C <- v:
+		return
+	}
 }
 
 func (s *Observer) Close() {
@@ -171,7 +169,7 @@ func (s *Job) ObserveLog() *Observer {
 
 func (s *Job) pushToObservers(l LogItem) {
 	for _, o := range s.observers {
-		o.Push(l)
+		go o.Push(l)
 	}
 }
 
