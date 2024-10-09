@@ -10,15 +10,28 @@ import (
 )
 
 type Observer struct {
-	C  chan LogItem
-	ID string
+	C      chan LogItem
+	ID     string
+	mux    sync.Mutex
+	closed bool
 }
 
 func (s *Observer) Push(v LogItem) {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	if s.closed {
+		return
+	}
 	s.C <- v
 }
 
 func (s *Observer) Close() {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	if s.closed {
+		return
+	}
+	s.closed = true
 	close(s.C)
 }
 
@@ -43,6 +56,7 @@ type Job struct {
 	storage      Storage
 	main         bool
 	purge        bool
+	onClose      chan any
 }
 
 type LogItemLevel string
@@ -97,6 +111,7 @@ func New(ctx context.Context, id string, queue string, runnable Runnable, storag
 		storage:   storage,
 		main:      true,
 		purge:     purge,
+		onClose:   make(chan any),
 	}
 }
 
@@ -106,6 +121,7 @@ func (s *Job) Run(ctx context.Context) error {
 			log.Errorf("job panic: %v", r)
 		}
 	}()
+	s.open()
 	if !s.purge {
 		items, err := s.storage.Sub(ctx, s.ID)
 		if err != nil {
@@ -114,9 +130,13 @@ func (s *Job) Run(ctx context.Context) error {
 		if items != nil {
 			s.main = false
 			for i := range items {
-				err = s.log(i)
-				if err != nil {
-					return err
+				if i.Level == Close {
+					s.close()
+				} else {
+					err = s.log(i)
+					if err != nil {
+						return err
+					}
 				}
 			}
 			return nil
@@ -128,9 +148,12 @@ func (s *Job) Run(ctx context.Context) error {
 		}
 	}
 
-	s.Open()
 	if s.runnable != nil {
-		return s.runnable.Run(s)
+		err := s.runnable.Run(s)
+		s.close()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -140,6 +163,10 @@ func (s *Job) ObserveLog() *Observer {
 	defer s.observersMux.Unlock()
 	o := NewObserver()
 	s.observers[o.ID] = o
+	go func() {
+		<-s.onClose
+		o.Close()
+	}()
 	return o
 }
 
@@ -150,7 +177,7 @@ func (s *Job) RemoveObserver(o *Observer) {
 	o.Close()
 }
 
-func (s *Job) PushToObservers(l LogItem) {
+func (s *Job) pushToObservers(l LogItem) {
 	s.observersMux.Lock()
 	defer s.observersMux.Unlock()
 	for _, o := range s.observers {
@@ -158,27 +185,14 @@ func (s *Job) PushToObservers(l LogItem) {
 	}
 }
 
-func (s *Job) log(l LogItem) error {
-	l.Timestamp = time.Now()
-	if l.Level == Close {
-		s.closed = true
+func (s *Job) pubToStorage(l LogItem) (err error) {
+	if l.Level == Open {
+		return
 	}
-	if l.Level == InProgress {
-		s.cur = l.Tag
-	} else {
-		l.Tag = s.cur
-	}
-	s.l = append(s.l, l)
+	return s.storage.Pub(s.Context, s.ID, &l)
+}
 
-	s.PushToObservers(l)
-
-	if s.main {
-		err := s.storage.Pub(s.Context, s.ID, &l)
-		if err != nil {
-			return err
-		}
-	}
-
+func (s *Job) logToLogger(l LogItem) {
 	message := l.Message
 	if message == "" {
 		message = string(l.Level)
@@ -192,10 +206,32 @@ func (s *Job) log(l LogItem) error {
 		"Body":     l.Body,
 		"Status":   l.Status,
 	}).Log(levelMap[l.Level], message)
+}
+
+func (s *Job) log(l LogItem) error {
+	l.Timestamp = time.Now()
+	if l.Level == InProgress {
+		s.cur = l.Tag
+	} else {
+		l.Tag = s.cur
+	}
+	s.l = append(s.l, l)
+
+	s.pushToObservers(l)
+
+	if s.main {
+		err := s.pubToStorage(l)
+		if err != nil {
+			return err
+		}
+	}
+
+	s.logToLogger(l)
+
 	return nil
 }
 
-func (s *Job) Open() *Job {
+func (s *Job) open() *Job {
 	_ = s.log(LogItem{
 		Level: Open,
 	})
@@ -293,7 +329,7 @@ func (s *Job) RenderTemplate(name string, body string) *Job {
 	return s
 }
 
-func (s *Job) Close() {
+func (s *Job) close() {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	if s.closed {
@@ -303,6 +339,7 @@ func (s *Job) Close() {
 	_ = s.log(LogItem{
 		Level: Close,
 	})
+	close(s.onClose)
 }
 
 type Jobs struct {
@@ -335,7 +372,6 @@ func (s *Jobs) Enqueue(ctx context.Context, cancel context.CancelFunc, id string
 			_ = s.storage.Drop(context.Background(), id)
 			log.WithError(err).Error("got job error")
 		}
-		j.Close()
 		s.mux.Lock()
 		defer s.mux.Unlock()
 		delete(s.jobs, id)
@@ -344,7 +380,7 @@ func (s *Jobs) Enqueue(ctx context.Context, cancel context.CancelFunc, id string
 }
 
 func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
-	c = make(chan LogItem)
+	c = make(chan LogItem, 10)
 	j, ok := s.jobs[id]
 	if !ok {
 		log.Infof("unable to find local job with id=%v", id)
@@ -379,11 +415,14 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 					close(c)
 					j.RemoveObserver(o)
 					return
-				case i := <-o.C:
+				case i, okk := <-o.C:
+					if !okk {
+						close(c)
+						return
+					}
 					c <- i
 					if i.Level == Close {
 						close(c)
-						j.RemoveObserver(o)
 						return
 					}
 				}

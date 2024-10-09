@@ -24,7 +24,7 @@ func (s *Handler) log(c *gin.Context) {
 
 	c.Stream(func(w io.Writer) bool {
 		select {
-		case <-c.Request.Context().Done():
+		case <-ctx.Done():
 			return false
 		case msg, ok := <-l:
 			if !ok {
