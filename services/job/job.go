@@ -329,15 +329,15 @@ func (s *Job) close() {
 	if s.closed {
 		return
 	}
+	s.closed = true
+	_ = s.log(LogItem{
+		Level: Close,
+	})
 	s.observersMux.Lock()
 	defer s.observersMux.Unlock()
 	for _, o := range s.observers {
 		o.Close()
 	}
-	s.closed = true
-	_ = s.log(LogItem{
-		Level: Close,
-	})
 }
 
 type Jobs struct {
