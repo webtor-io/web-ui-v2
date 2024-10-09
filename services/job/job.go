@@ -22,7 +22,14 @@ func (s *Observer) Push(v LogItem) {
 	if s.closed {
 		return
 	}
-	s.C <- v
+	go func() {
+		select {
+		case <-time.After(5 * time.Minute):
+			return
+		case s.C <- v:
+			return
+		}
+	}()
 }
 
 func (s *Observer) Close() {
@@ -119,6 +126,7 @@ func (s *Job) Run(ctx context.Context) error {
 			log.Errorf("job panic: %v", r)
 		}
 	}()
+	defer s.close()
 	s.open()
 	if !s.purge {
 		items, err := s.storage.Sub(ctx, s.ID)
@@ -148,7 +156,6 @@ func (s *Job) Run(ctx context.Context) error {
 
 	if s.runnable != nil {
 		err := s.runnable.Run(s)
-		s.close()
 		if err != nil {
 			return err
 		}
@@ -157,23 +164,12 @@ func (s *Job) Run(ctx context.Context) error {
 }
 
 func (s *Job) ObserveLog() *Observer {
-	//s.observersMux.Lock()
-	//defer s.observersMux.Unlock()
 	o := NewObserver()
 	s.observers[o.ID] = o
 	return o
 }
 
-//func (s *Job) RemoveObserver(o *Observer) {
-//	s.observersMux.Lock()
-//	defer s.observersMux.Unlock()
-//	delete(s.observers, o.ID)
-//	o.Close()
-//}
-
 func (s *Job) pushToObservers(l LogItem) {
-	//s.observersMux.Lock()
-	//defer s.observersMux.Unlock()
 	for _, o := range s.observers {
 		o.Push(l)
 	}
