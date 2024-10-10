@@ -495,10 +495,10 @@ func (s *Api) Stats(ctx context.Context, u string) (chan EventData, error) {
 				}
 				select {
 				case ch <- event:
+					continue
 				case <-ctx.Done():
 					return
 				}
-				continue
 			}
 		}
 	}()
