@@ -53,14 +53,13 @@ type Job struct {
 	l         []LogItem
 	runnable  Runnable
 	observers map[string]*Observer
-	//observersMux sync.Mutex
-	closed  bool
-	mux     sync.Mutex
-	cur     string
-	Context context.Context
-	storage Storage
-	main    bool
-	purge   bool
+	closed    bool
+	mux       sync.Mutex
+	cur       string
+	Context   context.Context
+	storage   Storage
+	main      bool
+	purge     bool
 }
 
 type LogItemLevel string
@@ -169,7 +168,7 @@ func (s *Job) ObserveLog() *Observer {
 
 func (s *Job) pushToObservers(l LogItem) {
 	for _, o := range s.observers {
-		go o.Push(l)
+		o.Push(l)
 	}
 }
 
