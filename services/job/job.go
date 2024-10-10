@@ -16,14 +16,14 @@ type Observer struct {
 	closed bool
 }
 
-func (s *Observer) Push(v LogItem) {
+func (s *Observer) Push(ctx context.Context, v LogItem) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	if s.closed {
 		return
 	}
 	select {
-	case <-time.After(5 * time.Minute):
+	case <-ctx.Done():
 		return
 	case s.C <- v:
 		return
@@ -133,10 +133,10 @@ func (s *Job) Run(ctx context.Context) error {
 		if items != nil {
 			s.main = false
 			for i := range items {
-				err = s.log(i)
 				if i.Level == Close {
 					s.close()
 				}
+				err = s.log(i)
 				if err != nil {
 					return err
 				}
@@ -165,10 +165,16 @@ func (s *Job) ObserveLog() *Observer {
 	return o
 }
 
-func (s *Job) pushToObservers(l LogItem) {
+func (s *Job) pushToObservers(ctx context.Context, l LogItem) {
+	wg := sync.WaitGroup{}
+	wg.Add(len(s.observers))
 	for _, o := range s.observers {
-		go o.Push(l)
+		go func(o *Observer) {
+			o.Push(ctx, l)
+			wg.Done()
+		}(o)
 	}
+	wg.Wait()
 }
 
 func (s *Job) pubToStorage(l LogItem) (err error) {
@@ -203,8 +209,6 @@ func (s *Job) log(l LogItem) error {
 	}
 	s.l = append(s.l, l)
 
-	s.pushToObservers(l)
-
 	if s.main {
 		err := s.pubToStorage(l)
 		if err != nil {
@@ -213,6 +217,10 @@ func (s *Job) log(l LogItem) error {
 	}
 
 	s.logToLogger(l)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	s.pushToObservers(ctx, l)
 
 	return nil
 }
