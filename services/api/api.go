@@ -493,7 +493,11 @@ func (s *Api) Stats(ctx context.Context, u string) (chan EventData, error) {
 					log.WithError(err).Errorf("failed to unmarshal data=%v line=%v", data, line)
 					continue
 				}
-				ch <- event
+				select {
+				case ch <- event:
+				case <-ctx.Done():
+					return
+				}
 				continue
 			}
 		}

@@ -405,7 +405,6 @@ func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
 				select {
 				case <-ctx.Done():
 					close(c)
-					//j.RemoveObserver(o)
 					return
 				case i, okk := <-o.C:
 					if !okk {
