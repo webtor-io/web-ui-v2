@@ -133,13 +133,12 @@ func (s *Job) Run(ctx context.Context) error {
 		if items != nil {
 			s.main = false
 			for i := range items {
+				err = s.log(i)
 				if i.Level == Close {
 					s.close()
-				} else {
-					err = s.log(i)
-					if err != nil {
-						return err
-					}
+				}
+				if err != nil {
+					return err
 				}
 			}
 			return nil
@@ -168,7 +167,7 @@ func (s *Job) ObserveLog() *Observer {
 
 func (s *Job) pushToObservers(l LogItem) {
 	for _, o := range s.observers {
-		o.Push(l)
+		go o.Push(l)
 	}
 }
 
@@ -326,8 +325,6 @@ func (s *Job) close() {
 	_ = s.log(LogItem{
 		Level: Close,
 	})
-	//s.observersMux.Lock()
-	//defer s.observersMux.Unlock()
 	for _, o := range s.observers {
 		o.Close()
 	}
