@@ -57,7 +57,7 @@ func (s *LoadScript) storeFile(j *job.Job, file []byte) (res *ra.ResourceRespons
 	defer cancel()
 	res, err = s.api.StoreResource(ctx, s.claims, file)
 	if err != nil {
-		return nil, j.Error(err, "failed to upload file")
+		return nil, errors.Wrap(err, "failed to upload file")
 	}
 	j.Done()
 	return
@@ -67,7 +67,7 @@ func (s *LoadScript) storeQuery(j *job.Job, query string) (res *ra.ResourceRespo
 	j.InProgress("checking magnet")
 	sha1Hash := services.SHA1R.Find([]byte(query))
 	if sha1Hash == nil {
-		return nil, j.Error(err, "wrong resource provided")
+		return nil, errors.Wrap(err, "wrong resource provided")
 	}
 	hash := strings.ToLower(string(sha1Hash))
 	if !strings.HasPrefix(query, "magnet:") {
@@ -77,7 +77,7 @@ func (s *LoadScript) storeQuery(j *job.Job, query string) (res *ra.ResourceRespo
 	defer cancel()
 	res, err = s.api.GetResource(ctx, s.claims, hash)
 	if err != nil {
-		return nil, j.Error(err, "failed to load resource by magnet")
+		return nil, errors.Wrap(err, "failed to load resource by magnet")
 	}
 	if res != nil {
 		j.Done()
@@ -90,7 +90,7 @@ func (s *LoadScript) storeQuery(j *job.Job, query string) (res *ra.ResourceRespo
 	defer cancel()
 	res, err = s.api.StoreResource(ctx, s.claims, []byte(query))
 	if err != nil || res == nil {
-		return nil, j.Error(err, "failed to magnetize, there were no peers for 60 seconds, try another magnet")
+		return nil, errors.Wrap(err, "failed to magnetize, there were no peers for 60 seconds, try another magnet")
 	}
 	j.Done()
 	return

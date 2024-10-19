@@ -50,11 +50,11 @@ func (s *Redis) Pub(ctx context.Context, id string, l *LogItem) (err error) {
 	return
 }
 
-func (s *Redis) GetState(ctx context.Context, id string) (state *State, err error) {
+func (s *Redis) GetState(ctx context.Context, id string) (state *State, ok bool, err error) {
 	key := s.makeKey(id)
 	ttlCmd := s.cl.TTL(ctx, key)
 	if ttlCmd.Err() != nil {
-		return nil, ttlCmd.Err()
+		return nil, false, ttlCmd.Err()
 	}
 	var dur time.Duration
 	val := ttlCmd.Val()
@@ -67,7 +67,7 @@ func (s *Redis) GetState(ctx context.Context, id string) (state *State, err erro
 	return &State{
 		ID:  id,
 		TTL: dur,
-	}, nil
+	}, true, nil
 }
 
 func (s *Redis) Sub(ctx context.Context, id string) (res chan LogItem, err error) {

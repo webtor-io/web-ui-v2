@@ -3,6 +3,7 @@ package job
 import (
 	"context"
 	"github.com/google/uuid"
+	"strings"
 	"sync"
 	"time"
 
@@ -153,6 +154,10 @@ func (s *Job) Run(ctx context.Context) error {
 	if s.runnable != nil {
 		err := s.runnable.Run(s)
 		if err != nil {
+			errr := s.Error(err)
+			if errr != nil {
+				return errr
+			}
 			return err
 		}
 	}
@@ -250,11 +255,11 @@ func (s *Job) Warn(err error, message string) *Job {
 	return s
 }
 
-func (s *Job) Error(err error, message string) error {
+func (s *Job) Error(err error) error {
 	log.WithError(err).Error("got job error")
 	_ = s.log(LogItem{
 		Level:   Error,
-		Message: message,
+		Message: strings.Split(err.Error(), ":")[0],
 		Tag:     s.cur,
 	})
 	return err
@@ -364,6 +369,7 @@ func (s *Jobs) Enqueue(ctx context.Context, cancel context.CancelFunc, id string
 	go func() {
 		defer cancel()
 		err := j.Run(ctx)
+		<-time.After(60 * time.Second)
 		if err != nil {
 			_ = s.storage.Drop(context.Background(), id)
 			log.WithError(err).Error("got job error")
@@ -375,20 +381,20 @@ func (s *Jobs) Enqueue(ctx context.Context, cancel context.CancelFunc, id string
 	return j
 }
 
-func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, err error) {
+func (s *Jobs) Log(ctx context.Context, id string) (c chan LogItem, ok bool, err error) {
 	c = make(chan LogItem, 10)
 	j, ok := s.jobs[id]
 	if !ok {
 		log.Infof("unable to find local job with id=%v", id)
 		var state *State
-		state, err = s.storage.GetState(ctx, id)
+		state, ok, err = s.storage.GetState(ctx, id)
 		log.Infof("got storage state=%+v for id=%+v err=%+v", state, id, err)
 		if err != nil {
 			close(c)
 			return
 		}
-		if state == nil {
-			log.Warnf("state is empty for id=%+v", id)
+		if !ok {
+			log.Warnf("no state for id=%+v", id)
 			close(c)
 			return
 		}

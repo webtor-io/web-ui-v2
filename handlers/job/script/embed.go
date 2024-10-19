@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/webtor-io/web-ui-v2/services/models"
 	"io"
 	"net/http"
@@ -114,7 +115,7 @@ func (s *EmbedScript) getBestItem(j *job.Job, id string, settings *models.EmbedS
 		Output: api.OutputTree,
 	})
 	if err != nil {
-		return nil, j.Error(err, "failed to list resource content")
+		return nil, errors.Wrap(err, "failed to list resource content")
 	}
 	if file != "" {
 		for _, f := range l.Items {
@@ -127,7 +128,7 @@ func (s *EmbedScript) getBestItem(j *job.Job, id string, settings *models.EmbedS
 		i = s.findBestItem(l)
 	}
 	if i == nil {
-		return nil, j.Error(err, "failed to find stream content")
+		return nil, errors.Wrap(err, "failed to find stream content")
 	}
 	j.Done()
 	return

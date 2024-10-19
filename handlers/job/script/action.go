@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"github.com/anacrolix/torrent/metainfo"
+	"github.com/pkg/errors"
 	"io"
 	"strings"
 	"time"
@@ -49,7 +50,7 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 	defer cancel()
 	resourceResponse, err := s.api.GetResource(ctx, claims, resourceID)
 	if err != nil {
-		return j.Error(err, "failed to retrieve for 5 minutes")
+		return errors.Wrap(err, "failed to retrieve for 5 minutes")
 	}
 	j.Done()
 	sc.Resource = resourceResponse
@@ -58,7 +59,7 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 	defer cancel2()
 	exportResponse, err := s.api.ExportResourceContent(ctx2, claims, resourceID, itemID, settings.ImdbID)
 	if err != nil {
-		return j.Error(err, "failed to retrieve for 5 minutes")
+		return errors.Wrap(err, "failed to retrieve for 5 minutes")
 	}
 	j.Done()
 	sc.ExportTag = exportResponse.ExportItems["stream"].Tag
@@ -75,7 +76,7 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 			j.InProgress("probing content media info")
 			mp, err := s.api.GetMediaProbe(ctx, exportResponse.ExportItems["media_probe"].URL)
 			if err != nil {
-				return j.Error(err, "failed to get probe data")
+				return errors.Wrap(err, "failed to get probe data")
 			}
 			sc.MediaProbe = mp
 			log.Infof("got media probe %+v", mp)
@@ -106,7 +107,7 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 	}
 	err = s.renderActionTemplate(j, c, sc, template)
 	if err != nil {
-		return j.Error(err, "failed to render resource")
+		return errors.Wrap(err, "failed to render resource")
 	}
 	j.InProgress("waiting player initialization")
 	return
@@ -141,7 +142,7 @@ func (s *ActionScript) download(j *job.Job, claims *api.Claims, resourceID strin
 	defer cancel()
 	resp, err := s.api.ExportResourceContent(ctx, claims, resourceID, itemID, "")
 	if err != nil {
-		return j.Error(err, "failed to retrieve for 30 seconds")
+		return errors.Wrap(err, "failed to retrieve for 30 seconds")
 	}
 	j.Done()
 	de := resp.ExportItems["download"]
@@ -161,22 +162,22 @@ func (s *ActionScript) downloadTorrent(j *job.Job, c *gin.Context, claims *api.C
 	defer cancel()
 	resp, err := s.api.GetTorrent(ctx, claims, resourceID)
 	if err != nil {
-		return j.Error(err, "failed to retrieve for 30 seconds")
+		return errors.Wrap(err, "failed to retrieve for 30 seconds")
 	}
 	defer func(resp io.ReadCloser) {
 		_ = resp.Close()
 	}(resp)
 	torrent, err := io.ReadAll(resp)
 	if err != nil {
-		return j.Error(err, "failed to read torrent")
+		return errors.Wrap(err, "failed to read torrent")
 	}
 	mi, err := metainfo.Load(bytes.NewBuffer(torrent))
 	if err != nil {
-		return j.Error(err, "failed to load torrent metainfo")
+		return errors.Wrap(err, "failed to load torrent metainfo")
 	}
 	info, err := mi.UnmarshalInfo()
 	if err != nil {
-		return j.Error(err, "failed to unmarshal torrent metainfo")
+		return errors.Wrap(err, "failed to unmarshal torrent metainfo")
 	}
 	j.DoneWithMessage("success! download should start right now!")
 	tpl := s.tb.Build("action/download_torrent").WithLayoutBody(`{{ template "main" . }}`)
@@ -224,18 +225,20 @@ func (s *ActionScript) warmUp(j *job.Job, m string, u string, su string, size in
 				log.WithError(err).Error("failed to get stats")
 				return
 			}
-			select {
-			case ev := <-ch:
-				j.StatusUpdate(fmt.Sprintf("%v peers", ev.Peers))
-			case <-ctx2.Done():
-				return
+			for {
+				select {
+				case ev := <-ch:
+					j.StatusUpdate(fmt.Sprintf("%v peers", ev.Peers))
+				case <-ctx2.Done():
+					return
+				}
 			}
 		}()
 	}
 
 	b, err := s.api.DownloadWithRange(ctx2, u, 0, limitStart)
 	if err != nil {
-		return j.Error(err, "failed to start download")
+		return errors.Wrap(err, "failed to start download")
 	}
 	defer func(b io.ReadCloser) {
 		_ = b.Close()
@@ -246,7 +249,7 @@ func (s *ActionScript) warmUp(j *job.Job, m string, u string, su string, size in
 	if limitEnd > 0 {
 		b2, err := s.api.DownloadWithRange(ctx2, u, size-limitEnd, -1)
 		if err != nil {
-			return j.Error(err, "failed to start download")
+			return errors.Wrap(err, "failed to start download")
 		}
 		defer func(b2 io.ReadCloser) {
 			_ = b2.Close()
@@ -254,7 +257,7 @@ func (s *ActionScript) warmUp(j *job.Job, m string, u string, su string, size in
 		_, err = io.Copy(io.Discard, b2)
 	}
 	if err != nil {
-		return j.Error(err, "failed to download within 5 minutes")
+		return errors.Wrap(err, "failed to download within 5 minutes")
 	}
 
 	j.Done()

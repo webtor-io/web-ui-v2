@@ -11,9 +11,13 @@ import (
 func (s *Handler) log(c *gin.Context) {
 	ctx, cancel := context.WithCancel(c.Request.Context())
 	defer cancel()
-	l, err := s.q.GetOrCreate(c.Param("queue_id")).Log(ctx, c.Param("job_id"))
+	l, ok, err := s.q.GetOrCreate(c.Param("queue_id")).Log(ctx, c.Param("job_id"))
 	if err != nil {
 		_ = c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	if !ok {
+		c.Status(http.StatusNotFound)
 		return
 	}
 

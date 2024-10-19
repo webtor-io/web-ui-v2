@@ -128,6 +128,7 @@ class Renderer {
 
     updateLine(data) {
         const el = this.lt.querySelector(`*[task-tag='${data.tag}']`);
+        if (!el) return;
         el.classList = [];
         const classList = [data.level];
         for (const cl of classList) {
