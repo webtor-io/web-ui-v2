@@ -62,8 +62,6 @@ type Job struct {
 	storage   Storage
 	main      bool
 	purge     bool
-	curLevel  LogItemLevel
-	curStatus string
 }
 
 type LogItemLevel string
@@ -200,11 +198,13 @@ func (s *Job) logToLogger(l LogItem) {
 	log.WithFields(log.Fields{
 		"ID":       s.ID,
 		"Queue":    s.Queue,
+		"Main":     s.main,
 		"Tag":      l.Tag,
 		"Location": l.Location,
 		"Template": l.Template,
 		"Body":     l.Body,
 		"Status":   l.Status,
+		"Level":    l.Level,
 	}).Log(levelMap[l.Level], message)
 }
 
@@ -215,16 +215,12 @@ func (s *Job) log(l LogItem) error {
 	} else {
 		l.Tag = s.curTag
 	}
-	if l.Level == StatusUpdate && s.curTag == l.Tag && s.curLevel != InProgress && s.curLevel != StatusUpdate {
-		return nil
-	}
-	if l.Level == StatusUpdate && s.curTag == l.Tag && s.curStatus == l.Status {
-		return nil
-	}
 
-	s.curLevel = l.Level
-	s.curStatus = l.Status
-	replaced := s.addToLog(l)
+	replaced, ok := s.addToLog(l)
+
+	if !ok {
+		return nil
+	}
 
 	if s.main {
 		err := s.pubToStorage(replaced, l)
@@ -242,17 +238,24 @@ func (s *Job) log(l LogItem) error {
 	return nil
 }
 
-func (s *Job) addToLog(l LogItem) (replaced bool) {
+func (s *Job) addToLog(l LogItem) (replaced bool, ok bool) {
 	s.logMux.Lock()
 	defer s.logMux.Unlock()
 	if len(s.l) > 0 {
 		last := s.l[len(s.l)-1]
+		if l.Level == StatusUpdate && last.Tag == l.Tag && last.Level != InProgress && last.Level != StatusUpdate {
+			return false, false
+		}
+		if l.Level == StatusUpdate && last.Tag == l.Tag && last.Status == l.Status {
+			return false, false
+		}
 		if last.Level == StatusUpdate && s.curTag == last.Tag {
 			s.l = s.l[:len(s.l)-1]
 			replaced = true
 		}
 	}
 	s.l = append(s.l, l)
+
 	return
 }
 

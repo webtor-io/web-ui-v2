@@ -227,7 +227,10 @@ func (s *ActionScript) warmUp(j *job.Job, m string, u string, su string, size in
 			}
 			for {
 				select {
-				case ev := <-ch:
+				case ev, ok := <-ch:
+					if !ok {
+						return
+					}
 					j.StatusUpdate(fmt.Sprintf("%v peers", ev.Peers))
 				case <-ctx2.Done():
 					return
