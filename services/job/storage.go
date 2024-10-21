@@ -13,7 +13,7 @@ type State struct {
 }
 
 type Storage interface {
-	Pub(ctx context.Context, id string, replace bool, l LogItem) error
+	Pub(ctx context.Context, id string, l LogItem) error
 	Sub(ctx context.Context, id string) (res chan LogItem, err error)
 	GetState(ctx context.Context, id string) (state *State, ok bool, err error)
 	Drop(ctx context.Context, id string) (err error)
@@ -21,7 +21,7 @@ type Storage interface {
 
 type NilStorage struct{}
 
-func (s *NilStorage) Pub(ctx context.Context, id string, replace bool, l LogItem) error {
+func (s *NilStorage) Pub(_ context.Context, _ string, _ LogItem) error {
 	return nil
 }
 
