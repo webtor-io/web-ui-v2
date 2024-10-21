@@ -56,11 +56,14 @@ type Job struct {
 	observers map[string]*Observer
 	closed    bool
 	mux       sync.Mutex
-	cur       string
+	logMux    sync.Mutex
+	curTag    string
 	Context   context.Context
 	storage   Storage
 	main      bool
 	purge     bool
+	curLevel  LogItemLevel
+	curStatus string
 }
 
 type LogItemLevel string
@@ -182,11 +185,11 @@ func (s *Job) pushToObservers(ctx context.Context, l LogItem) {
 	wg.Wait()
 }
 
-func (s *Job) pubToStorage(l LogItem) (err error) {
+func (s *Job) pubToStorage(replaced bool, l LogItem) (err error) {
 	if l.Level == Open {
 		return
 	}
-	return s.storage.Pub(s.Context, s.ID, &l)
+	return s.storage.Pub(s.Context, s.ID, replaced, l)
 }
 
 func (s *Job) logToLogger(l LogItem) {
@@ -208,14 +211,23 @@ func (s *Job) logToLogger(l LogItem) {
 func (s *Job) log(l LogItem) error {
 	l.Timestamp = time.Now()
 	if l.Level == InProgress {
-		s.cur = l.Tag
+		s.curTag = l.Tag
 	} else {
-		l.Tag = s.cur
+		l.Tag = s.curTag
 	}
-	s.l = append(s.l, l)
+	if l.Level == StatusUpdate && s.curTag == l.Tag && s.curLevel != InProgress && s.curLevel != StatusUpdate {
+		return nil
+	}
+	if l.Level == StatusUpdate && s.curTag == l.Tag && s.curStatus == l.Status {
+		return nil
+	}
+
+	s.curLevel = l.Level
+	s.curStatus = l.Status
+	replaced := s.addToLog(l)
 
 	if s.main {
-		err := s.pubToStorage(l)
+		err := s.pubToStorage(replaced, l)
 		if err != nil {
 			return err
 		}
@@ -228,6 +240,20 @@ func (s *Job) log(l LogItem) error {
 	s.pushToObservers(ctx, l)
 
 	return nil
+}
+
+func (s *Job) addToLog(l LogItem) (replaced bool) {
+	s.logMux.Lock()
+	defer s.logMux.Unlock()
+	if len(s.l) > 0 {
+		last := s.l[len(s.l)-1]
+		if last.Level == StatusUpdate && s.curTag == last.Tag {
+			s.l = s.l[:len(s.l)-1]
+			replaced = true
+		}
+	}
+	s.l = append(s.l, l)
+	return
 }
 
 func (s *Job) open() *Job {
@@ -250,7 +276,7 @@ func (s *Job) Warn(err error, message string) *Job {
 	_ = s.log(LogItem{
 		Level:   Warn,
 		Message: message,
-		Tag:     s.cur,
+		Tag:     s.curTag,
 	})
 	return s
 }
@@ -260,17 +286,17 @@ func (s *Job) Error(err error) error {
 	_ = s.log(LogItem{
 		Level:   Error,
 		Message: strings.Split(err.Error(), ":")[0],
-		Tag:     s.cur,
+		Tag:     s.curTag,
 	})
 	return err
 }
 
 func (s *Job) InProgress(message string) *Job {
-	s.cur = message
+	s.curTag = message
 	_ = s.log(LogItem{
 		Level:   InProgress,
 		Message: message,
-		Tag:     s.cur,
+		Tag:     s.curTag,
 	})
 	return s
 }
@@ -279,7 +305,7 @@ func (s *Job) StatusUpdate(status string) *Job {
 	_ = s.log(LogItem{
 		Level:  StatusUpdate,
 		Status: status,
-		Tag:    s.cur,
+		Tag:    s.curTag,
 	})
 	return s
 }
@@ -287,7 +313,7 @@ func (s *Job) StatusUpdate(status string) *Job {
 func (s *Job) Done() *Job {
 	_ = s.log(LogItem{
 		Level: Done,
-		Tag:   s.cur,
+		Tag:   s.curTag,
 	})
 	return s
 }
@@ -295,7 +321,7 @@ func (s *Job) Done() *Job {
 func (s *Job) DoneWithMessage(msg string) *Job {
 	_ = s.log(LogItem{
 		Level:   Done,
-		Tag:     s.cur,
+		Tag:     s.curTag,
 		Message: msg,
 	})
 	return s

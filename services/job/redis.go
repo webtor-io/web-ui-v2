@@ -32,11 +32,18 @@ func NewRedis(cl redis.UniversalClient, prefix string) *Redis {
 	}
 }
 
-func (s *Redis) Pub(ctx context.Context, id string, l *LogItem) (err error) {
+func (s *Redis) Pub(ctx context.Context, id string, replace bool, l LogItem) (err error) {
 	key := s.makeKey(id)
 	j, err := json.Marshal(l)
 	if err != nil {
 		return err
+	}
+
+	if replace {
+		cmd := s.cl.RPop(ctx, key)
+		if cmd.Err() != nil {
+			return cmd.Err()
+		}
 	}
 
 	cmd := s.cl.RPush(ctx, key, j)
