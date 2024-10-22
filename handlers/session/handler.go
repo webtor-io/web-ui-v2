@@ -21,6 +21,7 @@ const (
 	sessionSecretFlag = "secret"
 	redisHostFlag     = "session-redis-host"
 	redisPortFlag     = "session-redis-port"
+	redisPassFlag     = "session-redis-pass"
 )
 
 func RegisterFlags(f []cli.Flag) []cli.Flag {
@@ -35,6 +36,11 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 			Name:   redisHostFlag,
 			Usage:  "session redis host",
 			EnvVar: "REDIS_MASTER_SERVICE_HOST, REDIS_SERVICE_HOST",
+		},
+		cli.StringFlag{
+			Name:   redisPassFlag,
+			Usage:  "session redis pass",
+			EnvVar: "REDIS_PASS",
 		},
 		cli.IntFlag{
 			Name:   redisPortFlag,
@@ -53,7 +59,7 @@ func RegisterHandler(c *cli.Context, r *gin.Engine) (err error) {
 	var store sessions.Store
 	if c.String(redisHostFlag) != "" && c.Int(redisPortFlag) != 0 {
 		url := fmt.Sprintf("%v:%v", c.String(redisHostFlag), c.Int(redisPortFlag))
-		store, err = redis.NewStore(10, "tcp", url, "", []byte(sessionSecretFlag))
+		store, err = redis.NewStore(10, "tcp", url, c.String(redisPassFlag), []byte(sessionSecretFlag))
 		if err != nil {
 			return err
 		}

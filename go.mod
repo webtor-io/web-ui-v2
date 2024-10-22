@@ -11,25 +11,25 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/uuid v1.6.0
 	github.com/pkg/errors v0.9.1
-	github.com/redis/go-redis/v9 v9.6.1
+	github.com/redis/go-redis/v9 v9.7.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/supertokens/supertokens-golang v0.20.0
-	github.com/urfave/cli v1.22.15
+	github.com/urfave/cli v1.22.16
 	github.com/utrack/gin-csrf v0.0.0-20190424104817-40fb8d2c8fca
 	github.com/webtor-io/abuse-store v0.0.0-20230514145349-23cc55871d7e
 	github.com/webtor-io/claims-provider v0.0.0-20240414120741-d7e398fc01d8
-	github.com/webtor-io/common-services v0.0.0-20240603220900-f55e2770e301
+	github.com/webtor-io/common-services v0.0.0-20241022160325-d391acd827ab
 	github.com/webtor-io/lazymap v0.0.0-20221030185154-1799721becef
 	github.com/webtor-io/rest-api v0.0.0-20231229193338-6669290c58f0
 	github.com/yargevad/filepathx v1.0.0
-	golang.org/x/text v0.18.0
+	golang.org/x/text v0.19.0
 	google.golang.org/grpc v1.67.0
 )
 
 require (
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/klauspost/compress v1.17.10 // indirect
+	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 )
 
@@ -102,9 +102,9 @@ require (
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.20.4 // indirect
+	github.com/prometheus/client_golang v1.20.5 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.59.1 // indirect
+	github.com/prometheus/common v0.60.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/satori/go.uuid v1.2.0
@@ -126,16 +126,16 @@ require (
 	github.com/webtor-io/magnet2torrent v0.0.0-20220312143110-bc1a7e4bcbba // indirect
 	github.com/webtor-io/torrent-store v0.0.0-20230129225621-aec101523586 // indirect
 	golang.org/x/arch v0.10.0 // indirect
-	golang.org/x/crypto v0.27.0 // indirect
+	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
-	golang.org/x/sys v0.25.0 // indirect
-	golang.org/x/term v0.24.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/term v0.25.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
 	golang.org/x/tools v0.25.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240924160255-9d4c2d233b61 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	gopkg.in/h2non/gock.v1 v1.1.2 // indirect
