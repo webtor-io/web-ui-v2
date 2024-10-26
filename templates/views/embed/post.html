@@ -24,9 +24,6 @@
         {{ if has . "Job" }}
         <form class="hidden progress-alert progress-alert-block mb-10 closeable" data-async-progress-log="{{ .Job | makeJobLogURL }}">
             <div class="log-target"></div>
-            <div class="pt-3 flex justify-end hidden alert-close-wrapper">
-                <a class="closeable-close close">got it!</a>
-            </div>
         </form>
         {{ end }}
         {{ end }}
