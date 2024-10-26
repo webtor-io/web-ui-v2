@@ -91,6 +91,16 @@ class Renderer {
             });
         }
     }
+    addCustom(data) {
+        const div = document.createElement('div');
+        this.lt.appendChild(div);
+        loadAsyncView(div, data.body);
+        for (const close of div.querySelectorAll('.closeable-close')) {
+            close.addEventListener('click', () => {
+                this.el.classList.add('hidden');
+            });
+        }
+    }
     addSummary(data) {
         if (!data.message) return;
         const pre = document.createElement('pre');
@@ -188,8 +198,11 @@ class Renderer {
         }
         if (data.level === 'rendertemplate') {
             data.render = (el) => {
-                loadAsyncView(el, data.body, data.template);
+                loadAsyncView(el, data.body);
             };
+        }
+        if (data.level === 'custom') {
+            this.addCustom(data);
         }
         if (data.level === 'download') {
             this.addSummary(data);

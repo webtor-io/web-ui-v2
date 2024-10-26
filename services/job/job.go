@@ -74,6 +74,7 @@ const (
 	Redirect       LogItemLevel = "redirect"
 	Download       LogItemLevel = "download"
 	RenderTemplate LogItemLevel = "rendertemplate"
+	Custom         LogItemLevel = "custom"
 	StatusUpdate   LogItemLevel = "statusupdate"
 	Close          LogItemLevel = "close"
 	Open           LogItemLevel = "open"
@@ -90,6 +91,7 @@ var levelMap = map[LogItemLevel]log.Level{
 	Redirect:       log.InfoLevel,
 	StatusUpdate:   log.InfoLevel,
 	RenderTemplate: log.InfoLevel,
+	Custom:         log.InfoLevel,
 	Close:          log.InfoLevel,
 }
 
@@ -341,6 +343,15 @@ func (s *Job) close() {
 	for _, o := range s.observers {
 		o.Close()
 	}
+}
+
+func (s *Job) Custom(name string, body string) *Job {
+	_ = s.log(LogItem{
+		Level:    Custom,
+		Template: name,
+		Body:     body,
+	})
+	return s
 }
 
 type Jobs struct {

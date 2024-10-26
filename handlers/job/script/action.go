@@ -136,7 +136,11 @@ func (s *ActionScript) renderActionTemplate(j *job.Job, c *gin.Context, sc *Stre
 	return nil
 }
 
-func (s *ActionScript) download(j *job.Job, claims *api.Claims, resourceID string, itemID string) (err error) {
+type FileDownload struct {
+	URL string
+}
+
+func (s *ActionScript) download(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string) (err error) {
 	j.InProgress("retrieving download link")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -146,13 +150,21 @@ func (s *ActionScript) download(j *job.Job, claims *api.Claims, resourceID strin
 	}
 	j.Done()
 	de := resp.ExportItems["download"]
-	url := de.URL
+	//url := de.URL
 	if !de.ExportMetaItem.Meta.Cache {
 		if err := s.warmUp(j, "warming up torrent client", resp.ExportItems["download"].URL, resp.ExportItems["torrent_client_stat"].URL, int(resp.Source.Size), 1_000_000, 0, "", true); err != nil {
 			return err
 		}
 	}
-	j.Download(url)
+	j.DoneWithMessage("success! file is ready for download!")
+	tpl := s.tb.Build("action/download_file").WithLayoutBody(`{{ template "main" . }}`)
+	str, err := tpl.ToString(c, &FileDownload{
+		URL: de.URL,
+	})
+	if err != nil {
+		return err
+	}
+	j.Custom("action/download_file", strings.TrimSpace(str))
 	return
 }
 
@@ -194,7 +206,7 @@ func (s *ActionScript) downloadTorrent(j *job.Job, c *gin.Context, claims *api.C
 	if err != nil {
 		return err
 	}
-	j.RenderTemplate("action/download_torrent", strings.TrimSpace(str))
+	j.Custom("action/download_torrent", strings.TrimSpace(str))
 	return nil
 }
 
@@ -282,7 +294,9 @@ type ActionScript struct {
 func (s *ActionScript) Run(j *job.Job) (err error) {
 	switch s.action {
 	case "download":
-		return s.download(j, s.claims, s.resourceId, s.itemId)
+		return s.download(j, s.c, s.claims, s.resourceId, s.itemId)
+	case "download-dir":
+		return s.download(j, s.c, s.claims, s.resourceId, s.itemId)
 	case "download-torrent":
 		return s.downloadTorrent(j, s.c, s.claims, s.resourceId)
 	case "preview-image":
