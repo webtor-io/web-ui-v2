@@ -7,90 +7,6 @@ import './mediaelement-plugins/embed';
 
 const {MediaElementPlayer} = global;
 
-window.copyToClipboard = function(e) {
-    const el = document.getElementById('embed');
-    const code = el.querySelector('textarea').value;
-    navigator.clipboard.writeText(code);
-    const checkbox = document.getElementById('embed-checkbox');
-    checkbox.checked = !checkbox.checked;
-}
-
-window.toggleOpenSubtitles = function(e) {
-    const el = document.getElementById('opensubtitles');
-    const ele = document.getElementById('embedded');
-    const hidden = el.classList.contains('hidden');
-    if (hidden) {
-        e.classList.remove('btn-outline');
-        el.classList.remove('hidden');
-        ele.classList.add('hidden');
-    } else {
-        e.classList.add('btn-outline');
-        el.classList.add('hidden');
-        ele.classList.remove('hidden');
-    }
-}
-
-async function markTrack(e, type) {
-    if (e.getAttribute('data-default') == 'true') {
-        return;
-    }
-    e.classList.add('text-primary', 'underline');
-    e.setAttribute('data-default', 'true');
-    const s = document.getElementById('subtitles');
-    const es = s.querySelectorAll(`.${type}`);
-    for (const ee of es) {
-        if (ee == e) continue;
-        ee.classList.remove('text-primary', 'underline');
-        ee.removeAttribute('data-default');
-    }
-    const csrf = s.getAttribute('data-csrf');
-    await fetch(`/stream-video/${type}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': s.getAttribute('data-csrf'),
-        },
-        body:   JSON.stringify({
-            id:         e.getAttribute('data-id'),
-            resourceID: s.getAttribute('data-resource-id'),
-            itemID:     s.getAttribute('data-item-id'),
-        }),
-    });
-}
-
-window.setAudio = function(e) {
-    markTrack(e, 'audio');
-    const provider = e.getAttribute('data-provider');
-    if (hlsPlayer && provider == 'MediaProbe') {
-        hlsPlayer.audioTrack = e.getAttribute('data-mp-id');
-    }
-}
-
-window.setSubtitle = function(e) {
-    markTrack(e, 'subtitle');
-    const videos = document.querySelectorAll('video.player');
-
-    const provider = e.getAttribute('data-provider');
-    if (hlsPlayer && provider == 'MediaProbe') {
-        const id = parseInt(e.getAttribute('data-mp-id'));
-        hlsPlayer.subtitleTrack = id;
-    } else if (video) {
-        const id = e.getAttribute('data-id');
-        for (const p of videos) {
-            for (const t of p.textTracks) {
-                if (t.id ==  id) {
-                    t.mode = 'showing';
-                } else {
-                    t.mode = 'hidden';
-                }
-            }
-        }
-    }
-}
-
-
-
-
 let player;
 let hlsPlayer;
 let video;
@@ -195,6 +111,7 @@ export function initPlayer(target, ready) {
             });
             if (media.hlsPlayer) {
                 hlsPlayer = media.hlsPlayer;
+                window.hlsPlayer = hlsPlayer;
                 media.addEventListener('seeking', () => {
                     if (media.hlsPlayer.loadLevel > 1) {
                         media.hlsPlayer.loadLevel = 1;

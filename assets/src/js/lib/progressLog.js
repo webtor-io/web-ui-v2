@@ -92,7 +92,10 @@ class Renderer {
         }
     }
     addCustom(data) {
+        const el = this.lt.querySelector(`*[task-custom='${data.tag}']`);
+        if (el) return;
         const div = document.createElement('div');
+        div.setAttribute('task-custom', data.tag);
         this.lt.appendChild(div);
         loadAsyncView(div, data.body);
         for (const close of div.querySelectorAll('.closeable-close')) {
@@ -103,18 +106,23 @@ class Renderer {
     }
     addSummary(data) {
         if (!data.message) return;
+        const el = this.lt.querySelector(`*[task-summary='${data.tag}']`);
+        if (el) return;
         const pre = document.createElement('pre');
         const line = document.createElement('span');
         line.classList.add('line');
         pre.appendChild(line);
         line.innerText = data.message;
         const classList = [data.level + "-summary"];
+        pre.setAttribute('task-summary', data.tag);
         for (const cl of classList) {
             pre.classList.add(cl);
         }
         this.lt.appendChild(pre);
     }
     addLine(data) {
+        const el = this.lt.querySelector(`*[task-tag='${data.tag}']`);
+        if (el) return;
         const pre = document.createElement('pre');
         const line = document.createElement('span');
         line.classList.add('line');
