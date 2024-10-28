@@ -142,7 +142,7 @@ export function initPlayer(target, ready) {
                         }
                     } else {
                         console.log(data);
-                        if (data.type == Hls.ErrorTypes.MEDIA_ERROR && data.details == 'bufferStalledError') {
+                        if (data.type === Hls.ErrorTypes.MEDIA_ERROR && data.details === 'bufferStalledError') {
                             setTimeout(() => {
                                 media.hlsPlayer.startLoad();
                             }, 5000);

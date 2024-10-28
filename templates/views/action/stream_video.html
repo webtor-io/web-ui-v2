@@ -33,7 +33,7 @@
                     <h3 class="font-bold text-lg">Audio</h3>
                     <ul class="flex flex-wrap">
                         {{ range getAudioTracks .VideoStreamUserData .MediaProbe }}
-                        <li data-id="{{ .ID }}" data-mp-id="{{ .MPID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="audio cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}" onclick="setAudio(this)">{{ .Label }}</li>
+                        <li data-id="{{ .ID }}" data-mp-id="{{ .MPID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="audio cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}">{{ .Label }}</li>
                         {{ end }}
                     </ul>
                 </div>
@@ -41,7 +41,7 @@
                     <h3 class="font-bold text-lg">Subtitles</h3>
                     <ul class="flex flex-wrap">
                         {{ range $otherSubs }}
-                        <li data-id="{{ .ID }}" data-mp-id="{{ .MPID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="subtitle cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}" onclick="setSubtitle(this)">{{ .Label }}</li>
+                        <li data-id="{{ .ID }}" data-mp-id="{{ .MPID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="subtitle cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}">{{ .Label }}</li>
                         {{ end }}
                     </ul>
                 </div>
@@ -51,13 +51,13 @@
                     <h3 class="font-bold text-lg">OpenSubtitles</h3>
                     <ul class="flex flex-wrap">
                         {{ range $openSubs }}
-                        <li data-id="{{ .ID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="subtitle cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}" onclick="setSubtitle(this)">{{ .Label }}</li>
+                        <li data-id="{{ .ID }}" data-provider="{{ .Provider }}" {{ if .Default }}data-default="true" {{ end }} class="subtitle cursor-pointer pr-3{{ if .Default }} text-primary underline{{ end }}">{{ .Label }}</li>
                         {{ end }}
                     </ul>
                 </div>
             </div>
             <div class="modal-action">
-                {{ if $openSubs }}<label class="btn btn-accent btn-outline" onclick="toggleOpenSubtitles(this)">OpenSubtitles</label>{{ end }}
+                {{ if $openSubs }}<label for="opensubtitles" class="btn btn-accent btn-outline">OpenSubtitles</label>{{ end }}
                 <label for="subtitles-checkbox" class="btn btn-accent btn-outline">Close</label>
             </div>
         </div>
