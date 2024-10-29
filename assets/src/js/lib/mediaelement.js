@@ -36,9 +36,6 @@ export function initPlayer(target, ready) {
         'chromecast',
         'embed',
     ];
-    if (window._domainSettings && window._domainSettings.ads) {
-        features.push('logo');
-    }
     if (duration > 0) {
         features.push('availableprogress');
     }
@@ -50,6 +47,9 @@ export function initPlayer(target, ready) {
                 features.push(name);
             }
         }
+    }
+    if (window._domainSettings && window._domainSettings.ads === true) {
+        features.push('logo');
     }
     player = new MediaElementPlayer(video, {
         autoRewind: false,
