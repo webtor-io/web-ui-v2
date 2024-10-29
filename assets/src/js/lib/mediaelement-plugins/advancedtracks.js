@@ -20,19 +20,18 @@ Object.assign(MediaElementPlayer.prototype, {
         }
         e.classList.add('text-primary', 'underline');
         e.setAttribute('data-default', 'true');
-        const s = document.getElementById('subtitles');
+        const s = this.tracksLayer.querySelector('#subtitles');
         const es = s.querySelectorAll(`.${type}`);
         for (const ee of es) {
             if (ee === e) continue;
             ee.classList.remove('text-primary', 'underline');
             ee.removeAttribute('data-default');
         }
-        const csrf = s.getAttribute('data-csrf');
         await fetch(`/stream-video/${type}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': s.getAttribute('data-csrf'),
+                'X-CSRF-TOKEN': window._CSRF,
             },
             body:   JSON.stringify({
                 id:         e.getAttribute('data-id'),

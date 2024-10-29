@@ -23,7 +23,7 @@
         {{ end }}
     </video>
     <input type="checkbox" id="subtitles-checkbox" class="modal-toggle" />
-    <div class="modal w-full h-full" id="subtitles" data-csrf="{{ $.CSRF }}" data-resource-id="{{ .VideoStreamUserData.ResourceID }}" data-item-id="{{ .VideoStreamUserData.ItemID }}">
+    <div class="modal w-full h-full" id="subtitles" data-resource-id="{{ .VideoStreamUserData.ResourceID }}" data-item-id="{{ .VideoStreamUserData.ItemID }}">
         {{ $subs := getSubtitles .VideoStreamUserData .MediaProbe .ExportTag .OpenSubtitles .ExternalData }}
         {{ $openSubs := filterSubtitlesByProvider $subs "OpenSubtitles" false }}
         {{ $otherSubs := filterSubtitlesByProvider $subs "OpenSubtitles" true }}
