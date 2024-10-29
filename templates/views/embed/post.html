@@ -11,18 +11,27 @@
         {{ template "embed_extra" . }}
         {{ "embed.css" | asset }}
         {{ "embed/index.js" | asset }}
+        {{ if .Data.DomainSettings.Ads }}
+            {{ "baskerville.css" | asset }}
+        {{ end }}
     </head>
-    <body data-iframe-height>
+    <body data-iframe-height class="relative">
         {{ if .Err }}
-        <div class="progress-alert progress-alert-oneline mb-10 closeable">
+        <div class="progress-alert progress-alert-oneline mb-10 closeable relative bg-black/50">
             <pre>{{ .Err | log | shortErr }}</pre>
             <a class="closeable-close close">ok</a>
         </div>
         {{ end }} 
         {{ with .Data }}
-
         {{ if has . "Job" }}
-        <form class="hidden progress-alert progress-alert-block mb-10 closeable" data-async-progress-log="{{ .Job | makeJobLogURL }}">
+        <form class="hidden progress-alert progress-alert-block mb-10 closeable bg-black/50" data-async-progress-log="{{ .Job | makeJobLogURL }}">
+            {{ if .DomainSettings.Ads }}
+            <div class="font-baskerville text-4xl sm:text-5xl sm:absolute sm:right-0 sm:top-0 p-2 sm:p-4 sm:pt-4 pt-0 z-50 text-center">
+                <a href="{{ domain }}" target="_blank">
+                    <span>web</span><span class="text-accent">tor</span>
+                </a>
+            </div>
+            {{ end }}
             <div class="log-target"></div>
         </form>
         {{ end }}

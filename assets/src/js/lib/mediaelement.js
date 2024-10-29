@@ -4,6 +4,7 @@ import './mediaelement-plugins/availableprogress';
 import './mediaelement-plugins/advancedtracks';
 import './mediaelement-plugins/chromecast';
 import './mediaelement-plugins/embed';
+import './mediaelement-plugins/logo';
 
 const {MediaElementPlayer} = global;
 
@@ -18,7 +19,7 @@ export function initPlayer(target, ready) {
     const height = video.height;
     const controls = video.controls;
     const stretching = height ? 'auto' : 'responsive';
-    if (stretching == 'auto') {
+    if (stretching === 'auto') {
         if (width) video.setAttribute('width', width);
         if (height) video.setAttribute('height', height);
     }
@@ -35,6 +36,9 @@ export function initPlayer(target, ready) {
         'chromecast',
         'embed',
     ];
+    if (window._domainSettings && window._domainSettings.ads) {
+        features.push('logo');
+    }
     if (duration > 0) {
         features.push('availableprogress');
     }
@@ -66,6 +70,8 @@ export function initPlayer(target, ready) {
             // progressive: true,
             // testBandwidth: false,
             path: '/assets/lib/hls.min.js',
+            maxBufferSize: 15 * 1000 * 1000,
+            maxMaxBufferLength: 180,
         },
         error: function(e) {
             console.log(e);
