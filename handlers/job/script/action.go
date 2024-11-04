@@ -69,19 +69,19 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 		if err = s.warmUp(j, "warming up torrent client", exportResponse.ExportItems["download"].URL, exportResponse.ExportItems["torrent_client_stat"].URL, int(exportResponse.Source.Size), 1_000_000, 500_000, "file", true); err != nil {
 			return
 		}
-		if se.Meta.Transcode {
-			if err = s.warmUp(j, "warming up transcoder", exportResponse.ExportItems["stream"].URL, exportResponse.ExportItems["torrent_client_stat"].URL, 0, -1, -1, "stream", false); err != nil {
-				return
-			}
-			j.InProgress("probing content media info")
-			mp, err := s.api.GetMediaProbe(ctx, exportResponse.ExportItems["media_probe"].URL)
-			if err != nil {
-				return errors.Wrap(err, "failed to get probe data")
-			}
-			sc.MediaProbe = mp
-			log.Infof("got media probe %+v", mp)
-			j.Done()
+	}
+	if se.Meta.Transcode {
+		if err = s.warmUp(j, "warming up transcoder", exportResponse.ExportItems["stream"].URL, exportResponse.ExportItems["torrent_client_stat"].URL, 0, -1, -1, "stream", false); err != nil {
+			return
 		}
+		j.InProgress("probing content media info")
+		mp, err := s.api.GetMediaProbe(ctx, exportResponse.ExportItems["media_probe"].URL)
+		if err != nil {
+			return errors.Wrap(err, "failed to get probe data")
+		}
+		sc.MediaProbe = mp
+		log.Infof("got media probe %+v", mp)
+		j.Done()
 	}
 	if exportResponse.Source.MediaFormat == ra.Video {
 		sc.VideoStreamUserData = vsud
