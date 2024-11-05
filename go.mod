@@ -18,7 +18,7 @@ require (
 	github.com/utrack/gin-csrf v0.0.0-20190424104817-40fb8d2c8fca
 	github.com/webtor-io/abuse-store v0.0.0-20230514145349-23cc55871d7e
 	github.com/webtor-io/claims-provider v0.0.0-20240414120741-d7e398fc01d8
-	github.com/webtor-io/common-services v0.0.0-20241022160325-d391acd827ab
+	github.com/webtor-io/common-services v0.0.0-20241105172818-f7eb346e94e6
 	github.com/webtor-io/lazymap v0.0.0-20221030185154-1799721becef
 	github.com/webtor-io/rest-api v0.0.0-20231229193338-6669290c58f0
 	github.com/yargevad/filepathx v1.0.0
@@ -104,7 +104,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.20.5 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.60.0 // indirect
+	github.com/prometheus/common v0.60.1 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/satori/go.uuid v1.2.0

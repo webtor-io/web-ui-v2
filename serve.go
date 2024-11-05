@@ -78,13 +78,17 @@ func serve(c *cli.Context) error {
 	var servers []cs.Servable
 	// Setting Probe
 	probe := cs.NewProbe(c)
-	servers = append(servers, probe)
-	defer probe.Close()
+	if probe != nil {
+		servers = append(servers, probe)
+		defer probe.Close()
+	}
 
 	// Setting Pprof
 	pprof := cs.NewPprof(c)
-	servers = append(servers, pprof)
-	defer pprof.Close()
+	if pprof != nil {
+		servers = append(servers, pprof)
+		defer pprof.Close()
+	}
 
 	// Setting template renderer
 	re := multitemplate.NewRenderer()
