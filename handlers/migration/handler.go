@@ -8,6 +8,12 @@ import (
 )
 
 func RegisterHandler(r *gin.Engine) {
+	r.GET("/en", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/")
+	})
+	r.GET("/ru", func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/")
+	})
 	r.GET("/show", func(c *gin.Context) {
 		params := c.Request.URL.Query()
 		if params.Get("downloadId") != "" {
