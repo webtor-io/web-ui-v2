@@ -15,9 +15,11 @@ window.progress = {
 import {bindAsync} from '../lib/async';
 import initAsyncView from '../lib/asyncView';
 
-
 const initTheme = (await import('../lib/themeSelector')).initTheme;
+window.loaded = false;
 function onLoad() {
+    if (window.loaded) return;
+    window.loaded = true;
     initTheme(document.querySelector('[data-toggle-theme]'));
     document.body.style.display = 'flex';
     hideProgress();
