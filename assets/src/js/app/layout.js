@@ -7,7 +7,12 @@ function hideProgress() {
     progress.classList.add('hidden');
 }
 
-if (window._umami) (await import('../lib/umami')).init(window, window._umami);
+if (window._umami) {
+    const umami = (await import('../lib/umami')).init(window, window._umami);
+    umami.identify({
+        tier: window._tier,
+    });
+}
 
 window.progress = {
     show: showProgress,

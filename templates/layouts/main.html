@@ -17,6 +17,7 @@
             {{- if useUmami }}
             window._umami = {{ umamiConfig | json }};
             {{- end }}
+            window._tier = "{{ .Claims.Context.Tier.Name }}"
         </script>
         {{ "layout.js" | asset }}
         {{ "baskerville.css" | asset }}
