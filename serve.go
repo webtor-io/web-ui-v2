@@ -18,6 +18,7 @@ import (
 	"github.com/webtor-io/web-ui-v2/handlers/support"
 	"github.com/webtor-io/web-ui-v2/handlers/tests"
 	as "github.com/webtor-io/web-ui-v2/services/abuse_store"
+	"github.com/webtor-io/web-ui-v2/services/umami"
 	"net/http"
 
 	"github.com/gin-contrib/multitemplate"
@@ -61,6 +62,7 @@ func configureServe(c *cli.Command) {
 	c.Flags = cs.RegisterRedisClientFlags(c.Flags)
 	c.Flags = as.RegisterFlags(c.Flags)
 	c.Flags = cs.RegisterPprofFlags(c.Flags)
+	c.Flags = umami.RegisterFlags(c.Flags)
 }
 
 func serve(c *cli.Context) error {
@@ -127,8 +129,14 @@ func serve(c *cli.Context) error {
 	// Setting Helper
 	helper := w.NewHelper(c)
 
+	// Setting Helper
+	umamiHelper := umami.NewHelper(c)
+
 	// Setting TemplateManager
-	tm := template.NewManager(re).WithHelper(helper).WithContextWrapper(w.NewContext)
+	tm := template.NewManager(re).
+		WithHelper(helper).
+		WithHelper(umamiHelper).
+		WithContextWrapper(w.NewContext)
 
 	// Setting Redis
 	redis := cs.NewRedisClient(c)

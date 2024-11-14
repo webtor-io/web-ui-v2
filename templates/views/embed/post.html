@@ -7,6 +7,9 @@
             window._embedSettings = {{ .Data.EmbedSettings | json }};
             window._domainSettings = {{ .Data.DomainSettings | json }};
             window._sessionID = "{{ .SessionID }}";
+            {{- if useUmami }}
+            window._umami = {{ umamiConfig | json }};
+            {{- end }}
         </script>
         {{ template "embed_extra" . }}
         {{ "embed.css" | asset }}

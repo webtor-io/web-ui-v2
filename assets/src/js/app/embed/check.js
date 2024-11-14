@@ -4,6 +4,11 @@ const debug = await makeDebug('webtor:embed:check');
 const sha1 = require('sha1');
 message.send('init');
 const data = await message.receiveOnce('init');
+if (window._umami) {
+    (await import('../../lib/umami')).init(window, window._umami, {
+        referrer: data.referer,
+    });
+}
 const c = await check();
 if (c) {
     initPlaceholder(data);

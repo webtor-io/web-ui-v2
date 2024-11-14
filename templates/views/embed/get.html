@@ -7,6 +7,9 @@
             window._id = "{{ .Data.ID }}";
             window._CSRF = "{{ .CSRF }}";
             window._sessionID = "{{ .SessionID }}";
+            {{- if useUmami }}
+            window._umami = {{ umamiConfig | json }};
+            {{- end }}
         </script>
         <style>
             body {
@@ -38,7 +41,7 @@
         {{ "embed/check.js" | asset }}
     </head>
     <body data-iframe-height>
-        <button type="button" title="Play" aria-label="Play" aria-pressed="false">
+        <button type="button" title="Play" aria-label="Play" aria-pressed="false" data-umami-event="play-embed">
 			<svg xmlns="http://www.w3.org/2000/svg" id="mep_0-icon-overlay-play" class="mejs__icon-overlay-play" aria-hidden="true" focusable="false">
 				<use xlink:href="assets/mejs-controls.svg#icon-overlay-play"></use>
 			</svg>

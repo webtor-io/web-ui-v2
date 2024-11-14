@@ -14,6 +14,9 @@
             window._CSRF = "{{ .CSRF }}";
             window._sessionID = "{{ .SessionID }}";
             window._domain = "{{ domain }}";
+            {{- if useUmami }}
+            window._umami = {{ umamiConfig | json }};
+            {{- end }}
         </script>
         {{ "layout.js" | asset }}
         {{ "baskerville.css" | asset }}

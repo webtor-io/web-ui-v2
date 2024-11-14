@@ -7,6 +7,8 @@ function hideProgress() {
     progress.classList.add('hidden');
 }
 
+if (window._umami) (await import('../lib/umami')).init(window, window._umami);
+
 window.progress = {
     show: showProgress,
     hide: hideProgress,
@@ -43,7 +45,8 @@ function onLoad() {
     initAsyncView();
 }
 
-if (document.readyState !== 'loading') {
+if (document.readyState === 'complete') {
     onLoad();
+} else {
+    document.addEventListener('readystatechange', onLoad, true);
 }
-window.addEventListener('DOMContentLoaded', onLoad);

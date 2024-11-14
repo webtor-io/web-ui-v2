@@ -20,7 +20,6 @@ var (
 )
 
 func RegisterFlags(f []cli.Flag) []cli.Flag {
-
 	f = append(f,
 		cli.StringFlag{
 			Name:   DomainFlag,

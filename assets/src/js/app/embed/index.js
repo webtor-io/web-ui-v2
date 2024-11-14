@@ -1,6 +1,10 @@
 import message from './message';
 import initAsyncView from '../../lib/asyncView';
 
+// (await import('../../lib/umami')).init(window, window._umami, {
+//     referrer: window._embedSettings.referer,
+// });
+
 function setHeight() {
     const width = document.body.offsetWidth;
     const height = width/16*9;

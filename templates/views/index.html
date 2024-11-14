@@ -23,7 +23,7 @@
 <form action="/" method="post" enctype="multipart/form-data" class="join w-full" data-async-target="main">
     <input type="text" name="resource" value="{{ if has . "Args" }}{{ .Args.Query }}{{ end }}" placeholder="Magnet-uri...?  Infohash...?" class="input input-bordered w-full join-item" />
     <input name="instruction" value="{{ .Instruction }}" type="hidden" />
-    <button type="submit" class="btn btn-accent btn-outline join-item">Search</button>
+    <button type="submit" class="btn btn-accent btn-outline join-item" data-umami-event="search">Search</button>
 </form>
 <div class="divider h-12">OR</div>
 <form action="/" method="post" enctype="multipart/form-data" class="dropzone flex justify-center items-center w-full" data-async-target="main">
@@ -41,7 +41,7 @@
 <form class="flex flex-col justify-center items-center" action="/" method="post" enctype="multipart/form-data" data-async-target="main">
     <input type="hidden" name="resource" value="{{ demoMagnet }}" />
     <input name="instruction" value="{{ .Instruction }}" type="hidden" />
-    <button type="submit" class="btn btn-accent btn-outline">Try demo!</button>
+    <button type="submit" class="btn btn-accent btn-outline" data-umami-event="try-demo">Try demo!</button>
 </form>
 {{ "index.js" | asset }}
 {{ template "about" . }}
