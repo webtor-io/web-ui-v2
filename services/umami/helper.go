@@ -19,11 +19,6 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 			EnvVar: "USE_UMAMI",
 		},
 		cli.StringFlag{
-			Name:   SrcFlag,
-			Usage:  "umami src",
-			EnvVar: "UMAMI_SRC",
-		},
-		cli.StringFlag{
 			Name:   WebsiteIDFlag,
 			Usage:  "umami website-id",
 			EnvVar: "UMAMI_WEBSITE_ID",
@@ -38,7 +33,6 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 
 type Helper struct {
 	use       bool
-	Src       string `json:"src,omitempty"`
 	WebsiteID string `json:"website_id,omitempty"`
 	HostURL   string `json:"host_url,omitempty"`
 }
@@ -46,7 +40,6 @@ type Helper struct {
 func NewHelper(cli *cli.Context) *Helper {
 	return &Helper{
 		use:       cli.Bool(UseFlag),
-		Src:       cli.String(SrcFlag),
 		WebsiteID: cli.String(WebsiteIDFlag),
 		HostURL:   cli.String(HostUrlFlag),
 	}
