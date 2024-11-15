@@ -10,7 +10,7 @@
             {{- if useUmami }}
             window._umami = {{ umamiConfig | json }};
             {{- end }}
-            window._tier = "{{ .Claims.Context.Tier.Name }}"
+            window._tier = "{{ .Claims | tierName }}"
         </script>
         <style>
             body {

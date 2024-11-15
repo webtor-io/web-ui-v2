@@ -86,6 +86,13 @@ func (s *Helper) HasAds(c *claims.Data) bool {
 	return !c.Claims.Site.NoAds
 }
 
+func (s *Helper) TierName(c *claims.Data) string {
+	if c == nil {
+		return "free"
+	}
+	return c.Context.Tier.Name
+}
+
 func (s *Helper) UseAuth() bool {
 	return s.useAuth
 }

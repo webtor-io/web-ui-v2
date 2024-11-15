@@ -10,6 +10,7 @@
             {{- if useUmami }}
             window._umami = {{ umamiConfig | json }};
             {{- end }}
+            window._tier = "{{ .Claims | tierName }}"
         </script>
         {{ template "embed_extra" . }}
         {{ "embed.css" | asset }}
