@@ -1,0 +1,9 @@
+{{ define "main" }}
+<ul>
+    {{ range .Data }}
+    <li>
+        <a href="/embed/example/{{ .Name }}">{{ .Name }}</a>
+    </li>
+    {{ end }}
+</ul>
+{{ end }}
