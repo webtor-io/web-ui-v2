@@ -8,9 +8,11 @@ if (window._umami) {
     const umami = (await import('../../lib/umami')).init(window, window._umami, {
         referrer: data.referer,
     });
-    umami.identify({
-        tier: window._tier,
-    });
+    if (window._tier !== 'free') {
+        umami.identify({
+            tier: window._tier,
+        });
+    }
 }
 const c = await check();
 if (c) {
