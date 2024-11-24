@@ -9,9 +9,11 @@ function hideProgress() {
 
 if (window._umami) {
     const umami = (await import('../lib/umami')).init(window, window._umami);
-    umami.identify({
-        tier: window._tier,
-    });
+    if (window._tier !== 'free') {
+        umami.identify({
+            tier: window._tier,
+        });
+    }
 }
 
 window.progress = {
