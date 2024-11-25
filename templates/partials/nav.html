@@ -1,4 +1,7 @@
 {{ define "nav" }}
+<script>
+    window._tier = "{{ .Claims | tierName }}"
+</script>
 <div class="navbar sticky top-0">
     <div class="flex-1">
         <a class="btn btn-sm btn-accent btn-outline" href="/" data-async-target="main">webtor.io</a>

@@ -1,9 +1,11 @@
 import message from './message';
 import initAsyncView from '../../lib/asyncView';
 
-// (await import('../../lib/umami')).init(window, window._umami, {
-//     referrer: window._embedSettings.referer,
-// });
+if (window._umami) {
+    (await import('../../lib/umami')).init(window, Object.assign(window._umami, {
+        tag: 'embed',
+    }));
+}
 
 function setHeight() {
     const width = document.body.offsetWidth;

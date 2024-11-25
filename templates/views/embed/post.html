@@ -31,7 +31,7 @@
         <form class="hidden progress-alert progress-alert-block mb-10 closeable bg-black/50" data-async-progress-log="{{ .Job | makeJobLogURL }}">
             {{ if .DomainSettings.Ads }}
             <div class="font-baskerville text-4xl sm:text-5xl sm:absolute sm:right-0 sm:top-0 p-2 sm:p-4 sm:pt-4 pt-0 z-50 text-center">
-                <a href="{{ domain }}" target="_blank">
+                <a href="{{ domain }}" target="_blank" data-umami-event="embed-click-logo">
                     <span>web</span><span class="text-accent">tor</span>
                 </a>
             </div>

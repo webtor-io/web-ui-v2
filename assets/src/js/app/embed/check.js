@@ -5,14 +5,9 @@ const sha1 = require('sha1');
 message.send('init');
 const data = await message.receiveOnce('init');
 if (window._umami) {
-    const umami = (await import('../../lib/umami')).init(window, window._umami, {
+    (await import('../../lib/umami')).init(window, Object.assign(window._umami, {
         referrer: data.referer,
-    });
-    if (window._tier !== 'free') {
-        umami.identify({
-            tier: window._tier,
-        });
-    }
+    }));
 }
 const c = await check();
 if (c) {

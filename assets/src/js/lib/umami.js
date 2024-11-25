@@ -1,4 +1,4 @@
-export function init(window, config, initProps = {}) {
+export function init(window, config) {
     const {
         screen: { width, height },
         navigator: { language },
@@ -10,8 +10,8 @@ export function init(window, config, initProps = {}) {
     const { hostname, href } = location;
     let { referrer } = document;
 
-    if (initProps.referrer) {
-        referrer = initProps.referrer;
+    if (config.referrer) {
+        referrer = config.referrer;
     }
 
     const _data = 'data-';
