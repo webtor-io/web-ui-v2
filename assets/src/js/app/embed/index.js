@@ -2,9 +2,7 @@ import message from './message';
 import initAsyncView from '../../lib/asyncView';
 
 if (window._umami) {
-    (await import('../../lib/umami')).init(window, Object.assign(window._umami, {
-        tag: 'embed',
-    }));
+    (await import('../../lib/umami')).init(window, window._umami);
 }
 
 function setHeight() {
