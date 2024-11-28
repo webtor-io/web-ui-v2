@@ -77,6 +77,21 @@ func serve(c *cli.Context) error {
 		return err
 	}
 
+	// Setting template renderer
+	re := multitemplate.NewRenderer()
+
+	// Setting Helper
+	helper := w.NewHelper(c)
+
+	// Setting Helper
+	umamiHelper := umami.NewHelper(c)
+
+	// Setting TemplateManager
+	tm := template.NewManager(re).
+		WithHelper(helper).
+		WithHelper(umamiHelper).
+		WithContextWrapper(w.NewContext)
+
 	var servers []cs.Servable
 	// Setting Probe
 	probe := cs.NewProbe(c)
@@ -91,10 +106,6 @@ func serve(c *cli.Context) error {
 		servers = append(servers, pprof)
 		defer pprof.Close()
 	}
-
-	// Setting template renderer
-	re := multitemplate.NewRenderer()
-
 	// Setting Gin
 	r := gin.Default()
 	r.HTMLRender = re
@@ -112,44 +123,6 @@ func serve(c *cli.Context) error {
 		return err
 	}
 
-	err = sta.RegisterHandler(c, r)
-	if err != nil {
-		return err
-	}
-
-	// Setting Migration from v1 to v2
-	wm.RegisterHandler(r)
-
-	// Setting HTTP Client
-	cl := http.DefaultClient
-
-	// Setting Api
-	sapi := api.New(c, cl)
-
-	// Setting Helper
-	helper := w.NewHelper(c)
-
-	// Setting Helper
-	umamiHelper := umami.NewHelper(c)
-
-	// Setting TemplateManager
-	tm := template.NewManager(re).
-		WithHelper(helper).
-		WithHelper(umamiHelper).
-		WithContextWrapper(w.NewContext)
-
-	// Setting Redis
-	redis := cs.NewRedisClient(c)
-	defer redis.Close()
-
-	// Setting JobQueues
-	queues := job.NewQueues(job.NewStorage(redis, gin.Mode()))
-
-	// Setting JobHandler
-	jobs := wj.New(queues, tm, sapi)
-
-	jobs.RegisterHandler(r)
-
 	// Setting Auth
 	a := auth.New(c)
 
@@ -160,18 +133,6 @@ func serve(c *cli.Context) error {
 		}
 		a.RegisterHandler(r)
 		wau.RegisterHandler(r, tm)
-	}
-
-	// Setting AbuseStore
-	asc := as.New(c)
-
-	if asc != nil {
-		defer asc.Close()
-		// Setting Support
-		support.RegisterHandler(r, tm, asc)
-
-		// Setting Legal
-		legal.RegisterHandler(r, tm)
 	}
 
 	// Setting Claims Client
@@ -185,11 +146,49 @@ func serve(c *cli.Context) error {
 		uc.RegisterHandler(r)
 	}
 
-	// Setting DomainSettings
-	ds := embed.NewDomainSettings(pg, uc)
+	// Setting HTTP Client
+	cl := http.DefaultClient
+
+	// Setting Api
+	sapi := api.New(c, cl)
 
 	// Setting ApiClaimsHandler
 	sapi.RegisterHandler(r)
+
+	err = sta.RegisterHandler(c, r)
+	if err != nil {
+		return err
+	}
+
+	// Setting Migration from v1 to v2
+	wm.RegisterHandler(r)
+
+	// Setting Redis
+	redis := cs.NewRedisClient(c)
+	defer redis.Close()
+
+	// Setting JobQueues
+	queues := job.NewQueues(job.NewStorage(redis, gin.Mode()))
+
+	// Setting JobHandler
+	jobs := wj.New(queues, tm, sapi)
+
+	jobs.RegisterHandler(r)
+
+	// Setting AbuseStore
+	asc := as.New(c)
+
+	if asc != nil {
+		defer asc.Close()
+		// Setting Support
+		support.RegisterHandler(r, tm, asc)
+
+		// Setting Legal
+		legal.RegisterHandler(r, tm)
+	}
+
+	// Setting DomainSettings
+	ds := embed.NewDomainSettings(pg, uc)
 
 	// Setting ResourceHandler
 	wr.RegisterHandler(r, tm, sapi, jobs)
