@@ -5,7 +5,7 @@
         var wgetCmd = `wget -c -O "${file}" -t 20 "${url}"`;
     </script>
     {{- if .Data.HasAds }}
-    <pre class="warn-summary"><span>Your current download speed will be limited to {{ .Claims.Claims.Connection.Rate }}Mbps, <a href="/donate" data-umami-event="donate-download-link" class="link" target="_blank">donate</a> to increase your speed and remove ads!</span></pre>
+    <pre class="warn-summary"><span>Your current download speed will be limited to {{ .Claims.Claims.Connection.Rate }}Mbps, <a href="/donate" data-umami-event="donate-download" class="link" target="_blank">donate</a> to increase your speed and remove ads!</span></pre>
     {{- end }}
     <div class="pt-3 ml-3 flex flex-wrap justify-end">
         {{- if .Data.HasAds }}
