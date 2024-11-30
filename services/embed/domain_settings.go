@@ -1,6 +1,7 @@
 package embed
 
 import (
+	"context"
 	"github.com/pkg/errors"
 	"time"
 
@@ -31,7 +32,7 @@ func NewDomainSettings(pg *cs.PG, claims *claims.Claims) *DomainSettings {
 	}
 }
 
-func (s *DomainSettings) get(domain string) (*DomainSettingsData, error) {
+func (s *DomainSettings) get(ctx context.Context, domain string) (*DomainSettingsData, error) {
 	if s.pg == nil || s.pg.Get() == nil || s.claims == nil {
 		return &DomainSettingsData{}, nil
 	}
@@ -43,16 +44,16 @@ func (s *DomainSettings) get(domain string) (*DomainSettingsData, error) {
 	} else if err != nil {
 		return nil, err
 	}
-	cl, err := s.claims.Get(em.Email)
+	cl, err := s.claims.Get(ctx, em.Email)
 	if err != nil {
 		return nil, err
 	}
 	return &DomainSettingsData{Ads: em.Ads || !cl.Claims.Embed.NoAds}, nil
 }
 
-func (s *DomainSettings) Get(domain string) (*DomainSettingsData, error) {
+func (s *DomainSettings) Get(ctx context.Context, domain string) (*DomainSettingsData, error) {
 	resp, err := s.LazyMap.Get(domain, func() (interface{}, error) {
-		return s.get(domain)
+		return s.get(ctx, domain)
 	})
 	if err != nil {
 		return nil, err

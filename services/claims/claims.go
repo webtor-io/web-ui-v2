@@ -48,14 +48,12 @@ func New(c *cli.Context, cl *Client) *Claims {
 	}
 }
 
-func (s *Claims) get(email string) (resp *Data, err error) {
+func (s *Claims) get(ctx context.Context, email string) (resp *Data, err error) {
 	var cl proto.ClaimsProviderClient
 	cl, err = s.cl.Get()
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 	resp, err = cl.Get(ctx, &proto.GetRequest{Email: email})
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed to get claims")
@@ -63,9 +61,9 @@ func (s *Claims) get(email string) (resp *Data, err error) {
 	return
 }
 
-func (s *Claims) Get(email string) (*Data, error) {
+func (s *Claims) Get(ctx context.Context, email string) (*Data, error) {
 	resp, err := s.LazyMap.Get(email, func() (interface{}, error) {
-		return s.get(email)
+		return s.get(ctx, email)
 	})
 	if err != nil {
 		return nil, err
@@ -75,7 +73,7 @@ func (s *Claims) Get(email string) (*Data, error) {
 
 func (s *Claims) MakeUserClaimsFromContext(c *gin.Context) (*Data, error) {
 	u := auth.GetUserFromContext(c)
-	r, err := s.Get(u.Email)
+	r, err := s.Get(c.Request.Context(), u.Email)
 	if err != nil {
 		return nil, err
 	}
