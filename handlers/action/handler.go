@@ -2,6 +2,7 @@ package action
 
 import (
 	wj "github.com/webtor-io/web-ui-v2/handlers/job"
+	"github.com/webtor-io/web-ui-v2/services/claims"
 	m "github.com/webtor-io/web-ui-v2/services/models"
 	"net/http"
 
@@ -15,7 +16,8 @@ import (
 type PostArgs struct {
 	ResourceID string
 	ItemID     string
-	Claims     *api.Claims
+	ApiClaims  *api.Claims
+	UserClaims *claims.Data
 	Purge      bool
 }
 
@@ -103,7 +105,8 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 		ResourceID: rID[0],
 		ItemID:     iID[0],
 		Purge:      purge,
-		Claims:     api.GetClaimsFromContext(c),
+		ApiClaims:  api.GetClaimsFromContext(c),
+		UserClaims: claims.GetFromContext(c),
 	}, nil
 }
 
@@ -121,7 +124,7 @@ func (s *Handler) post(c *gin.Context, action string) {
 		return
 	}
 	d.Args = args
-	actionJob, err = s.jobs.Action(c, args.Claims, args.ResourceID, args.ItemID, action, &m.StreamSettings{}, args.Purge)
+	actionJob, err = s.jobs.Action(c, args.ApiClaims, args.UserClaims, args.ResourceID, args.ItemID, action, &m.StreamSettings{}, args.Purge)
 	if err != nil {
 		postTpl.HTMLWithErr(errors.Wrap(err, "failed to start downloading"), http.StatusBadRequest, c, d)
 		return

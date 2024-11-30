@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/pkg/errors"
+	"github.com/webtor-io/web-ui-v2/services/claims"
 	"io"
 	"strings"
 	"time"
@@ -137,14 +138,15 @@ func (s *ActionScript) renderActionTemplate(j *job.Job, c *gin.Context, sc *Stre
 }
 
 type FileDownload struct {
-	URL string
+	URL    string
+	HasAds bool
 }
 
-func (s *ActionScript) download(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string) (err error) {
+func (s *ActionScript) download(j *job.Job, c *gin.Context, apiClaims *api.Claims, userClaims *claims.Data, resourceID string, itemID string) (err error) {
 	j.InProgress("retrieving download link")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	resp, err := s.api.ExportResourceContent(ctx, claims, resourceID, itemID, "")
+	resp, err := s.api.ExportResourceContent(ctx, apiClaims, resourceID, itemID, "")
 	if err != nil {
 		return errors.Wrap(err, "failed to retrieve for 30 seconds")
 	}
@@ -159,7 +161,8 @@ func (s *ActionScript) download(j *job.Job, c *gin.Context, claims *api.Claims, 
 	j.DoneWithMessage("success! file is ready for download!")
 	tpl := s.tb.Build("action/download_file").WithLayoutBody(`{{ template "main" . }}`)
 	str, err := tpl.ToString(c, &FileDownload{
-		URL: de.URL,
+		URL:    de.URL,
+		HasAds: !userClaims.Claims.Site.NoAds,
 	})
 	if err != nil {
 		return err
@@ -281,7 +284,8 @@ func (s *ActionScript) warmUp(j *job.Job, m string, u string, su string, size in
 
 type ActionScript struct {
 	api        *api.Api
-	claims     *api.Claims
+	apiClaims  *api.Claims
+	userClaims *claims.Data
 	c          *gin.Context
 	resourceId string
 	itemId     string
@@ -294,31 +298,32 @@ type ActionScript struct {
 func (s *ActionScript) Run(j *job.Job) (err error) {
 	switch s.action {
 	case "download":
-		return s.download(j, s.c, s.claims, s.resourceId, s.itemId)
+		return s.download(j, s.c, s.apiClaims, s.userClaims, s.resourceId, s.itemId)
 	case "download-dir":
-		return s.download(j, s.c, s.claims, s.resourceId, s.itemId)
+		return s.download(j, s.c, s.apiClaims, s.userClaims, s.resourceId, s.itemId)
 	case "download-torrent":
-		return s.downloadTorrent(j, s.c, s.claims, s.resourceId)
+		return s.downloadTorrent(j, s.c, s.apiClaims, s.resourceId)
 	case "preview-image":
-		return s.previewImage(j, s.c, s.claims, s.resourceId, s.itemId, s.settings, s.vsud)
+		return s.previewImage(j, s.c, s.apiClaims, s.resourceId, s.itemId, s.settings, s.vsud)
 	case "stream-audio":
-		return s.streamAudio(j, s.c, s.claims, s.resourceId, s.itemId, s.settings, s.vsud)
+		return s.streamAudio(j, s.c, s.apiClaims, s.resourceId, s.itemId, s.settings, s.vsud)
 	case "stream-video":
-		return s.streamVideo(j, s.c, s.claims, s.resourceId, s.itemId, s.settings, s.vsud)
+		return s.streamVideo(j, s.c, s.apiClaims, s.resourceId, s.itemId, s.settings, s.vsud)
 	}
 	return
 }
 
-func Action(tb template.Builder, api *api.Api, claims *api.Claims, c *gin.Context, resourceID string, itemID string, action string, settings *m.StreamSettings) (r job.Runnable, id string) {
+func Action(tb template.Builder, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, c *gin.Context, resourceID string, itemID string, action string, settings *m.StreamSettings) (r job.Runnable, id string) {
 	vsud := m.NewVideoStreamUserData(resourceID, itemID, settings)
 	vsud.FetchSessionData(c)
 	vsudID := vsud.AudioID + "/" + vsud.SubtitleID + "/" + fmt.Sprintf("%+v", vsud.AcceptLangTags)
 	settingsID := fmt.Sprintf("%+v", settings)
-	id = fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+claims.Role+"/"+settingsID+"/"+vsudID)))
+	id = fmt.Sprintf("%x", sha1.Sum([]byte(resourceID+"/"+itemID+"/"+action+"/"+apiClaims.Role+"/"+settingsID+"/"+vsudID)))
 	return &ActionScript{
 		tb:         tb,
 		api:        api,
-		claims:     claims,
+		apiClaims:  apiClaims,
+		userClaims: userClaims,
 		c:          c,
 		resourceId: resourceID,
 		itemId:     itemID,

@@ -3,6 +3,7 @@ package job
 import (
 	"context"
 	"github.com/webtor-io/web-ui-v2/handlers/job/script"
+	"github.com/webtor-io/web-ui-v2/services/claims"
 	"github.com/webtor-io/web-ui-v2/services/models"
 	"net/http"
 	"time"
@@ -12,8 +13,8 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/job"
 )
 
-func (s *Handler) Embed(c *gin.Context, hCl *http.Client, claims *api.Claims, settings *models.EmbedSettings) (j *job.Job, err error) {
-	es, hash, err := script.Embed(s.tb, hCl, c, s.api, claims, settings, "")
+func (s *Handler) Embed(c *gin.Context, hCl *http.Client, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings) (j *job.Job, err error) {
+	es, hash, err := script.Embed(s.tb, hCl, c, s.api, apiClaims, userClaims, settings, "")
 	if err != nil {
 		return
 	}

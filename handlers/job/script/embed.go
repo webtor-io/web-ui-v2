@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/webtor-io/web-ui-v2/services/claims"
 	"github.com/webtor-io/web-ui-v2/services/models"
 	"io"
 	"net/http"
@@ -25,24 +26,26 @@ var (
 )
 
 type EmbedScript struct {
-	api      *api.Api
-	claims   *api.Claims
-	settings *models.EmbedSettings
-	file     string
-	tb       template.Builder
-	c        *gin.Context
-	hCl      *http.Client
+	api        *api.Api
+	apiClaims  *api.Claims
+	settings   *models.EmbedSettings
+	file       string
+	tb         template.Builder
+	c          *gin.Context
+	hCl        *http.Client
+	userClaims *claims.Data
 }
 
-func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, claims *api.Claims, settings *models.EmbedSettings, file string) *EmbedScript {
+func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string) *EmbedScript {
 	return &EmbedScript{
-		api:      api,
-		claims:   claims,
-		settings: settings,
-		file:     file,
-		tb:       tb,
-		c:        c,
-		hCl:      hCl,
+		api:        api,
+		apiClaims:  apiClaims,
+		userClaims: userClaims,
+		settings:   settings,
+		file:       file,
+		tb:         tb,
+		c:          c,
+		hCl:        hCl,
 	}
 }
 
@@ -72,7 +75,7 @@ func (s *EmbedScript) Run(j *job.Job) (err error) {
 	if err != nil {
 		return
 	}
-	ls, _, err := Load(s.api, s.claims, args)
+	ls, _, err := Load(s.api, s.apiClaims, args)
 	if err != nil {
 		return err
 	}
@@ -91,7 +94,7 @@ func (s *EmbedScript) Run(j *job.Job) (err error) {
 	} else if i.MediaFormat == ra.Audio {
 		action = "stream-audio"
 	}
-	as, _ := Action(s.tb, s.api, s.claims, s.c, id, i.ID, action, &s.settings.StreamSettings)
+	as, _ := Action(s.tb, s.api, s.apiClaims, s.userClaims, s.c, id, i.ID, action, &s.settings.StreamSettings)
 	err = as.Run(j)
 	if err != nil {
 		return err
@@ -110,7 +113,7 @@ func (s *EmbedScript) getBestItem(j *job.Job, id string, settings *models.EmbedS
 		file = parts[len(parts)-1]
 		pwd = strings.Join(parts[:len(parts)-1], "/")
 	}
-	l, err := s.api.ListResourceContent(ctx, s.claims, id, &api.ListResourceContentArgs{
+	l, err := s.api.ListResourceContent(ctx, s.apiClaims, id, &api.ListResourceContentArgs{
 		Path:   pwd,
 		Output: api.OutputTree,
 	})
@@ -153,8 +156,8 @@ func (s *EmbedScript) findBestItem(l *ra.ListResponse) *ra.ListItem {
 	return nil
 }
 
-func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, claims *api.Claims, settings *models.EmbedSettings, file string) (r job.Runnable, hash string, err error) {
-	hash = fmt.Sprintf("%x", sha1.Sum([]byte(claims.Role+"/"+fmt.Sprintf("%+v", settings))))
-	r = NewEmbedScript(tb, hCl, c, api, claims, settings, file)
+func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string) (r job.Runnable, hash string, err error) {
+	hash = fmt.Sprintf("%x", sha1.Sum([]byte(apiClaims.Role+"/"+fmt.Sprintf("%+v", settings))))
+	r = NewEmbedScript(tb, hCl, c, api, apiClaims, userClaims, settings, file)
 	return
 }

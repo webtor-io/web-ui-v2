@@ -2,6 +2,7 @@ package embed
 
 import (
 	"encoding/json"
+	"github.com/webtor-io/web-ui-v2/services/claims"
 	"github.com/webtor-io/web-ui-v2/services/models"
 	"net/http"
 	"net/url"
@@ -15,7 +16,8 @@ import (
 type PostArgs struct {
 	ID            string
 	EmbedSettings *models.EmbedSettings
-	Claims        *api.Claims
+	ApiClaims     *api.Claims
+	UserClaims    *claims.Data
 }
 
 type PostData struct {
@@ -37,7 +39,8 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 	return &PostArgs{
 		ID:            id,
 		EmbedSettings: &settings,
-		Claims:        api.GetClaimsFromContext(c),
+		ApiClaims:     api.GetClaimsFromContext(c),
+		UserClaims:    claims.GetFromContext(c),
 	}, nil
 
 }
@@ -63,7 +66,7 @@ func (s *Handler) post(c *gin.Context) {
 	}
 	pd.EmbedSettings = args.EmbedSettings
 	pd.DomainSettings = dsd
-	embedJob, err := s.jobs.Embed(c, s.hCl, args.Claims, args.EmbedSettings)
+	embedJob, err := s.jobs.Embed(c, s.hCl, args.ApiClaims, args.UserClaims, args.EmbedSettings)
 	if err != nil {
 		tpl.HTMLWithErr(err, http.StatusBadRequest, c, pd)
 		return
