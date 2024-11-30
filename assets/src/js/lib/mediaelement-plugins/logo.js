@@ -1,15 +1,31 @@
 Object.assign(MediaElementPlayer.prototype, {
+    watchControlsVisible(controls, callback) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    callback(!mutation.target.classList.contains(`${this.options.classPrefix}offscreen`));
+                }
+            });
+        });
+        observer.observe(controls, {
+            attributes: true,
+        });
+    },
     async buildlogo(player, controls, layers) {
-        const playLayer = layers.querySelector(`.${this.options.classPrefix}overlay-play`);
-        const logoButton = document.createElement('div');
-        logoButton.className = `${this.options.classPrefix}button ${this.options.classPrefix}logo-button`;
-        logoButton.innerHTML = `
-            <div class="font-baskerville sm:text-5xl text-4xl absolute right-0 top-0 p-3 sm:p-4 z-50 text-center">
-                <a href="#" target="_blank">
-                    <span>web</span><span class="text-accent">tor</span>
-                </a>
-            </div>`;
-        logoButton.querySelector('a').setAttribute('href', window._embedSettings.baseUrl);
-        playLayer.appendChild(logoButton);
+        const logoLayer = document.createElement('div');
+        layers.logoLayer = logoLayer;
+        logoLayer.className = `${this.options.classPrefix}layer ${this.options.classPrefix}webtor-logo`;
+        const logo = document.getElementById('logo');
+        logo.remove();
+        logo.classList.remove('hidden');
+        logoLayer.appendChild(logo);
+        layers.appendChild(logoLayer);
+        this.watchControlsVisible(controls, (visible) => {
+            if (visible) {
+                logoLayer.classList.remove('hidden');
+            } else {
+                logoLayer.classList.add('hidden');
+            }
+        });
     }
 });

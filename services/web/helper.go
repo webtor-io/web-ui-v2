@@ -155,6 +155,12 @@ func (s *Helper) DevAsset(in string) template.HTML {
 	return ""
 }
 
+func (s *Helper) Pwd(in string) string {
+	parts := strings.Split(in, "/")
+	pwd := strings.Join(parts[:len(parts)-1], "/")
+	return pwd
+}
+
 type AssetHashes struct {
 	lazymap.LazyMap
 	path string
