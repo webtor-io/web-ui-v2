@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	log "github.com/sirupsen/logrus"
 	"html/template"
 	"os"
 	"path/filepath"
@@ -361,7 +362,9 @@ func (s *Template) ToString(c *gin.Context, obj any) (res string, err error) {
 			return
 		}
 	}
-	re, _ := s.tm.re.Instance(v, s.tm.contextWrapper(c, obj, nil)).(render.HTML)
+	data := s.tm.contextWrapper(c, obj, nil)
+	log.Infof("action template %v data: %+v", s.name, data)
+	re, _ := s.tm.re.Instance(v, data).(render.HTML)
 	err = re.Template.Execute(&b, re.Data)
 	if err != nil {
 		return
