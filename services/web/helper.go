@@ -158,6 +158,9 @@ func (s *Helper) DevAsset(in string) template.HTML {
 func (s *Helper) Pwd(in string) string {
 	parts := strings.Split(in, "/")
 	pwd := strings.Join(parts[:len(parts)-1], "/")
+	if pwd == "" {
+		pwd = "/"
+	}
 	return pwd
 }
 

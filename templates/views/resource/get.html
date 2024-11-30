@@ -27,6 +27,6 @@
 </div>
 <div id="log-{{ .Resource.ID }}" class="mt-3" data-async-layout="{{`{{ template "main" . }}`}}" />
 {{ end }}
-{{ "resource/get.js" | asset }}
 {{ template "get_extra" . }}
+{{ "resource/get.js" | asset }}
 {{ end }}
