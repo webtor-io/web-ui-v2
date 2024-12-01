@@ -8,6 +8,7 @@
     {{ end }}
 {{ end }}
 {{ define "main" }}
+{{ template "promo" . }}
 {{ with .Data }}
 {{ if .Item }}
 <div id="file" data-async-layout="{{`{{ template "file" . }}`}}">
