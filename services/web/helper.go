@@ -10,6 +10,7 @@ import (
 	"github.com/webtor-io/web-ui-v2/services/abuse_store"
 	"html/template"
 	"io"
+	"math/rand/v2"
 	"os"
 	"reflect"
 	"strings"
@@ -90,6 +91,15 @@ func (s *Helper) TimeBetween(from string, to string) bool {
 	}
 	now := time.Now()
 	return now.After(ft) && now.Before(tt)
+}
+
+func (s *Helper) CheckProb(probability float64) bool {
+	// Ensure the probability is within bounds [0.0, 1.0]
+	if probability < 0.0 || probability > 1.0 {
+		panic("Probability must be between 0 and 1")
+	}
+	// Generate a random float between 0 and 1
+	return rand.Float64() < probability
 }
 
 func (s *Helper) HasAds(c *claims.Data) bool {
