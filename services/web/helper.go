@@ -79,6 +79,19 @@ func NewHelper(c *cli.Context) *Helper {
 	}
 }
 
+func (s *Helper) TimeBetween(from string, to string) bool {
+	ft, err := time.Parse(time.DateTime, from)
+	if err != nil {
+		panic(err)
+	}
+	tt, err := time.Parse(time.DateTime, to)
+	if err != nil {
+		panic(err)
+	}
+	now := time.Now()
+	return now.After(ft) && now.Before(tt)
+}
+
 func (s *Helper) HasAds(c *claims.Data) bool {
 	if c == nil {
 		return false

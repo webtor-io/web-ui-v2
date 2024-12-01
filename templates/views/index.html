@@ -10,7 +10,8 @@
     <pre>{{ .Err | log | shortErr }}</pre>
     <a class="closeable-close close">ok</a>
 </div>
-{{ end }} 
+{{ end }}
+{{ template "promo" . }}
 {{ with .Data }}
 {{ if has . "Job" }}
 <form class="hidden progress-alert progress-alert-block mb-10 closeable" data-async-progress-log="{{ .Job | makeJobLogURL }}" data-async-target="main">

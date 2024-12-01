@@ -33,9 +33,41 @@
       opacity: 1;
     }
   }
+
+  @property --bg-angle {
+    inherits: false;
+    initial-value: 0deg;
+    syntax: "<angle>";
+  }
+
+  @keyframes spin {
+    to {
+      --bg-angle: 360deg;
+    }
+  }
+
+  .border-rainbow {
+    animation: spin 2.5s infinite linear;
+    background:
+            linear-gradient(
+                    to bottom,
+                    oklch(0.1 0.2 240 / 0.95),
+                    oklch(0.1 0.2 240 / 0.95)
+            )
+            padding-box,
+            conic-gradient(
+                    from var(--bg-angle) in oklch longer hue,
+                    oklch(0.85 0.37 0) 0 0
+            )
+            border-box;
+    border-style: solid;
+    border-color: transparent;
+  }
 }
 
 @layer components {
+
+
   .progress-alert {
     @apply bg-base-200 text-accent border-accent border shadow-md py-4 rounded-box popin;
 
