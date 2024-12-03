@@ -127,12 +127,8 @@ func (s *Helper) HasBreadcrumbs(lr *ra.ListResponse) bool {
 	return hasDir || lr.ListItem.PathStr != "/"
 }
 
-func (s *Helper) MakeBreadcrumbs(r *ra.ResourceResponse, pathStr string) []Breadcrumb {
+func (s *Helper) MakeBreadcrumbs(pathStr string) []Breadcrumb {
 	var res []Breadcrumb
-	res = append(res, Breadcrumb{
-		Name:    r.Name,
-		PathStr: "/",
-	})
 	if pathStr != "/" {
 		var t []string
 		path := strings.Split(strings.Trim(pathStr, "/"), "/")
@@ -144,7 +140,9 @@ func (s *Helper) MakeBreadcrumbs(r *ra.ResourceResponse, pathStr string) []Bread
 			})
 		}
 	}
-	res[len(res)-1].Active = true
+	if len(res) > 0 {
+		res[len(res)-1].Active = true
+	}
 	return res
 }
 

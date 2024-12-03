@@ -5,7 +5,7 @@
         {{ $List := .List}}
         {{ $Item := .Item}}
         <ul class="py-1">
-            {{ range makeBreadcrumbs .Resource .List.ListItem.PathStr }}
+            {{ range makeBreadcrumbs .List.ListItem.PathStr }}
                 {{ if .Active }}
                     <li class="inline-block text-primary-focus">/ {{ .Name }}</li>
                 {{ else if $Args.File }}
