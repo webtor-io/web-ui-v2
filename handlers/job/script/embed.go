@@ -120,6 +120,15 @@ func (s *EmbedScript) getBestItem(j *job.Job, id string, settings *models.EmbedS
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to list resource content")
 	}
+	if len(l.Items) == 1 && l.Items[0].Type == ra.ListTypeDirectory {
+		l, err = s.api.ListResourceContent(ctx, s.apiClaims, id, &api.ListResourceContentArgs{
+			Path:   l.Items[0].PathStr,
+			Output: api.OutputTree,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to list resource content")
+		}
+	}
 	if file != "" {
 		for _, f := range l.Items {
 			if f.Name == file {
