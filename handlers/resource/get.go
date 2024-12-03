@@ -107,6 +107,14 @@ func (s *Handler) get(c *gin.Context) {
 		indexTpl.HTMLWithErr(errors.Wrap(err, "failed to list resource"), http.StatusInternalServerError, c, d)
 		return
 	}
+	if len(list.Items) == 1 && list.Items[0].Type == ra.ListTypeDirectory {
+		args.PWD = list.Items[0].PathStr
+		list, err = s.getList(ctx, args)
+		if err != nil {
+			indexTpl.HTMLWithErr(errors.Wrap(err, "failed to list resource"), http.StatusInternalServerError, c, d)
+			return
+		}
+	}
 	if len(list.Items) > 1 {
 		d.List = list
 	}
