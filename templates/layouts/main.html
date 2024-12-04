@@ -17,14 +17,12 @@
             {{- if useUmami }}
             window._umami = {{ umamiConfig | json }};
             {{- end }}
+            {{- if useAuth }}
+            window._sessionExpired = {{ .User.Expired }};
+            {{- end }}
         </script>
-        {{ "layout.js" | asset }}
         {{ "baskerville.css" | asset }}
         {{ "style.css" | asset }}
-        {{- if useAuth }}
-        <script>window._sessionExpired = {{ .User.Expired }};</script>
-        {{ "auth.js" | asset }}
-        {{- end }}
         {{- template "head_extra" . }}
     </head>
     <body class="flex flex-col min-h-screen">
@@ -47,5 +45,9 @@
                 </div>
             </div>
         </div>
+        {{ "layout.js" | asset }}
+        {{- if useAuth }}
+        {{ "auth.js" | asset }}
+        {{- end }}
     </body>
 </html>

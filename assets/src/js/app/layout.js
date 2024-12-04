@@ -22,35 +22,25 @@ import {bindAsync} from '../lib/async';
 import initAsyncView from '../lib/asyncView';
 
 const initTheme = (await import('../lib/themeSelector')).initTheme;
-window.loaded = false;
-function onLoad() {
-    if (window.loaded) return;
-    window.loaded = true;
-    initTheme(document.querySelector('[data-toggle-theme]'));
-    document.body.style.display = 'flex';
-    hideProgress();
-    bindAsync({
-        async fetch(f, url, fetchParams) {
-            showProgress();
-            fetchParams.headers['X-CSRF-TOKEN'] = window._CSRF;
-            fetchParams.headers['X-SESSION-ID'] = window._sessionID;
-            const res = await fetch(url, fetchParams);
-            hideProgress();
-            return res;
-        },
-        update(key, val) {
-            if (key === 'title') document.querySelector('title').innerText = val;
-        },
-        fallback: {
-            selector: 'main',
-            layout: 'async',
-        },
-    });
-    initAsyncView();
-}
 
-if (document.readyState === 'complete') {
-    onLoad();
-} else {
-    document.addEventListener('readystatechange', onLoad, true);
-}
+initTheme(document.querySelector('[data-toggle-theme]'));
+document.body.style.display = 'flex';
+hideProgress();
+bindAsync({
+    async fetch(f, url, fetchParams) {
+        showProgress();
+        fetchParams.headers['X-CSRF-TOKEN'] = window._CSRF;
+        fetchParams.headers['X-SESSION-ID'] = window._sessionID;
+        const res = await fetch(url, fetchParams);
+        hideProgress();
+        return res;
+    },
+    update(key, val) {
+        if (key === 'title') document.querySelector('title').innerText = val;
+    },
+    fallback: {
+        selector: 'main',
+        layout: 'async',
+    },
+});
+initAsyncView();
