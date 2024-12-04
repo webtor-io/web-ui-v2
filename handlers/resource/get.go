@@ -24,6 +24,7 @@ const (
 
 type GetArgs struct {
 	ID       string
+	Query    string
 	Page     uint
 	PageSize uint
 	PWD      string
@@ -68,10 +69,11 @@ func (s *Handler) getList(ctx context.Context, args *GetArgs) (l *ra.ListRespons
 }
 
 type GetData struct {
-	Args     *GetArgs
-	Resource *ra.ResourceResponse
-	List     *ra.ListResponse
-	Item     *ra.ListItem
+	Args        *GetArgs
+	Resource    *ra.ResourceResponse
+	List        *ra.ListResponse
+	Item        *ra.ListItem
+	Instruction string
 }
 
 func (s *Handler) get(c *gin.Context) {
