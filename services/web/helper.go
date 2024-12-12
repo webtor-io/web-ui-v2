@@ -188,7 +188,7 @@ func (s *Helper) Pwd(in string) string {
 }
 
 type AssetHashes struct {
-	lazymap.LazyMap
+	lazymap.LazyMap[string]
 	path string
 }
 
@@ -205,18 +205,22 @@ func (s *AssetHashes) get(name string) (hash string, err error) {
 }
 
 func (s *AssetHashes) Get(name string) (string, error) {
-	resp, err := s.LazyMap.Get(name, func() (interface{}, error) {
-		return s.get(name)
+	return s.LazyMap.Get(name, func() (string, error) {
+		f, err := os.Open(s.path + "/" + name)
+		if err != nil {
+			return "", err
+		}
+		md5Hash := md5.New()
+		if _, err := io.Copy(md5Hash, f); err != nil {
+			return "", err
+		}
+		return hex.EncodeToString(md5Hash.Sum(nil)), nil
 	})
-	if err != nil {
-		return "", err
-	}
-	return resp.(string), nil
 }
 
 func NewAssetHashes(path string) *AssetHashes {
 	return &AssetHashes{
-		LazyMap: lazymap.New(&lazymap.Config{}),
+		LazyMap: lazymap.New[string](&lazymap.Config{}),
 		path:    path,
 	}
 }

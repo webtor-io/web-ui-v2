@@ -13,7 +13,7 @@ import (
 )
 
 type DomainSettings struct {
-	lazymap.LazyMap
+	lazymap.LazyMap[*DomainSettingsData]
 	pg     *cs.PG
 	claims *claims.Claims
 }
@@ -25,38 +25,30 @@ func NewDomainSettings(pg *cs.PG, claims *claims.Claims) *DomainSettings {
 	return &DomainSettings{
 		pg:     pg,
 		claims: claims,
-		LazyMap: lazymap.New(&lazymap.Config{
+		LazyMap: lazymap.New[*DomainSettingsData](&lazymap.Config{
 			Expire:      time.Minute,
 			ErrorExpire: 10 * time.Second,
 		}),
 	}
 }
 
-func (s *DomainSettings) get(ctx context.Context, domain string) (*DomainSettingsData, error) {
-	if s.pg == nil || s.pg.Get() == nil || s.claims == nil {
-		return &DomainSettingsData{}, nil
-	}
-	db := s.pg.Get()
-	em := &models.EmbedDomain{}
-	err := db.Model(em).Where("domain = ?", domain).Select()
-	if errors.Is(err, pg.ErrNoRows) {
-		return &DomainSettingsData{Ads: true}, nil
-	} else if err != nil {
-		return nil, err
-	}
-	cl, err := s.claims.Get(ctx, em.Email)
-	if err != nil {
-		return nil, err
-	}
-	return &DomainSettingsData{Ads: em.Ads || !cl.Claims.Embed.NoAds}, nil
-}
-
 func (s *DomainSettings) Get(ctx context.Context, domain string) (*DomainSettingsData, error) {
-	resp, err := s.LazyMap.Get(domain, func() (interface{}, error) {
-		return s.get(ctx, domain)
+	return s.LazyMap.Get(domain, func() (*DomainSettingsData, error) {
+		if s.pg == nil || s.pg.Get() == nil || s.claims == nil {
+			return &DomainSettingsData{}, nil
+		}
+		db := s.pg.Get()
+		em := &models.EmbedDomain{}
+		err := db.Model(em).Where("domain = ?", domain).Select()
+		if errors.Is(err, pg.ErrNoRows) {
+			return &DomainSettingsData{Ads: true}, nil
+		} else if err != nil {
+			return nil, err
+		}
+		cl, err := s.claims.Get(ctx, em.Email)
+		if err != nil {
+			return nil, err
+		}
+		return &DomainSettingsData{Ads: em.Ads || !cl.Claims.Embed.NoAds}, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-	return resp.(*DomainSettingsData), nil
 }

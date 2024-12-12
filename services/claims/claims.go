@@ -29,7 +29,7 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 }
 
 type Claims struct {
-	lazymap.LazyMap
+	lazymap.LazyMap[*Data]
 	cl *Client
 }
 
@@ -41,34 +41,26 @@ func New(c *cli.Context, cl *Client) *Claims {
 	}
 	return &Claims{
 		cl: cl,
-		LazyMap: lazymap.New(&lazymap.Config{
+		LazyMap: lazymap.New[*Data](&lazymap.Config{
 			Expire:      time.Minute,
 			ErrorExpire: 10 * time.Second,
 		}),
 	}
 }
 
-func (s *Claims) get(ctx context.Context, email string) (resp *Data, err error) {
-	var cl proto.ClaimsProviderClient
-	cl, err = s.cl.Get()
-	if err != nil {
-		return nil, err
-	}
-	resp, err = cl.Get(ctx, &proto.GetRequest{Email: email})
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to get claims")
-	}
-	return
-}
-
 func (s *Claims) Get(ctx context.Context, email string) (*Data, error) {
-	resp, err := s.LazyMap.Get(email, func() (interface{}, error) {
-		return s.get(ctx, email)
+	return s.LazyMap.Get(email, func() (resp *Data, err error) {
+		var cl proto.ClaimsProviderClient
+		cl, err = s.cl.Get()
+		if err != nil {
+			return nil, err
+		}
+		resp, err = cl.Get(ctx, &proto.GetRequest{Email: email})
+		if err != nil {
+			return nil, errors.WithMessage(err, "failed to get claims")
+		}
+		return
 	})
-	if err != nil {
-		return nil, err
-	}
-	return resp.(*Data), nil
 }
 
 func (s *Claims) MakeUserClaimsFromContext(c *gin.Context) (*Data, error) {

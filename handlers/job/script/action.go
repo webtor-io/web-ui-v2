@@ -66,14 +66,17 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 	sc.ExportTag = exportResponse.ExportItems["stream"].Tag
 	sc.Item = &exportResponse.Source
 	se := exportResponse.ExportItems["stream"]
-	if !se.ExportMetaItem.Meta.Cache {
-		if err = s.warmUp(j, "warming up torrent client", exportResponse.ExportItems["download"].URL, exportResponse.ExportItems["torrent_client_stat"].URL, int(exportResponse.Source.Size), 1_000_000, 500_000, "file", true); err != nil {
-			return
-		}
-	}
+
 	if se.Meta.Transcode {
-		if err = s.warmUp(j, "warming up transcoder", exportResponse.ExportItems["stream"].URL, exportResponse.ExportItems["torrent_client_stat"].URL, 0, -1, -1, "stream", false); err != nil {
-			return
+		if !se.Meta.TranscodeCache {
+			if !se.ExportMetaItem.Meta.Cache {
+				if err = s.warmUp(j, "warming up torrent client", exportResponse.ExportItems["download"].URL, exportResponse.ExportItems["torrent_client_stat"].URL, int(exportResponse.Source.Size), 1_000_000, 500_000, "file", true); err != nil {
+					return
+				}
+			}
+			if err = s.warmUp(j, "warming up transcoder", exportResponse.ExportItems["stream"].URL, exportResponse.ExportItems["torrent_client_stat"].URL, 0, -1, -1, "stream", false); err != nil {
+				return
+			}
 		}
 		j.InProgress("probing content media info")
 		mp, err := s.api.GetMediaProbe(ctx, exportResponse.ExportItems["media_probe"].URL)
@@ -83,6 +86,12 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 		sc.MediaProbe = mp
 		log.Infof("got media probe %+v", mp)
 		j.Done()
+	} else {
+		if !se.ExportMetaItem.Meta.Cache {
+			if err = s.warmUp(j, "warming up torrent client", exportResponse.ExportItems["download"].URL, exportResponse.ExportItems["torrent_client_stat"].URL, int(exportResponse.Source.Size), 1_000_000, 500_000, "file", true); err != nil {
+				return
+			}
+		}
 	}
 	if exportResponse.Source.MediaFormat == ra.Video {
 		sc.VideoStreamUserData = vsud
