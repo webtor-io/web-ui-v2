@@ -137,7 +137,7 @@ func (s *Helper) DemoTorrent() template.URL {
 }
 
 func (s *Helper) IsDemoMagnet(m string) bool {
-	return s.demoMagnet == m
+	return strings.HasPrefix(m, s.demoMagnet)
 }
 
 func (s *Helper) Obfuscate(in string) string {
