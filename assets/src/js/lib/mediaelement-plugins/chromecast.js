@@ -3,7 +3,7 @@ Object.assign(MediaElementPlayer.prototype, {
     async buildchromecast(player) {
         const t = this;
         window['__onGCastApiAvailable'] = function(isAvailable) {
-            if (isAvailable) {
+            if (isAvailable && window.cast) {
                 t._initializeCastPlayer();
             }
         };
