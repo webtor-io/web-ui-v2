@@ -633,6 +633,8 @@ github.com/webtor-io/common-services v0.0.0-20250105173005-fe4606378dff h1:xygV+
 github.com/webtor-io/common-services v0.0.0-20250105173005-fe4606378dff/go.mod h1:6jUeO6R+ytZnEJj7PlcLEQZfWaxw8ovav73BP83MTlI=
 github.com/webtor-io/common-services v0.0.0-20250112153000-8f4957fc8094 h1:HiRCtzeHb5G46mlmfx+unkcI0RnRZ7t+/CuYH2TyL3c=
 github.com/webtor-io/common-services v0.0.0-20250112153000-8f4957fc8094/go.mod h1:6jUeO6R+ytZnEJj7PlcLEQZfWaxw8ovav73BP83MTlI=
+github.com/webtor-io/common-services v0.0.0-20250112153432-554128b56bd5 h1:EGVq16o1t8LO2HR2eGh4YEJjLF9Np2bBgJxHkUr+fb4=
+github.com/webtor-io/common-services v0.0.0-20250112153432-554128b56bd5/go.mod h1:6jUeO6R+ytZnEJj7PlcLEQZfWaxw8ovav73BP83MTlI=
 github.com/webtor-io/lazymap v0.0.0-20221030185154-1799721becef h1:tSAcIGxgmsxFJnLRyTkhzFhjGAtaOZ5g2osBHG3JYBs=
 github.com/webtor-io/lazymap v0.0.0-20221030185154-1799721becef/go.mod h1:za/bioTGK3VjG3+mK7/kpx0TV8++ytZkdOQ1MJ2HTjM=
 github.com/webtor-io/lazymap v0.0.0-20241211155941-e81d935cfa1d h1:Xi9E0LCDgK++QliA7ZNFdSI11Bpg5qe7efN3AMWJ3dY=
