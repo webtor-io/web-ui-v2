@@ -169,9 +169,13 @@ func (s *ActionScript) download(j *job.Job, c *gin.Context, apiClaims *api.Claim
 	}
 	j.DoneWithMessage("success! file is ready for download!")
 	tpl := s.tb.Build("action/download_file").WithLayoutBody(`{{ template "main" . }}`)
+	hasAds := false
+	if userClaims != nil {
+		hasAds = !userClaims.Claims.Site.NoAds
+	}
 	str, err := tpl.ToString(c, &FileDownload{
 		URL:    de.URL,
-		HasAds: !userClaims.Claims.Site.NoAds,
+		HasAds: hasAds,
 	})
 	if err != nil {
 		return err

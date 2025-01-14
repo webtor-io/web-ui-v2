@@ -23,6 +23,7 @@ node_modules
 assets/dist/*
 
 .env
+.self-hosted.env
 
 templates/partials/extend.html
 /.idea/dataSources.xml
