@@ -95,13 +95,15 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 	}
 	if exportResponse.Source.MediaFormat == ra.Video {
 		sc.VideoStreamUserData = vsud
-		j.InProgress("loading OpenSubtitles")
-		subs, err := s.api.GetOpenSubtitles(ctx, exportResponse.ExportItems["subtitles"].URL)
-		if err != nil {
-			j.Warn(err, "failed to get OpenSubtitles")
-		} else {
-			sc.OpenSubtitles = subs
-			j.Done()
+		if subtitles, ok := exportResponse.ExportItems["subtitles"]; ok {
+			j.InProgress("loading OpenSubtitles")
+			subs, err := s.api.GetOpenSubtitles(ctx, subtitles.URL)
+			if err != nil {
+				j.Warn(err, "failed to get OpenSubtitles")
+			} else {
+				sc.OpenSubtitles = subs
+				j.Done()
+			}
 		}
 	}
 	if settings.Poster != "" {
