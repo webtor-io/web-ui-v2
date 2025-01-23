@@ -28,7 +28,7 @@ ENV CGO_ENABLED=0
 ENV GOOS=linux
 
 # build the binary with debug information removed
-RUN go build -ldflags '-w -s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn' -a -installsuffix cgo -o server
+RUN go build -ldflags '-w -s -X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=ignore' -a -installsuffix cgo -o server
 
 FROM alpine:latest
 

@@ -7,8 +7,8 @@ Object.assign(MediaElementPlayer.prototype, {
         this.addControlElement(player.embedButton, 'embed');
         player.embedLayer = document.createElement('div');
         player.embedLayer.className = `${this.options.classPrefix}layer ${this.options.classPrefix}overlay ${this.options.classPrefix}webtor-embed`;
-        const embedContainer = document.getElementById('embed');
-        const checkbox = document.getElementById('embed-checkbox');
+        const embedContainer = document.getElementById('embed').cloneNode(true);
+        const checkbox = document.getElementById('embed-checkbox').cloneNode(true);
         player.embedLayer.appendChild(checkbox);
         player.embedLayer.appendChild(embedContainer);
         const playLayer = layers.querySelector(`.${this.options.classPrefix}overlay-play`);

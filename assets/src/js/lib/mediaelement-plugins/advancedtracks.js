@@ -83,8 +83,8 @@ Object.assign(MediaElementPlayer.prototype, {
         this.addControlElement(player.tracksButton, 'tracks');
         player.tracksLayer = document.createElement('div');
         player.tracksLayer.className = `${this.options.classPrefix}layer ${this.options.classPrefix}overlay ${this.options.classPrefix}tracks`;
-        const tracksContainer = document.getElementById('subtitles');
-        const checkbox = document.getElementById('subtitles-checkbox');
+        const tracksContainer = document.getElementById('subtitles').cloneNode(true);
+        const checkbox = document.getElementById('subtitles-checkbox').cloneNode(true);
         player.tracksLayer.appendChild(checkbox);
         player.tracksLayer.appendChild(tracksContainer);
         const playLayer = layers.querySelector(`.${this.options.classPrefix}overlay-play`);

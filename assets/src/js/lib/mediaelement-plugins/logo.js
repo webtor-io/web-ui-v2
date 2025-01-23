@@ -15,8 +15,7 @@ Object.assign(MediaElementPlayer.prototype, {
         const logoLayer = document.createElement('div');
         layers.logoLayer = logoLayer;
         logoLayer.className = `${this.options.classPrefix}layer ${this.options.classPrefix}webtor-logo`;
-        const logo = document.getElementById('logo');
-        logo.remove();
+        const logo = document.getElementById('logo').cloneNode(true);
         logo.classList.remove('hidden');
         logoLayer.appendChild(logo);
         layers.appendChild(logoLayer);
