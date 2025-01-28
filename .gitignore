@@ -17,6 +17,7 @@ tmp
 .DS_Store
 __debug*
 web-ui-v2
+web-ui
 
 node_modules
 
@@ -26,4 +27,5 @@ assets/dist/*
 .self-hosted.env
 
 templates/partials/extend.html
-/.idea/dataSources.xml
+.idea
+.vscode
