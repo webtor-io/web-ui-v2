@@ -12,7 +12,7 @@ let player;
 let hlsPlayer;
 let video;
 
-export function initPlayer(target, ready) {
+export function initPlayer(target) {
     video = target.querySelector('.player');
     const settings = JSON.parse(video.dataset.settings);
     const width = video.width;
@@ -113,7 +113,8 @@ export function initPlayer(target, ready) {
                 if (!controls) {
                     document.querySelector('.mejs__controls').style.display = 'none';
                 }
-                ready();
+                const event = new CustomEvent('player_ready');
+                window.dispatchEvent(event);
             });
             if (media.hlsPlayer) {
                 hlsPlayer = media.hlsPlayer;

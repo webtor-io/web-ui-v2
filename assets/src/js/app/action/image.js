@@ -1,13 +1,8 @@
 import av from '../../lib/av';
 
-function ready() {
+av(() => {
     const event = new CustomEvent('player_ready');
     window.dispatchEvent(event);
-}
-
-
-av(() => {
-    ready();
 });
 
 export {}
