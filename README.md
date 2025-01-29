@@ -1,7 +1,5 @@
 # web-ui-v2
 
-The future version of [webtor.io](https://webtor.io)
-
 Some features to mention:
 
 1. Lightweight - less JavaScript code, no frontend frameworks, fewer bytes sent to the client.
