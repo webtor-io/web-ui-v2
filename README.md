@@ -1,4 +1,4 @@
-# web-ui-v2
+# web-ui
 
 Some features to mention:
 
