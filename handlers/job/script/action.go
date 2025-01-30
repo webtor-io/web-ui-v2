@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/pkg/errors"
-	"github.com/webtor-io/web-ui-v2/services/claims"
+	"github.com/webtor-io/web-ui/services/claims"
 	"io"
 	"strings"
 	"time"
@@ -16,11 +16,11 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	ra "github.com/webtor-io/rest-api/services"
-	m "github.com/webtor-io/web-ui-v2/services/models"
-	"github.com/webtor-io/web-ui-v2/services/template"
+	m "github.com/webtor-io/web-ui/services/models"
+	"github.com/webtor-io/web-ui/services/template"
 
-	"github.com/webtor-io/web-ui-v2/services/api"
-	"github.com/webtor-io/web-ui-v2/services/job"
+	"github.com/webtor-io/web-ui/services/api"
+	"github.com/webtor-io/web-ui/services/job"
 )
 
 type StreamContent struct {

@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	ra "github.com/webtor-io/rest-api/services"
-	"github.com/webtor-io/web-ui-v2/services/api"
-	m "github.com/webtor-io/web-ui-v2/services/models"
+	"github.com/webtor-io/web-ui/services/api"
+	m "github.com/webtor-io/web-ui/services/models"
 	"golang.org/x/text/language"
 )
 

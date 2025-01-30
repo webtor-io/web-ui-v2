@@ -6,8 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/webtor-io/web-ui-v2/handlers/static"
-	"github.com/webtor-io/web-ui-v2/services/abuse_store"
+	"github.com/webtor-io/web-ui/handlers/static"
+	"github.com/webtor-io/web-ui/services/abuse_store"
 	"html/template"
 	"io"
 	"math/rand/v2"
@@ -22,11 +22,11 @@ import (
 	h "github.com/dustin/go-humanize"
 	log "github.com/sirupsen/logrus"
 	"github.com/webtor-io/lazymap"
-	"github.com/webtor-io/web-ui-v2/services"
-	"github.com/webtor-io/web-ui-v2/services/auth"
-	"github.com/webtor-io/web-ui-v2/services/claims"
-	"github.com/webtor-io/web-ui-v2/services/job"
-	"github.com/webtor-io/web-ui-v2/services/obfuscator"
+	"github.com/webtor-io/web-ui/services"
+	"github.com/webtor-io/web-ui/services/auth"
+	"github.com/webtor-io/web-ui/services/claims"
+	"github.com/webtor-io/web-ui/services/job"
+	"github.com/webtor-io/web-ui/services/obfuscator"
 )
 
 func (s *Helper) MakeJobLogURL(j *job.Job) string {

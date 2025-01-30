@@ -1,16 +1,16 @@
 package action
 
 import (
-	wj "github.com/webtor-io/web-ui-v2/handlers/job"
-	"github.com/webtor-io/web-ui-v2/services/claims"
-	m "github.com/webtor-io/web-ui-v2/services/models"
+	wj "github.com/webtor-io/web-ui/handlers/job"
+	"github.com/webtor-io/web-ui/services/claims"
+	m "github.com/webtor-io/web-ui/services/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
-	"github.com/webtor-io/web-ui-v2/services/api"
-	"github.com/webtor-io/web-ui-v2/services/job"
-	"github.com/webtor-io/web-ui-v2/services/template"
+	"github.com/webtor-io/web-ui/services/api"
+	"github.com/webtor-io/web-ui/services/job"
+	"github.com/webtor-io/web-ui/services/template"
 )
 
 type PostArgs struct {

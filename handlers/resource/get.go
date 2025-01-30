@@ -10,8 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	ra "github.com/webtor-io/rest-api/services"
-	sv "github.com/webtor-io/web-ui-v2/services"
-	"github.com/webtor-io/web-ui-v2/services/api"
+	sv "github.com/webtor-io/web-ui/services"
+	"github.com/webtor-io/web-ui/services/api"
 )
 
 var (

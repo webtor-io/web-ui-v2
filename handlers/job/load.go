@@ -2,11 +2,11 @@ package job
 
 import (
 	"context"
-	"github.com/webtor-io/web-ui-v2/handlers/job/script"
+	"github.com/webtor-io/web-ui/handlers/job/script"
 	"time"
 
-	"github.com/webtor-io/web-ui-v2/services/api"
-	"github.com/webtor-io/web-ui-v2/services/job"
+	"github.com/webtor-io/web-ui/services/api"
+	"github.com/webtor-io/web-ui/services/job"
 )
 
 func (s *Handler) Load(claims *api.Claims, args *script.LoadArgs) (j *job.Job, err error) {

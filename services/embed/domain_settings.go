@@ -8,8 +8,8 @@ import (
 	"github.com/go-pg/pg/v10"
 	cs "github.com/webtor-io/common-services"
 	"github.com/webtor-io/lazymap"
-	"github.com/webtor-io/web-ui-v2/services/claims"
-	"github.com/webtor-io/web-ui-v2/services/models"
+	"github.com/webtor-io/web-ui/services/claims"
+	"github.com/webtor-io/web-ui/services/models"
 )
 
 type DomainSettings struct {

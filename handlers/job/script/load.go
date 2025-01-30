@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/webtor-io/web-ui-v2/services"
-	"github.com/webtor-io/web-ui-v2/services/api"
-	"github.com/webtor-io/web-ui-v2/services/job"
+	"github.com/webtor-io/web-ui/services"
+	"github.com/webtor-io/web-ui/services/api"
+	"github.com/webtor-io/web-ui/services/job"
 
 	ra "github.com/webtor-io/rest-api/services"
 )

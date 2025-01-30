@@ -7,7 +7,7 @@ up.sh
 README.md
 Makefile
 LICENSE
-web-ui-v2
+web-ui
 __debug_bin
 .DS_Store
 node_modules

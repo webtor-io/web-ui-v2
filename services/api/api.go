@@ -28,9 +28,9 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 
-	"github.com/webtor-io/web-ui-v2/services"
-	"github.com/webtor-io/web-ui-v2/services/auth"
-	"github.com/webtor-io/web-ui-v2/services/claims"
+	"github.com/webtor-io/web-ui/services"
+	"github.com/webtor-io/web-ui/services/auth"
+	"github.com/webtor-io/web-ui/services/claims"
 )
 
 const (

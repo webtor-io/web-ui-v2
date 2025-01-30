@@ -2,9 +2,9 @@ package job
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/webtor-io/web-ui-v2/services/api"
-	"github.com/webtor-io/web-ui-v2/services/job"
-	"github.com/webtor-io/web-ui-v2/services/template"
+	"github.com/webtor-io/web-ui/services/api"
+	"github.com/webtor-io/web-ui/services/job"
+	"github.com/webtor-io/web-ui/services/template"
 )
 
 type Handler struct {

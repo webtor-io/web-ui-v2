@@ -2,15 +2,15 @@ package embed
 
 import (
 	"encoding/json"
-	"github.com/webtor-io/web-ui-v2/services/claims"
-	"github.com/webtor-io/web-ui-v2/services/models"
+	"github.com/webtor-io/web-ui/services/claims"
+	"github.com/webtor-io/web-ui/services/models"
 	"net/http"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
-	"github.com/webtor-io/web-ui-v2/services/api"
-	"github.com/webtor-io/web-ui-v2/services/embed"
-	"github.com/webtor-io/web-ui-v2/services/job"
+	"github.com/webtor-io/web-ui/services/api"
+	"github.com/webtor-io/web-ui/services/embed"
+	"github.com/webtor-io/web-ui/services/job"
 )
 
 type PostArgs struct {

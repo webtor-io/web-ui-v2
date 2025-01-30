@@ -20,7 +20,7 @@ import (
 	"github.com/supertokens/supertokens-golang/recipe/userroles"
 	"github.com/supertokens/supertokens-golang/supertokens"
 	"github.com/urfave/cli"
-	sv "github.com/webtor-io/web-ui-v2/services"
+	sv "github.com/webtor-io/web-ui/services"
 
 	defaultErrors "errors"
 )

@@ -3,7 +3,7 @@ package ext
 import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	"github.com/webtor-io/web-ui-v2/services/template"
+	"github.com/webtor-io/web-ui/services/template"
 	"net/http"
 	"strconv"
 )

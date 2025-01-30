@@ -6,7 +6,7 @@ import (
 
 	h "github.com/dustin/go-humanize"
 	ra "github.com/webtor-io/rest-api/services"
-	w "github.com/webtor-io/web-ui-v2/services/web"
+	w "github.com/webtor-io/web-ui/services/web"
 )
 
 type ButtonItem struct {

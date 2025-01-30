@@ -5,8 +5,8 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/webtor-io/web-ui-v2/services/claims"
-	"github.com/webtor-io/web-ui-v2/services/models"
+	"github.com/webtor-io/web-ui/services/claims"
+	"github.com/webtor-io/web-ui/services/models"
 	"io"
 	"net/http"
 	"regexp"
@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/webtor-io/web-ui-v2/services/api"
-	"github.com/webtor-io/web-ui-v2/services/job"
-	"github.com/webtor-io/web-ui-v2/services/template"
+	"github.com/webtor-io/web-ui/services/api"
+	"github.com/webtor-io/web-ui/services/job"
+	"github.com/webtor-io/web-ui/services/template"
 
 	ra "github.com/webtor-io/rest-api/services"
 )

@@ -1,4 +1,4 @@
-# web-ui-v2
+# web-ui
 
 The future version of [webtor.io](https://webtor.io)
 
@@ -40,7 +40,6 @@ Some features to mention:
 - [x] Embed support
   - [x] Base version
   - [x] Extended version
-- [x] 🚀Switch webtor.io to web-ui-v2
 
 
 ## Setting up connection to Webtor RestAPI
@@ -72,12 +71,12 @@ export RAPIDAPI_HOST={YOUR_RAPIDAPI_HOST}
 ## Usage
 
 ```shell
-./web-ui-v2 help
+./web-ui help
 NAME:
-   web-ui-v2 - runs webtor web ui v2
+   web-ui - runs webtor web ui v2
 
 USAGE:
-   web-ui-v2 [global options] command [command options] [arguments...]
+   web-ui [global options] command [command options] [arguments...]
 
 VERSION:
    0.0.1

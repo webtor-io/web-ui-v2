@@ -2,7 +2,7 @@ package example
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/webtor-io/web-ui-v2/services/template"
+	"github.com/webtor-io/web-ui/services/template"
 	"github.com/yargevad/filepathx"
 	"net/http"
 	"path/filepath"

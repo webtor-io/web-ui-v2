@@ -11,7 +11,7 @@ import (
 	"github.com/webtor-io/lazymap"
 
 	proto "github.com/webtor-io/claims-provider/proto"
-	"github.com/webtor-io/web-ui-v2/services/auth"
+	"github.com/webtor-io/web-ui/services/auth"
 )
 
 const (

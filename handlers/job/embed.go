@@ -2,15 +2,15 @@ package job
 
 import (
 	"context"
-	"github.com/webtor-io/web-ui-v2/handlers/job/script"
-	"github.com/webtor-io/web-ui-v2/services/claims"
-	"github.com/webtor-io/web-ui-v2/services/models"
+	"github.com/webtor-io/web-ui/handlers/job/script"
+	"github.com/webtor-io/web-ui/services/claims"
+	"github.com/webtor-io/web-ui/services/models"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/webtor-io/web-ui-v2/services/api"
-	"github.com/webtor-io/web-ui-v2/services/job"
+	"github.com/webtor-io/web-ui/services/api"
+	"github.com/webtor-io/web-ui/services/job"
 )
 
 func (s *Handler) Embed(c *gin.Context, hCl *http.Client, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings) (j *job.Job, err error) {

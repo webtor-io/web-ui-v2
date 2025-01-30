@@ -16,7 +16,7 @@ tmp
 
 .DS_Store
 __debug*
-web-ui-v2
+web-ui
 web-ui
 
 node_modules

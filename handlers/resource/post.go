@@ -2,16 +2,16 @@ package resource
 
 import (
 	"github.com/pkg/errors"
-	"github.com/webtor-io/web-ui-v2/handlers/job/script"
+	"github.com/webtor-io/web-ui/handlers/job/script"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	sv "github.com/webtor-io/web-ui-v2/services"
-	"github.com/webtor-io/web-ui-v2/services/api"
-	"github.com/webtor-io/web-ui-v2/services/job"
+	sv "github.com/webtor-io/web-ui/services"
+	"github.com/webtor-io/web-ui/services/api"
+	"github.com/webtor-io/web-ui/services/job"
 )
 
 type PostArgs struct {

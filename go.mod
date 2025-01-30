@@ -1,4 +1,4 @@
-module github.com/webtor-io/web-ui-v2
+module github.com/webtor-io/web-ui
 
 go 1.23.4
 
