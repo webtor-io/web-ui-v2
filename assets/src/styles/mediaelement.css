@@ -45,3 +45,9 @@ video::-webkit-media-text-track-display {
   line-height: 1.5 !important;
   top: auto !important;
 }
+
+.mejs__mediaelement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -11,14 +11,17 @@ if (window._umami) {
 }
 const c = await check();
 if (c) {
-    initPlaceholder(data);
+    await initPlaceholder(data);
     window.addEventListener('click', async () => {
         initEmbed(data);
     }, { once: true });
     message.send('inited');
+} else {
+   document.body.remove();
+   console.log('webtor check not passed, use original embed script');
 }
 
-function initPlaceholder(data) {
+async function initPlaceholder(data) {
     if (!data.height) {
         function setHeight() {
             const width = document.body.offsetWidth;
@@ -26,9 +29,7 @@ function initPlaceholder(data) {
             document.body.style.height = height + 'px';
         }
         window.addEventListener('resize', setHeight);
-        const s = document.createElement('script');
-        s.src = 'assets/lib/iframeResizer.contentWindow.min.js';
-        document.body.appendChild(s);
+        (await import('@open-iframe-resizer/core'));
         setHeight();
     } else {
         document.body.style.height = data.height;
@@ -48,6 +49,7 @@ async function check() {
 }
 
 function initEmbed(data) {
+    message.send('play_clicked');
     const form = document.createElement('form');
     form.setAttribute('method', 'post');
     form.setAttribute('enctype', 'multipart/form-data');

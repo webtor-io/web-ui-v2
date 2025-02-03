@@ -34,7 +34,10 @@ func (s *Handler) generateCheckScript(code string, id string) string {
 		var found = false;
 		var scripts = document.getElementsByTagName('script');
 			for (var i = scripts.length; i--;) {
-				if (scripts[i].src.includes('https://cdn.jsdelivr.net/npm/@webtor/')) {
+				if (
+					scripts[i].src.includes('https://cdn.jsdelivr.net/npm/@webtor/') ||
+					scripts[i].src.includes('http://localhost:9009/')
+				) {
 					found = '%v';
 				}
 			}

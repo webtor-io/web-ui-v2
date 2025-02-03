@@ -28,14 +28,11 @@ window.addEventListener('load', async () => {
             }
         }, {once: true});
         el.classList.add('hidden');
-        el.classList.add('mb-5')
         document.body.appendChild(el);
         ev.render(el);
     });
     if (!window._embedSettings.height) {
-        const s = document.createElement('script');
-        s.src = 'assets/lib/iframeResizer.contentWindow.min.js';
-        document.body.appendChild(s);
+        (await import('@open-iframe-resizer/core'));
     }
     setHeight();
     window.addEventListener('resize', setHeight);

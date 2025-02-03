@@ -19,11 +19,6 @@ export function initPlayer(target) {
     const height = video.height;
     const controls = video.controls;
     const stretching = height ? 'auto' : 'responsive';
-    if (stretching === 'auto') {
-        if (width) video.setAttribute('width', width);
-        if (height) video.setAttribute('height', height);
-    }
-
     const duration = video.getAttribute('data-duration') ? parseFloat(video.getAttribute('data-duration')) : -1;
     let features = [
         'playpause',
@@ -102,10 +97,6 @@ export function initPlayer(target) {
                     const subId = document.querySelector('.subtitle[data-default=true]').getAttribute('data-mp-id');
                     if (audioId) hlsPlayer.audioTrack = audioId;
                     if (subId) hlsPlayer.subtitleTrack = subId;
-                }
-                if (stretching != 'responsive') {
-                    if (width) player.node.style.width = width;
-                    if (height) player.node.style.height = height;
                 }
                 if (player) {
                     player.controlsEnabled = controls;
