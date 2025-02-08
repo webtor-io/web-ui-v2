@@ -1,4 +1,5 @@
 import {makeDebug} from '../../lib/debug';
+import semver from 'semver'
 const debug = await makeDebug('webtor:ext');
 
 function init() {
@@ -22,6 +23,10 @@ function fetch(downloadId) {
                 return;
             }
             if (event.data.torrent) {
+                if (event.data.ver && semver.gte('0.1.12', event.data.ver)) {
+                    resolve(new Blob([new Uint8Array(event.data.torrent)]));
+                    return;
+                }
                 resolve(new Blob([new Uint8Array(event.data.torrent.data)]));
             }
         });
