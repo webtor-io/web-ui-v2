@@ -33,7 +33,7 @@ func RegisterHandler(api *geoip.Api, r *gin.Engine) error {
 	}
 	r.Use(func(c *gin.Context) {
 		var ip net.IP
-		if coo, err := c.Cookie("test-ip"); !errors.As(err, http.ErrNoCookie) {
+		if coo, err := c.Cookie("test-ip"); err == nil {
 			ip = net.ParseIP(coo)
 		} else if c.Query("test-ip") != "" {
 			ip = net.ParseIP(c.Query("test-ip"))
