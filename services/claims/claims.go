@@ -66,6 +66,11 @@ func (s *Claims) Get(ctx context.Context, email string) (*Data, error) {
 func (s *Claims) MakeUserClaimsFromContext(c *gin.Context) (*Data, error) {
 	u := auth.GetUserFromContext(c)
 	r, err := s.Get(c.Request.Context(), u.Email)
+	if _, err := c.Cookie("test-ads"); !errors.As(err, http.ErrNoCookie) {
+		r.Claims.Site.NoAds = false
+	} else if c.Query("test-ads") != "" {
+		r.Claims.Site.NoAds = false
+	}
 	if err != nil {
 		return nil, err
 	}

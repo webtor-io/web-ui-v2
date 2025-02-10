@@ -7,6 +7,7 @@ import (
 	we "github.com/webtor-io/web-ui/handlers/embed"
 	wee "github.com/webtor-io/web-ui/handlers/embed/example"
 	"github.com/webtor-io/web-ui/handlers/ext"
+	"github.com/webtor-io/web-ui/handlers/geo"
 	wi "github.com/webtor-io/web-ui/handlers/index"
 	wj "github.com/webtor-io/web-ui/handlers/job"
 	"github.com/webtor-io/web-ui/handlers/legal"
@@ -18,6 +19,7 @@ import (
 	"github.com/webtor-io/web-ui/handlers/support"
 	"github.com/webtor-io/web-ui/handlers/tests"
 	as "github.com/webtor-io/web-ui/services/abuse_store"
+	"github.com/webtor-io/web-ui/services/geoip"
 	"github.com/webtor-io/web-ui/services/umami"
 	"net/http"
 
@@ -63,6 +65,7 @@ func configureServe(c *cli.Command) {
 	c.Flags = as.RegisterFlags(c.Flags)
 	c.Flags = cs.RegisterPprofFlags(c.Flags)
 	c.Flags = umami.RegisterFlags(c.Flags)
+	c.Flags = geoip.RegisterFlags(c.Flags)
 }
 
 func serve(c *cli.Context) error {
@@ -80,16 +83,11 @@ func serve(c *cli.Context) error {
 	// Setting template renderer
 	re := multitemplate.NewRenderer()
 
-	// Setting Helper
-	helper := w.NewHelper(c)
-
-	// Setting Helper
-	umamiHelper := umami.NewHelper(c)
-
 	// Setting TemplateManager
 	tm := template.NewManager(re).
-		WithHelper(helper).
-		WithHelper(umamiHelper).
+		WithHelper(w.NewHelper(c)).
+		WithHelper(umami.NewHelper(c)).
+		WithHelper(geoip.NewHelper()).
 		WithContextWrapper(w.NewContext)
 
 	var servers []cs.Servable
@@ -148,6 +146,16 @@ func serve(c *cli.Context) error {
 
 	// Setting HTTP Client
 	cl := http.DefaultClient
+
+	// Setting GeoIP
+	gapi := geoip.New(c, cl)
+
+	if gapi != nil {
+		err = geo.RegisterHandler(gapi, r)
+		if err != nil {
+			return err
+		}
+	}
 
 	// Setting Api
 	sapi := api.New(c, cl)
