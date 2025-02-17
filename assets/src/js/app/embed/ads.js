@@ -33,6 +33,7 @@ function renderVideoAds(el, ads = []) {
     const closeEl = document.createElement('button');
     closeEl.classList.add('absolute', 'top-2', 'right-2', 'btn', 'btn-accent', 'btn-sm', 'z-50');
     closeEl.textContent = 'Close (' + skipDelay + ')';
+    closeEl.setAttribute('data-umami-event', `embed-${ad.name}-close`);
     closeEl.disabled = true;
     videoEl.addEventListener('ended', function() {
         aEl.remove();
