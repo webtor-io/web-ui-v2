@@ -15,7 +15,6 @@ let video;
 export function initPlayer(target) {
     video = target.querySelector('.player');
     const settings = JSON.parse(video.dataset.settings);
-    const width = video.width;
     const height = video.height;
     const controls = video.controls;
     const stretching = height ? 'auto' : 'responsive';
@@ -104,6 +103,9 @@ export function initPlayer(target) {
                 if (!controls) {
                     document.querySelector('.mejs__controls').style.display = 'none';
                 }
+                window.addEventListener('player_play', function() {
+                    player.play();
+                }, {once: true});
                 const event = new CustomEvent('player_ready');
                 window.dispatchEvent(event);
             });

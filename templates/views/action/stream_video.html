@@ -10,7 +10,8 @@
            {{ if .Settings | hasControls }}controls{{ end }}
            {{ if .Settings.Width }}width="{{ .Settings.Width }}"{{ end }}
            {{ if .Settings.Height }}height="{{ .Settings.Height }}"{{ end }}
-           autoplay data-settings="{{ .Settings | json }}">
+           {{ if or (not (has . "DomainSettings")) (not .DomainSettings.Ads) }}autoplay{{ end }}
+           data-settings="{{ .Settings | json }}">
         {{ range .ExportTag.Sources }}
         <source src="{{ .Src }}" type="{{ .Type }}">
         {{ end }}

@@ -11,7 +11,7 @@
     <a class="closeable-close close">ok</a>
 </div>
 {{ end }}
-{{ template "promo" . }}
+{{ if .Claims | hasAds }}{{ template "promo" . }}{{ end }}
 {{ with .Data }}
 {{ if has . "Job" }}
 <form class="hidden progress-alert progress-alert-block mb-10 closeable" data-async-progress-log="{{ .Job | makeJobLogURL }}" data-async-target="main">

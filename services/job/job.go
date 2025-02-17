@@ -211,7 +211,7 @@ func (s *Job) log(l LogItem) error {
 	l.Timestamp = time.Now()
 	if l.Level == InProgress {
 		s.cur = l.Tag
-	} else {
+	} else if l.Tag == "" {
 		l.Tag = s.cur
 	}
 	s.l = append(s.l, l)
@@ -321,10 +321,11 @@ func (s *Job) Redirect(url string) *Job {
 	return s
 }
 
-func (s *Job) RenderTemplate(name string, body string) *Job {
+func (s *Job) RenderTemplate(tag string, name string, body string) *Job {
 	_ = s.log(LogItem{
 		Level:    RenderTemplate,
 		Template: name,
+		Tag:      tag,
 		Body:     body,
 	})
 	return s

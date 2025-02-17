@@ -6,9 +6,15 @@ func NewHelper() *Helper {
 	return &Helper{}
 }
 
-func (h *Helper) IsAsia(data *Data) bool {
+func (h *Helper) InCountries(data *Data, countries ...string) bool {
 	if data == nil {
 		return false
 	}
-	return data.Continent == "AS"
+	for _, country := range countries {
+		if data.Country == country {
+			return true
+
+		}
+	}
+	return false
 }

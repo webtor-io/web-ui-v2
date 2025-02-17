@@ -6,7 +6,7 @@
        preload="{{ .Preload }}"
        {{ if $MediaProbe }}data-duration="{{ $MediaProbe | getDurationSec }}" {{ end }}
        controls
-       autoplay
+        {{ if or (not (has . "DomainSettings")) (not .DomainSettings.Ads) }}autoplay{{ end }}
        data-settings="{{ $.Data.Settings | json }}">
     {{ range .Sources }}
     <source src="{{ .Src }}" type="{{ .Type }}">

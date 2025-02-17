@@ -8,6 +8,7 @@ import (
 	"github.com/anacrolix/torrent/metainfo"
 	"github.com/pkg/errors"
 	"github.com/webtor-io/web-ui/services/claims"
+	"github.com/webtor-io/web-ui/services/embed"
 	"io"
 	"strings"
 	"time"
@@ -32,6 +33,7 @@ type StreamContent struct {
 	VideoStreamUserData *m.VideoStreamUserData
 	Settings            *m.StreamSettings
 	ExternalData        *m.ExternalData
+	DomainSettings      *embed.DomainSettingsData
 }
 
 type TorrentDownload struct {
@@ -41,10 +43,11 @@ type TorrentDownload struct {
 	Size     int
 }
 
-func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, template string, settings *m.StreamSettings, vsud *m.VideoStreamUserData) (err error) {
+func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, template string, settings *m.StreamSettings, vsud *m.VideoStreamUserData, dsd *embed.DomainSettingsData) (err error) {
 	sc := &StreamContent{
-		Settings:     settings,
-		ExternalData: &m.ExternalData{},
+		Settings:       settings,
+		ExternalData:   &m.ExternalData{},
+		DomainSettings: dsd,
 	}
 	j.InProgress("retrieving resource data")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -125,16 +128,16 @@ func (s *ActionScript) streamContent(j *job.Job, c *gin.Context, claims *api.Cla
 	return
 }
 
-func (s *ActionScript) previewImage(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings, vsud *m.VideoStreamUserData) error {
-	return s.streamContent(j, c, claims, resourceID, itemID, "preview_image", settings, vsud)
+func (s *ActionScript) previewImage(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings, vsud *m.VideoStreamUserData, dsd *embed.DomainSettingsData) error {
+	return s.streamContent(j, c, claims, resourceID, itemID, "preview_image", settings, vsud, dsd)
 }
 
-func (s *ActionScript) streamAudio(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings, vsud *m.VideoStreamUserData) error {
-	return s.streamContent(j, c, claims, resourceID, itemID, "stream_audio", settings, vsud)
+func (s *ActionScript) streamAudio(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings, vsud *m.VideoStreamUserData, dsd *embed.DomainSettingsData) error {
+	return s.streamContent(j, c, claims, resourceID, itemID, "stream_audio", settings, vsud, dsd)
 }
 
-func (s *ActionScript) streamVideo(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings, vsud *m.VideoStreamUserData) error {
-	return s.streamContent(j, c, claims, resourceID, itemID, "stream_video", settings, vsud)
+func (s *ActionScript) streamVideo(j *job.Job, c *gin.Context, claims *api.Claims, resourceID string, itemID string, settings *m.StreamSettings, vsud *m.VideoStreamUserData, dsd *embed.DomainSettingsData) error {
+	return s.streamContent(j, c, claims, resourceID, itemID, "stream_video", settings, vsud, dsd)
 }
 
 func (s *ActionScript) renderActionTemplate(j *job.Job, c *gin.Context, sc *StreamContent, name string) error {
@@ -144,7 +147,7 @@ func (s *ActionScript) renderActionTemplate(j *job.Job, c *gin.Context, sc *Stre
 	if err != nil {
 		return err
 	}
-	j.RenderTemplate(actionTemplate, strings.TrimSpace(str))
+	j.RenderTemplate("rendering action", actionTemplate, strings.TrimSpace(str))
 	return nil
 }
 
@@ -308,6 +311,7 @@ type ActionScript struct {
 	tb         template.Builder
 	settings   *m.StreamSettings
 	vsud       *m.VideoStreamUserData
+	dsd        *embed.DomainSettingsData
 }
 
 func (s *ActionScript) Run(j *job.Job) (err error) {
@@ -319,16 +323,16 @@ func (s *ActionScript) Run(j *job.Job) (err error) {
 	case "download-torrent":
 		return s.downloadTorrent(j, s.c, s.apiClaims, s.resourceId)
 	case "preview-image":
-		return s.previewImage(j, s.c, s.apiClaims, s.resourceId, s.itemId, s.settings, s.vsud)
+		return s.previewImage(j, s.c, s.apiClaims, s.resourceId, s.itemId, s.settings, s.vsud, s.dsd)
 	case "stream-audio":
-		return s.streamAudio(j, s.c, s.apiClaims, s.resourceId, s.itemId, s.settings, s.vsud)
+		return s.streamAudio(j, s.c, s.apiClaims, s.resourceId, s.itemId, s.settings, s.vsud, s.dsd)
 	case "stream-video":
-		return s.streamVideo(j, s.c, s.apiClaims, s.resourceId, s.itemId, s.settings, s.vsud)
+		return s.streamVideo(j, s.c, s.apiClaims, s.resourceId, s.itemId, s.settings, s.vsud, s.dsd)
 	}
 	return
 }
 
-func Action(tb template.Builder, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, c *gin.Context, resourceID string, itemID string, action string, settings *m.StreamSettings) (r job.Runnable, id string) {
+func Action(tb template.Builder, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, c *gin.Context, resourceID string, itemID string, action string, settings *m.StreamSettings, dsd *embed.DomainSettingsData) (r job.Runnable, id string) {
 	vsud := m.NewVideoStreamUserData(resourceID, itemID, settings)
 	vsud.FetchSessionData(c)
 	vsudID := vsud.AudioID + "/" + vsud.SubtitleID + "/" + fmt.Sprintf("%+v", vsud.AcceptLangTags)
@@ -345,5 +349,6 @@ func Action(tb template.Builder, api *api.Api, apiClaims *api.Claims, userClaims
 		action:     action,
 		settings:   settings,
 		vsud:       vsud,
+		dsd:        dsd,
 	}, id
 }

@@ -11,25 +11,43 @@ function setHeight() {
     document.body.style.height = height + 'px';
 }
 
+function startPlayer(progress, el) {
+    window.removeEventListener('resize', setHeight);
+    document.body.style.height = 'auto';
+    progress.classList.add('hidden');
+    el.classList.remove('hidden');
+    const event = new CustomEvent('player_play');
+    window.dispatchEvent(event);
+}
+
 window.addEventListener('load', async () => {
     const progress = document.querySelector('.progress-alert');
-    const el = document.createElement('div');
+    const player = document.createElement('div');
     const initProgressLog = (await import('../../lib/progressLog')).initProgressLog;
+    let playingAds = false;
     initProgressLog(progress, function(ev) {
         if (ev.level !== 'rendertemplate') return;
-        window.addEventListener('player_ready', function() {
-            window.removeEventListener('resize', setHeight);
-            document.body.style.height = 'auto';
-            progress.classList.add('hidden');
-            el.classList.remove('hidden');
-            if (window._domainSettings.ads && window._injectAds) {
-                console.log('injecting ads');
-                message.send('inject', window._injectAds);
-            }
-        }, {once: true});
-        el.classList.add('hidden');
-        document.body.appendChild(el);
-        ev.render(el);
+        if (ev.tag === 'rendering action') {
+            window.addEventListener('player_ready', function() {
+                if (playingAds) return;
+                startPlayer(progress, player);
+            }, {once: true});
+            player.classList.add('hidden');
+            document.body.appendChild(player);
+            ev.render(player);
+        }
+        if (ev.tag === 'rendering ads') {
+            window.addEventListener('ads_play', function() {
+                playingAds = true;
+            }, {once: true});
+            window.addEventListener('ads_close', function() {
+                playingAds = false;
+                startPlayer(progress, player);
+            }, {once: true});
+            const ads = document.createElement('div');
+            document.body.appendChild(ads);
+            ev.render(ads);
+        }
     });
     if (!window._embedSettings.height) {
         (await import('@open-iframe-resizer/core'));

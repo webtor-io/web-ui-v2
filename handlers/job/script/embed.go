@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/webtor-io/web-ui/services/claims"
+	"github.com/webtor-io/web-ui/services/embed"
 	"github.com/webtor-io/web-ui/services/models"
 	"io"
 	"net/http"
@@ -34,9 +35,14 @@ type EmbedScript struct {
 	c          *gin.Context
 	hCl        *http.Client
 	userClaims *claims.Data
+	dsd        *embed.DomainSettingsData
 }
 
-func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string) *EmbedScript {
+type EmbedAdsData struct {
+	DomainSettings *embed.DomainSettingsData
+}
+
+func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string, dsd *embed.DomainSettingsData) *EmbedScript {
 	return &EmbedScript{
 		api:        api,
 		apiClaims:  apiClaims,
@@ -46,6 +52,7 @@ func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *
 		tb:         tb,
 		c:          c,
 		hCl:        hCl,
+		dsd:        dsd,
 	}
 }
 
@@ -94,7 +101,11 @@ func (s *EmbedScript) Run(j *job.Job) (err error) {
 	} else if i.MediaFormat == ra.Audio {
 		action = "stream-audio"
 	}
-	as, _ := Action(s.tb, s.api, s.apiClaims, s.userClaims, s.c, id, i.ID, action, &s.settings.StreamSettings)
+	err = s.renderAds(j, s.c, s.dsd)
+	if err != nil {
+		return err
+	}
+	as, _ := Action(s.tb, s.api, s.apiClaims, s.userClaims, s.c, id, i.ID, action, &s.settings.StreamSettings, s.dsd)
 	err = as.Run(j)
 	if err != nil {
 		return err
@@ -165,8 +176,24 @@ func (s *EmbedScript) findBestItem(l *ra.ListResponse) *ra.ListItem {
 	return nil
 }
 
-func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string) (r job.Runnable, hash string, err error) {
-	hash = fmt.Sprintf("%x", sha1.Sum([]byte(apiClaims.Role+"/"+fmt.Sprintf("%+v", settings))))
-	r = NewEmbedScript(tb, hCl, c, api, apiClaims, userClaims, settings, file)
+func (s *EmbedScript) renderAds(j *job.Job, c *gin.Context, dsd *embed.DomainSettingsData) (err error) {
+	if !dsd.Ads {
+		return
+	}
+	adsTemplate := "embed/ads"
+	tpl := s.tb.Build(adsTemplate)
+	str, err := tpl.ToString(c, &EmbedAdsData{
+		DomainSettings: dsd,
+	})
+	if err != nil {
+		return err
+	}
+	j.RenderTemplate("rendering ads", adsTemplate, strings.TrimSpace(str))
+	return
+}
+
+func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string, dsd *embed.DomainSettingsData) (r job.Runnable, hash string, err error) {
+	hash = fmt.Sprintf("%x", sha1.Sum([]byte(fmt.Sprintf("%+v", dsd)+"/"+apiClaims.Role+"/"+fmt.Sprintf("%+v", settings))))
+	r = NewEmbedScript(tb, hCl, c, api, apiClaims, userClaims, settings, file, dsd)
 	return
 }

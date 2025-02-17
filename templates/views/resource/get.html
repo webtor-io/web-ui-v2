@@ -8,14 +8,14 @@
     {{ end }}
 {{ end }}
 {{ define "main" }}
-{{ template "promo" . }}
+{{ if .Claims | hasAds }}{{ template "promo" . }}{{ end }}
 {{ with .Data }}
 {{ if .Item }}
 <div id="file" data-async-layout="{{`{{ template "file" . }}`}}">
   {{ template "file" $ }}
 </div>
 {{ end }}
-{{ template "get_ad" $ }}
+{{ if and ($.Claims | hasAds) (not (.Resource.MagnetURI | isDemoMagnet)) }}{{ template "get_ads" $ }}{{ end }}
 {{ if and .Item .List }}
 <div class="divider h-0"></div>
 {{ end }}
