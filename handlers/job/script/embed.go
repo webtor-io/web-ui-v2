@@ -37,17 +37,20 @@ type EmbedScript struct {
 	hCl        *http.Client
 	userClaims *claims.Data
 	dsd        *embed.DomainSettingsData
+	geo        *geoip.Data
 }
 
 type EmbedAdsData struct {
 	DomainSettings *embed.DomainSettingsData
+	Geo            *geoip.Data
 }
 
-func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string, dsd *embed.DomainSettingsData) *EmbedScript {
+func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string, dsd *embed.DomainSettingsData, geo *geoip.Data) *EmbedScript {
 	return &EmbedScript{
 		api:        api,
 		apiClaims:  apiClaims,
 		userClaims: userClaims,
+		geo:        geo,
 		settings:   settings,
 		file:       file,
 		tb:         tb,
@@ -102,7 +105,7 @@ func (s *EmbedScript) Run(j *job.Job) (err error) {
 	} else if i.MediaFormat == ra.Audio {
 		action = "stream-audio"
 	}
-	err = s.renderAds(j, s.c, s.dsd)
+	err = s.renderAds(j, s.c, s.dsd, s.geo)
 	if err != nil {
 		return err
 	}
@@ -177,7 +180,7 @@ func (s *EmbedScript) findBestItem(l *ra.ListResponse) *ra.ListItem {
 	return nil
 }
 
-func (s *EmbedScript) renderAds(j *job.Job, c *gin.Context, dsd *embed.DomainSettingsData) (err error) {
+func (s *EmbedScript) renderAds(j *job.Job, c *gin.Context, dsd *embed.DomainSettingsData, geo *geoip.Data) (err error) {
 	if !dsd.Ads {
 		return
 	}
@@ -185,6 +188,7 @@ func (s *EmbedScript) renderAds(j *job.Job, c *gin.Context, dsd *embed.DomainSet
 	tpl := s.tb.Build(adsTemplate)
 	str, err := tpl.ToString(c, &EmbedAdsData{
 		DomainSettings: dsd,
+		Geo:            geo,
 	})
 	if err != nil {
 		return err
@@ -199,6 +203,6 @@ func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, 
 		geoHash = geo.Country
 	}
 	hash = fmt.Sprintf("%x", sha1.Sum([]byte(geoHash+"/"+fmt.Sprintf("%+v", dsd)+"/"+apiClaims.Role+"/"+fmt.Sprintf("%+v", settings))))
-	r = NewEmbedScript(tb, hCl, c, api, apiClaims, userClaims, settings, file, dsd)
+	r = NewEmbedScript(tb, hCl, c, api, apiClaims, userClaims, settings, file, dsd, geo)
 	return
 }
