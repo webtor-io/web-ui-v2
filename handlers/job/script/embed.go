@@ -194,7 +194,11 @@ func (s *EmbedScript) renderAds(j *job.Job, c *gin.Context, dsd *embed.DomainSet
 }
 
 func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string, dsd *embed.DomainSettingsData, geo *geoip.Data) (r job.Runnable, hash string, err error) {
-	hash = fmt.Sprintf("%x", sha1.Sum([]byte(fmt.Sprintf("%+v", geo)+"/"+fmt.Sprintf("%+v", dsd)+"/"+apiClaims.Role+"/"+fmt.Sprintf("%+v", settings))))
+	geoHash := ""
+	if geo != nil {
+		geoHash = geo.Country
+	}
+	hash = fmt.Sprintf("%x", sha1.Sum([]byte(geoHash+"/"+fmt.Sprintf("%+v", dsd)+"/"+apiClaims.Role+"/"+fmt.Sprintf("%+v", settings))))
 	r = NewEmbedScript(tb, hCl, c, api, apiClaims, userClaims, settings, file, dsd)
 	return
 }
