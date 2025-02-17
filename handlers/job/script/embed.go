@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/webtor-io/web-ui/services/claims"
 	"github.com/webtor-io/web-ui/services/embed"
+	"github.com/webtor-io/web-ui/services/geoip"
 	"github.com/webtor-io/web-ui/services/models"
 	"io"
 	"net/http"
@@ -192,8 +193,8 @@ func (s *EmbedScript) renderAds(j *job.Job, c *gin.Context, dsd *embed.DomainSet
 	return
 }
 
-func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string, dsd *embed.DomainSettingsData) (r job.Runnable, hash string, err error) {
-	hash = fmt.Sprintf("%x", sha1.Sum([]byte(fmt.Sprintf("%+v", dsd)+"/"+apiClaims.Role+"/"+fmt.Sprintf("%+v", settings))))
+func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string, dsd *embed.DomainSettingsData, geo *geoip.Data) (r job.Runnable, hash string, err error) {
+	hash = fmt.Sprintf("%x", sha1.Sum([]byte(fmt.Sprintf("%+v", geo)+"/"+fmt.Sprintf("%+v", dsd)+"/"+apiClaims.Role+"/"+fmt.Sprintf("%+v", settings))))
 	r = NewEmbedScript(tb, hCl, c, api, apiClaims, userClaims, settings, file, dsd)
 	return
 }
