@@ -64,8 +64,8 @@ export function initPlayer(target) {
             // progressive: true,
             // testBandwidth: false,
             path: '/assets/lib/hls.min.js',
-            maxBufferSize: 15 * 1000 * 1000,
-            maxMaxBufferLength: 180,
+            // maxBufferSize: 15 * 1000 * 1000,
+            // maxMaxBufferLength: 180,
         },
         error: function(e) {
             console.log(e);
