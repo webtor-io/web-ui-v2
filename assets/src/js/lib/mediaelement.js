@@ -53,19 +53,12 @@ export function initPlayer(target) {
         stretching,
         features,
         hls: {
-            // debug: true,
             autoStartLoad: true,
             startPosition: 0,
             manifestLoadingTimeOut: 1000 * 60 * 10,
             manifestLoadingMaxRetry: 100,
             manifestLoadingMaxRetryTimeout: 1000 * 10,
-            // capLevelToPlayerSize: true,
-            // capLevelOnFPSDrop: true,
-            // progressive: true,
-            // testBandwidth: false,
             path: '/assets/lib/hls.min.js',
-            // maxBufferSize: 15 * 1000 * 1000,
-            // maxMaxBufferLength: 180,
         },
         error: function(e) {
             console.log(e);
