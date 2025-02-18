@@ -39,6 +39,7 @@ const (
 	apiSecureFlag    = "webtor-rest-api-secure"
 	apiHostFlag      = "webtor-rest-api-host"
 	apiPortFlag      = "webtor-rest-api-port"
+	apiExpireFlag    = "webtor-rest-api-expire"
 	rapidApiKeyFlag  = "rapidapi-key"
 	rapidApiHostFlag = "rapidapi-host"
 )
@@ -60,6 +61,12 @@ func RegisterFlags(f []cli.Flag) []cli.Flag {
 			Name:   apiSecureFlag,
 			Usage:  "webtor rest-api secure (https)",
 			EnvVar: "REST_API_SECURE",
+		},
+		cli.IntFlag{
+			Name:   apiExpireFlag,
+			Usage:  "webtor rest-api expire in days",
+			EnvVar: "REST_API_EXPIRE",
+			Value:  1,
 		},
 		cli.StringFlag{
 			Name:   apiKeyFlag,
@@ -163,6 +170,7 @@ type Api struct {
 	prepareRequest func(r *http.Request, c *Claims) (*http.Request, error)
 	cl             *http.Client
 	domain         string
+	expire         int
 }
 
 type ListResourceContentOutputType string
@@ -206,6 +214,7 @@ func New(c *cli.Context, cl *http.Client) *Api {
 	port := c.Int(apiPortFlag)
 	secure := c.Bool(apiSecureFlag)
 	secret := c.String(apiSecretFlag)
+	expire := c.Int(apiExpireFlag)
 	key := c.String(apiKeyFlag)
 	rapidApiHost := c.String(rapidApiHostFlag)
 	rapidApiKey := c.String(rapidApiKeyFlag)
@@ -244,6 +253,7 @@ func New(c *cli.Context, cl *http.Client) *Api {
 		cl:             cl,
 		prepareRequest: prepareRequest,
 		domain:         apiURL.Host,
+		expire:         expire,
 	}
 }
 
@@ -572,7 +582,7 @@ func (s *Api) MakeClaimsFromContext(c *gin.Context) (*Claims, error) {
 		RemoteAddress: getRemoteAddress(c.Request),
 		Agent:         c.Request.Header.Get("User-Agent"),
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(24 * 7 * time.Hour).Unix(),
+			ExpiresAt: time.Now().Add(time.Duration(s.expire) * 24 * time.Hour).Unix(),
 		},
 	}
 	u := auth.GetUserFromContext(c)
