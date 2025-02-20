@@ -59,6 +59,8 @@ export function initPlayer(target) {
             manifestLoadingMaxRetry: 100,
             manifestLoadingMaxRetryTimeout: 1000 * 10,
             path: '/assets/lib/hls.min.js',
+            maxBufferSize: 50 * 1000 * 1000,
+            maxMaxBufferLength: 180,
         },
         error: function(e) {
             console.log(e);
