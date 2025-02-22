@@ -100,7 +100,8 @@ func (s *EmbedScript) Run(j *job.Job) (err error) {
 	if err != nil {
 		return err
 	}
-	as, _ := Action(s.tb, s.api, s.c, id, i.ID, action, &s.settings.StreamSettings, s.dsd, &models.VideoStreamUserData{})
+	vsud := models.NewVideoStreamUserData(id, i.ID, &s.settings.StreamSettings)
+	as, _ := Action(s.tb, s.api, s.c, id, i.ID, action, &s.settings.StreamSettings, s.dsd, vsud)
 	err = as.Run(j)
 	if err != nil {
 		return err
