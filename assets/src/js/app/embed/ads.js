@@ -3,47 +3,85 @@ import message from './message';
 
 
 av(async function() {
-    if (window._injectAds) {
-        console.log('injecting ads');
-        message.send('inject', window._injectAds);
+    if (window._ads === undefined) {
+        window._ads = [];
     }
-    if (window._videoAds) {
-        renderVideoAds(this, window._videoAds);
+    for (const ad of window._ads) {
+        if (ad.injectScript) {
+            renderInjectAd(ad);
+        } else {
+            renderMediaAd(this, ad);
+        }
     }
 });
 
-function renderVideoAds(el, ads = []) {
-    const ad = Object.assign({}, {
+function  renderInjectAd(ad) {
+    message.send('inject', ad.injectScript);
+    window.umami.track(`embed-ad-${ad.name}-inject`)
+}
+
+function generateVideoEl(ad = {}) {
+    const el = document.createElement('video');
+    el.src = ad.src;
+    el.autoplay = true;
+    el.playsInline = true;
+    return el;
+}
+
+function generateImageEl(ad) {
+    ad = Object.assign({}, {
+        duration: 10,
+    }, ad);
+    const el = document.createElement('img');
+    el.src = ad.src;
+    el.addEventListener('load', function () {
+        const ev = new CustomEvent('play');
+        el.dispatchEvent(ev);
+        setTimeout(function () {
+            const ev = new CustomEvent('ended');
+            el.dispatchEvent(ev);
+        }, ad.duration * 1000);
+    })
+    return el;
+}
+
+function generateMediaEl(ad = {}) {
+    if (ad.src.endsWith('.mp4')) {
+        return generateVideoEl(ad);
+    } else if (ad.src.endsWith('.jpg')) {
+        return generateImageEl(ad);
+    }
+}
+
+function renderMediaAd(el, ad = {}) {
+    ad = Object.assign({}, {
         skipDelay: 5,
-    }, ads[0]);
+    }, ad);
     const event = new CustomEvent('ads_play');
     window.dispatchEvent(event);
-    const videoEl = document.createElement('video');
-    videoEl.src = ad.src;
-    videoEl.autoplay = true;
-    videoEl.playsInline = true;
+    const mediaEl = generateMediaEl(ad);
     const aEl = document.createElement('a');
     aEl.classList.add('absolute', 'top-0', 'left-0', 'z-50');
     aEl.href = ad.url;
     aEl.target = '_blank';
-    aEl.setAttribute('data-umami-event', `embed-${ad.name}-click`);
-    aEl.appendChild(videoEl);
+    aEl.setAttribute('data-umami-event', `embed-ad-${ad.name}-click`);
+    aEl.appendChild(mediaEl);
     el.appendChild(aEl);
     const skipDelay = ad.skipDelay;
     const closeEl = document.createElement('button');
     closeEl.classList.add('absolute', 'top-2', 'right-2', 'btn', 'btn-accent', 'btn-sm', 'z-50');
     closeEl.textContent = 'Close (' + skipDelay + ')';
-    closeEl.setAttribute('data-umami-event', `embed-${ad.name}-close`);
+    closeEl.setAttribute('data-umami-event', `embed-ad-${ad.name}-close`);
     closeEl.disabled = true;
-    videoEl.addEventListener('ended', function() {
+    mediaEl.addEventListener('ended', function() {
         aEl.remove();
         closeEl.remove();
         const event = new CustomEvent('ads_close');
         window.dispatchEvent(event);
     });
-    videoEl.addEventListener('play', function() {
+    mediaEl.addEventListener('play', function() {
         if (window.umami) {
-            window.umami.track(`embed-${ad.name}-play`)
+            window.umami.track(`embed-ad-${ad.name}-play`)
         }
         el.appendChild(closeEl);
         let cnt = 0;
