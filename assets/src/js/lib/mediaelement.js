@@ -126,8 +126,6 @@ export function initPlayer(target) {
                     media.hlsPlayer.loadLevel = -1;
                 });
                 media.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
-                    const ev = new CustomEvent('player_ready');
-                    window.dispatchEvent(ev);
                     if (media.hlsPlayer.levels.length > 1) {
                         media.hlsPlayer.startLevel = 1;
                     }
