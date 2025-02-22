@@ -1,4 +1,3 @@
-import message from './message';
 import initAsyncView from '../../lib/asyncView';
 
 if (window._umami) {
@@ -26,24 +25,30 @@ window.addEventListener('load', async () => {
     const initProgressLog = (await import('../../lib/progressLog')).initProgressLog;
     let playingAds = false;
     let playerReady = false;
+    let adsPlayed = false;
     initProgressLog(progress, function(ev) {
         if (ev.level !== 'rendertemplate') return;
         if (ev.tag === 'rendering action') {
             window.addEventListener('player_ready', function() {
                 playerReady = true;
-                if (playingAds) return;
-                startPlayer(progress, player);
+                if (playingAds) {
+                    const event = new CustomEvent('player_paused');
+                    window.dispatchEvent(event);
+                } else {
+                    startPlayer(progress, player);
+                }
             }, {once: true});
             player.classList.add('hidden');
             document.body.appendChild(player);
             ev.render(player);
         }
-        if (ev.tag === 'rendering ads') {
+        if (ev.tag === 'rendering ads' && !adsPlayed) {
             window.addEventListener('ads_play', function() {
                 playingAds = true;
             }, {once: true});
             window.addEventListener('ads_close', function() {
                 playingAds = false;
+                adsPlayed = true;
                 if (playerReady) startPlayer(progress, player);
             }, {once: true});
             const ads = document.createElement('div');

@@ -85,6 +85,14 @@ export function initPlayer(target) {
                     return oldSetCurrentTime.call(player, time, userInteraction);
                 }
             }
+            let paused = false;
+            window.addEventListener('player_paused', function() {
+                player.pause();
+                paused = true;
+            });
+            media.addEventListener('playing', () => {
+                if (paused) player.pause();
+            });
             media.addEventListener('canplay', () => {
                 if (hlsPlayer && document.getElementById('subtitles')) {
                     const audioId = document.querySelector('.audio[data-default=true]').getAttribute('data-mp-id');
@@ -99,8 +107,10 @@ export function initPlayer(target) {
                     document.querySelector('.mejs__controls').style.display = 'none';
                 }
                 window.addEventListener('player_play', function() {
+                    paused = false;
                     player.play();
                 });
+
                 const event = new CustomEvent('player_ready');
                 window.dispatchEvent(event);
             });
