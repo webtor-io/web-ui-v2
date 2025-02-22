@@ -25,10 +25,12 @@ window.addEventListener('load', async () => {
     const player = document.createElement('div');
     const initProgressLog = (await import('../../lib/progressLog')).initProgressLog;
     let playingAds = false;
+    let playerReady = false;
     initProgressLog(progress, function(ev) {
         if (ev.level !== 'rendertemplate') return;
         if (ev.tag === 'rendering action') {
             window.addEventListener('player_ready', function() {
+                playerReady = true;
                 if (playingAds) return;
                 startPlayer(progress, player);
             }, {once: true});
@@ -42,7 +44,7 @@ window.addEventListener('load', async () => {
             }, {once: true});
             window.addEventListener('ads_close', function() {
                 playingAds = false;
-                startPlayer(progress, player);
+                if (playerReady) startPlayer(progress, player);
             }, {once: true});
             const ads = document.createElement('div');
             document.body.appendChild(ads);
