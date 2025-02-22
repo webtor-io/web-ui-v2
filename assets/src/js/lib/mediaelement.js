@@ -100,7 +100,7 @@ export function initPlayer(target) {
                 }
                 window.addEventListener('player_play', function() {
                     player.play();
-                }, {once: true});
+                });
                 const event = new CustomEvent('player_ready');
                 window.dispatchEvent(event);
             });
@@ -116,6 +116,8 @@ export function initPlayer(target) {
                     media.hlsPlayer.loadLevel = -1;
                 });
                 media.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+                    const ev = new CustomEvent('player_ready');
+                    window.dispatchEvent(ev);
                     if (media.hlsPlayer.levels.length > 1) {
                         media.hlsPlayer.startLevel = 1;
                     }
