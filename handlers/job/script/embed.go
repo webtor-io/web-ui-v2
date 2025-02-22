@@ -5,17 +5,15 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/webtor-io/web-ui/services/claims"
 	"github.com/webtor-io/web-ui/services/embed"
-	"github.com/webtor-io/web-ui/services/geoip"
 	"github.com/webtor-io/web-ui/services/models"
+	"github.com/webtor-io/web-ui/services/web"
 	"io"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/webtor-io/web-ui/services/api"
 	"github.com/webtor-io/web-ui/services/job"
 	"github.com/webtor-io/web-ui/services/template"
@@ -28,42 +26,35 @@ var (
 )
 
 type EmbedScript struct {
-	api        *api.Api
-	apiClaims  *api.Claims
-	settings   *models.EmbedSettings
-	file       string
-	tb         template.Builder
-	c          *gin.Context
-	hCl        *http.Client
-	userClaims *claims.Data
-	dsd        *embed.DomainSettingsData
-	geo        *geoip.Data
+	api      *api.Api
+	settings *models.EmbedSettings
+	file     string
+	tb       template.Builder[*web.Context]
+	c        *web.Context
+	cl       *http.Client
+	dsd      *embed.DomainSettingsData
 }
 
 type EmbedAdsData struct {
 	DomainSettings *embed.DomainSettingsData
-	Geo            *geoip.Data
 }
 
-func NewEmbedScript(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string, dsd *embed.DomainSettingsData, geo *geoip.Data) *EmbedScript {
+func NewEmbedScript(tb template.Builder[*web.Context], cl *http.Client, c *web.Context, api *api.Api, settings *models.EmbedSettings, file string, dsd *embed.DomainSettingsData) *EmbedScript {
 	return &EmbedScript{
-		api:        api,
-		apiClaims:  apiClaims,
-		userClaims: userClaims,
-		geo:        geo,
-		settings:   settings,
-		file:       file,
-		tb:         tb,
-		c:          c,
-		hCl:        hCl,
-		dsd:        dsd,
+		c:        c,
+		api:      api,
+		settings: settings,
+		file:     file,
+		tb:       tb,
+		cl:       cl,
+		dsd:      dsd,
 	}
 }
 
 func (s *EmbedScript) makeLoadArgs(settings *models.EmbedSettings) (*LoadArgs, error) {
 	la := &LoadArgs{}
 	if settings.TorrentURL != "" {
-		resp, err := s.hCl.Get(settings.TorrentURL)
+		resp, err := s.cl.Get(settings.TorrentURL)
 		if err != nil {
 			return nil, err
 		}
@@ -86,7 +77,7 @@ func (s *EmbedScript) Run(j *job.Job) (err error) {
 	if err != nil {
 		return
 	}
-	ls, _, err := Load(s.api, s.apiClaims, args)
+	ls, _, err := Load(s.api, s.c, args)
 	if err != nil {
 		return err
 	}
@@ -105,11 +96,11 @@ func (s *EmbedScript) Run(j *job.Job) (err error) {
 	} else if i.MediaFormat == ra.Audio {
 		action = "stream-audio"
 	}
-	err = s.renderAds(j, s.c, s.dsd, s.geo)
+	err = s.renderAds(j, s.c, s.dsd)
 	if err != nil {
 		return err
 	}
-	as, _ := Action(s.tb, s.api, s.apiClaims, s.userClaims, s.c, id, i.ID, action, &s.settings.StreamSettings, s.dsd)
+	as, _ := Action(s.tb, s.api, s.c, id, i.ID, action, &s.settings.StreamSettings, s.dsd, &models.VideoStreamUserData{})
 	err = as.Run(j)
 	if err != nil {
 		return err
@@ -128,7 +119,7 @@ func (s *EmbedScript) getBestItem(j *job.Job, id string, settings *models.EmbedS
 		file = parts[len(parts)-1]
 		pwd = strings.Join(parts[:len(parts)-1], "/")
 	}
-	l, err := s.api.ListResourceContent(ctx, s.apiClaims, id, &api.ListResourceContentArgs{
+	l, err := s.api.ListResourceContent(ctx, s.c.ApiClaims, id, &api.ListResourceContentArgs{
 		Path:   pwd,
 		Output: api.OutputTree,
 	})
@@ -136,7 +127,7 @@ func (s *EmbedScript) getBestItem(j *job.Job, id string, settings *models.EmbedS
 		return nil, errors.Wrap(err, "failed to list resource content")
 	}
 	if len(l.Items) == 1 && l.Items[0].Type == ra.ListTypeDirectory {
-		l, err = s.api.ListResourceContent(ctx, s.apiClaims, id, &api.ListResourceContentArgs{
+		l, err = s.api.ListResourceContent(ctx, s.c.ApiClaims, id, &api.ListResourceContentArgs{
 			Path:   l.Items[0].PathStr,
 			Output: api.OutputTree,
 		})
@@ -180,16 +171,15 @@ func (s *EmbedScript) findBestItem(l *ra.ListResponse) *ra.ListItem {
 	return nil
 }
 
-func (s *EmbedScript) renderAds(j *job.Job, c *gin.Context, dsd *embed.DomainSettingsData, geo *geoip.Data) (err error) {
+func (s *EmbedScript) renderAds(j *job.Job, c *web.Context, dsd *embed.DomainSettingsData) (err error) {
 	if !dsd.Ads {
 		return
 	}
 	adsTemplate := "embed/ads"
 	tpl := s.tb.Build(adsTemplate)
-	str, err := tpl.ToString(c, &EmbedAdsData{
+	str, err := tpl.ToString(c.WithData(&EmbedAdsData{
 		DomainSettings: dsd,
-		Geo:            geo,
-	})
+	}))
 	if err != nil {
 		return err
 	}
@@ -197,12 +187,12 @@ func (s *EmbedScript) renderAds(j *job.Job, c *gin.Context, dsd *embed.DomainSet
 	return
 }
 
-func Embed(tb template.Builder, hCl *http.Client, c *gin.Context, api *api.Api, apiClaims *api.Claims, userClaims *claims.Data, settings *models.EmbedSettings, file string, dsd *embed.DomainSettingsData, geo *geoip.Data) (r job.Runnable, hash string, err error) {
+func Embed(tb template.Builder[*web.Context], cl *http.Client, c *web.Context, api *api.Api, settings *models.EmbedSettings, file string, dsd *embed.DomainSettingsData) (r job.Runnable, hash string, err error) {
 	geoHash := ""
-	if geo != nil {
-		geoHash = geo.Country
+	if c.Geo != nil {
+		geoHash = c.Geo.Country
 	}
-	hash = fmt.Sprintf("%x", sha1.Sum([]byte(geoHash+"/"+fmt.Sprintf("%+v", dsd)+"/"+apiClaims.Role+"/"+fmt.Sprintf("%+v", settings))))
-	r = NewEmbedScript(tb, hCl, c, api, apiClaims, userClaims, settings, file, dsd, geo)
+	hash = fmt.Sprintf("%x", sha1.Sum([]byte(geoHash+"/"+fmt.Sprintf("%+v", dsd)+"/"+c.ApiClaims.Role+"/"+fmt.Sprintf("%+v", settings))))
+	r = NewEmbedScript(tb, cl, c, api, settings, file, dsd)
 	return
 }

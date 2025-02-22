@@ -1,6 +1,7 @@
 package index
 
 import (
+	"github.com/webtor-io/web-ui/services/web"
 	"net/http"
 	"strings"
 
@@ -13,10 +14,10 @@ type Data struct {
 }
 
 type Handler struct {
-	tb template.Builder
+	tb template.Builder[*web.Context]
 }
 
-func RegisterHandler(r *gin.Engine, tm *template.Manager) {
+func RegisterHandler(r *gin.Engine, tm *template.Manager[*web.Context]) {
 	h := &Handler{
 		tb: tm.MustRegisterViews("*").WithLayout("main"),
 	}
@@ -28,7 +29,7 @@ func RegisterHandler(r *gin.Engine, tm *template.Manager) {
 }
 
 func (s *Handler) index(c *gin.Context) {
-	s.tb.Build("index").HTML(http.StatusOK, c, &Data{
+	s.tb.Build("index").HTML(http.StatusOK, web.NewContext(c).WithData(&Data{
 		Instruction: strings.TrimPrefix(c.Request.URL.Path, "/"),
-	})
+	}))
 }

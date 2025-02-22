@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"github.com/webtor-io/web-ui/services/web"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -91,29 +92,29 @@ func (s *Handler) get(c *gin.Context) {
 	args, err = s.bindGetArgs(c)
 	d.Args = args
 	if err != nil {
-		indexTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)
+		indexTpl.HTML(http.StatusBadRequest, web.NewContext(c).WithData(d).WithErr(errors.Wrap(err, "wrong args provided")))
 		return
 	}
 	res, err = s.api.GetResource(ctx, args.Claims, args.ID)
 	if err != nil {
-		indexTpl.HTMLWithErr(errors.Wrap(err, "failed to get resource"), http.StatusInternalServerError, c, d)
+		indexTpl.HTML(http.StatusInternalServerError, web.NewContext(c).WithData(d).WithErr(errors.Wrap(err, "failed to get resource")))
 		return
 	}
 	d.Resource = res
 	if res == nil {
-		indexTpl.HTMLWithErr(errors.Wrap(err, "resource not found"), http.StatusNotFound, c, d)
+		indexTpl.HTML(http.StatusNotFound, web.NewContext(c).WithData(d).WithErr(errors.Wrap(err, "resource not found")))
 		return
 	}
 	list, err = s.getList(ctx, args)
 	if err != nil {
-		indexTpl.HTMLWithErr(errors.Wrap(err, "failed to list resource"), http.StatusInternalServerError, c, d)
+		indexTpl.HTML(http.StatusInternalServerError, web.NewContext(c).WithData(d).WithErr(errors.Wrap(err, "failed to list resource")))
 		return
 	}
 	if len(list.Items) == 1 && list.Items[0].Type == ra.ListTypeDirectory {
 		args.PWD = list.Items[0].PathStr
 		list, err = s.getList(ctx, args)
 		if err != nil {
-			indexTpl.HTMLWithErr(errors.Wrap(err, "failed to list resource"), http.StatusInternalServerError, c, d)
+			indexTpl.HTML(http.StatusInternalServerError, web.NewContext(c).WithData(d).WithErr(errors.Wrap(err, "failed to list resource")))
 			return
 		}
 	}
@@ -125,10 +126,10 @@ func (s *Handler) get(c *gin.Context) {
 		d.List = list
 	}
 	if err != nil {
-		indexTpl.HTMLWithErr(errors.Wrap(err, "failed to get item"), http.StatusInternalServerError, c, d)
+		indexTpl.HTML(http.StatusInternalServerError, web.NewContext(c).WithData(d).WithErr(errors.Wrap(err, "failed to get item")))
 		return
 	}
-	getTpl.HTML(http.StatusOK, c, d)
+	getTpl.HTML(http.StatusOK, web.NewContext(c).WithData(d))
 }
 
 func (s *Handler) getBestItem(ctx context.Context, l *ra.ListResponse, args *GetArgs) (i *ra.ListItem, err error) {

@@ -3,6 +3,7 @@ package resource
 import (
 	"github.com/pkg/errors"
 	"github.com/webtor-io/web-ui/handlers/job/script"
+	"github.com/webtor-io/web-ui/services/web"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -79,22 +80,22 @@ func (s *Handler) post(c *gin.Context) {
 	)
 	args, err = s.bindArgs(c)
 	if err != nil {
-		indexTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)
+		indexTpl.HTML(http.StatusBadRequest, web.NewContext(c).WithData(d).WithErr(errors.Wrap(err, "wrong args provided")))
 	}
 	d.Args = args
 	d.Instruction = args.Instruction
 	if err != nil {
-		indexTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)
+		indexTpl.HTML(http.StatusBadRequest, web.NewContext(c).WithData(d).WithErr(errors.Wrap(err, "wrong args provided")))
 		return
 	}
-	loadJob, err = s.jobs.Load(args.Claims, &script.LoadArgs{
+	loadJob, err = s.jobs.Load(web.NewContext(c), &script.LoadArgs{
 		Query: args.Query,
 		File:  args.File,
 	})
 	if err != nil {
-		indexTpl.HTMLWithErr(errors.Wrap(err, "failed to load resource"), http.StatusInternalServerError, c, d)
+		indexTpl.HTML(http.StatusInternalServerError, web.NewContext(c).WithData(d).WithErr(errors.Wrap(err, "failed to load resource")))
 		return
 	}
 	d.Job = loadJob
-	indexTpl.HTML(http.StatusAccepted, c, d)
+	indexTpl.HTML(http.StatusAccepted, web.NewContext(c).WithData(d))
 }

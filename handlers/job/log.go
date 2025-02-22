@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,9 +28,14 @@ func (s *Handler) log(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 
 	c.Stream(func(w io.Writer) bool {
+		ticker := time.NewTicker(5 * time.Second)
 		select {
 		case <-ctx.Done():
+			ticker.Stop()
 			return false
+		case <-ticker.C:
+			c.SSEvent("ping", "")
+			return true
 		case msg, ok := <-l:
 			if !ok {
 				return false

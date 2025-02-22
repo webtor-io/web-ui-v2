@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/webtor-io/web-ui/handlers/geo"
 	"github.com/webtor-io/web-ui/handlers/session"
+	"github.com/webtor-io/web-ui/services/api"
 	"github.com/webtor-io/web-ui/services/auth"
 	"github.com/webtor-io/web-ui/services/claims"
 	"github.com/webtor-io/web-ui/services/geoip"
@@ -17,21 +18,40 @@ type Context struct {
 	User      *auth.User
 	Claims    *claims.Data
 	Geo       *geoip.Data
+	ApiClaims *api.Claims
+	ginCtx    *gin.Context
 }
 
-func NewContext(c *gin.Context, obj any, err error) any {
+func (c *Context) WithData(obj any) *Context {
+	nc := *c
+	nc.Data = obj
+	return &nc
+}
+
+func (c *Context) WithErr(err error) *Context {
+	nc := *c
+	nc.Err = err
+	return &nc
+}
+
+func (s *Context) GetGinContext() *gin.Context {
+	return s.ginCtx
+}
+
+func NewContext(c *gin.Context) *Context {
 	user := auth.GetUserFromContext(c)
 	cl := claims.GetFromContext(c)
 	sess := session.GetFromContext(c)
 	geoData := geo.GetFromContext(c)
+	aCl := api.GetClaimsFromContext(c)
 
 	return &Context{
-		Data:      obj,
 		CSRF:      sess.CSRF,
-		Err:       err,
 		User:      user,
 		Claims:    cl,
+		ApiClaims: aCl,
 		SessionID: sess.ID,
 		Geo:       geoData,
+		ginCtx:    c,
 	}
 }

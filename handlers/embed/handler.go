@@ -2,6 +2,7 @@ package embed
 
 import (
 	j "github.com/webtor-io/web-ui/handlers/job"
+	"github.com/webtor-io/web-ui/services/web"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,18 +11,18 @@ import (
 )
 
 type Handler struct {
-	tb   template.Builder
-	hCl  *http.Client
+	tb   template.Builder[*web.Context]
+	cl   *http.Client
 	jobs *j.Handler
 	ds   *embed.DomainSettings
 }
 
-func RegisterHandler(hCl *http.Client, r *gin.Engine, tm *template.Manager, jobs *j.Handler, ds *embed.DomainSettings) {
+func RegisterHandler(cl *http.Client, r *gin.Engine, tm *template.Manager[*web.Context], jobs *j.Handler, ds *embed.DomainSettings) {
 	h := &Handler{
 		tb:   tm.MustRegisterViews("embed/*"),
 		jobs: jobs,
 		ds:   ds,
-		hCl:  hCl,
+		cl:   cl,
 	}
 	r.GET("/embed", h.get)
 	r.POST("/embed", h.post)

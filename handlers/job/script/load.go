@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/webtor-io/web-ui/services/web"
 	"strings"
 	"time"
 
@@ -21,16 +22,16 @@ type LoadArgs struct {
 }
 
 type LoadScript struct {
-	api    *api.Api
-	claims *api.Claims
-	args   *LoadArgs
+	api  *api.Api
+	args *LoadArgs
+	c    *web.Context
 }
 
-func NewLoadScript(api *api.Api, claims *api.Claims, args *LoadArgs) *LoadScript {
+func NewLoadScript(api *api.Api, c *web.Context, args *LoadArgs) *LoadScript {
 	return &LoadScript{
-		api:    api,
-		claims: claims,
-		args:   args,
+		api:  api,
+		c:    c,
+		args: args,
 	}
 }
 
@@ -55,7 +56,7 @@ func (s *LoadScript) storeFile(j *job.Job, file []byte) (res *ra.ResourceRespons
 	j.InProgress("uploading file")
 	ctx, cancel := context.WithTimeout(j.Context, 60*time.Second)
 	defer cancel()
-	res, err = s.api.StoreResource(ctx, s.claims, file)
+	res, err = s.api.StoreResource(ctx, s.c.ApiClaims, file)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to upload file")
 	}
@@ -75,7 +76,7 @@ func (s *LoadScript) storeQuery(j *job.Job, query string) (res *ra.ResourceRespo
 	}
 	ctx, cancel := context.WithTimeout(j.Context, 60*time.Second)
 	defer cancel()
-	res, err = s.api.GetResource(ctx, s.claims, hash)
+	res, err = s.api.GetResource(ctx, s.c.ApiClaims, hash)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load resource by magnet")
 	}
@@ -88,7 +89,7 @@ func (s *LoadScript) storeQuery(j *job.Job, query string) (res *ra.ResourceRespo
 	j.InProgress("magnetizing")
 	ctx, cancel = context.WithTimeout(j.Context, 60*time.Second)
 	defer cancel()
-	res, err = s.api.StoreResource(ctx, s.claims, []byte(query))
+	res, err = s.api.StoreResource(ctx, s.c.ApiClaims, []byte(query))
 	if err != nil || res == nil {
 		return nil, errors.Wrap(err, "failed to magnetize, there were no peers for 60 seconds, try another magnet")
 	}
@@ -96,12 +97,12 @@ func (s *LoadScript) storeQuery(j *job.Job, query string) (res *ra.ResourceRespo
 	return
 }
 
-func Load(api *api.Api, claims *api.Claims, args *LoadArgs) (r job.Runnable, hash string, err error) {
+func Load(api *api.Api, c *web.Context, args *LoadArgs) (r job.Runnable, hash string, err error) {
 	h := sha1.New()
 	h.Write(args.File)
 	h.Write([]byte(args.Query))
 	hash = fmt.Sprintf("%x", h.Sum(nil))
 
-	r = NewLoadScript(api, claims, args)
+	r = NewLoadScript(api, c, args)
 	return
 }

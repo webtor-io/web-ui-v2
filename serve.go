@@ -84,11 +84,10 @@ func serve(c *cli.Context) error {
 	re := multitemplate.NewRenderer()
 
 	// Setting TemplateManager
-	tm := template.NewManager(re).
+	tm := template.NewManager[*w.Context](re).
 		WithHelper(w.NewHelper(c)).
 		WithHelper(umami.NewHelper(c)).
-		WithHelper(geoip.NewHelper()).
-		WithContextWrapper(w.NewContext)
+		WithHelper(geoip.NewHelper())
 
 	var servers []cs.Servable
 	// Setting Probe
@@ -130,7 +129,6 @@ func serve(c *cli.Context) error {
 			return err
 		}
 		a.RegisterHandler(r)
-		wau.RegisterHandler(r, tm)
 	}
 
 	// Setting Claims Client
@@ -197,6 +195,11 @@ func serve(c *cli.Context) error {
 
 	// Setting DomainSettings
 	ds := embed.NewDomainSettings(pg, uc)
+
+	// Setting AuthHandlers
+	if a != nil {
+		wau.RegisterHandler(r, tm)
+	}
 
 	// Setting ResourceHandler
 	wr.RegisterHandler(r, tm, sapi, jobs)

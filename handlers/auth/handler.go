@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/webtor-io/web-ui/services/web"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,10 +18,10 @@ type VerifyData struct {
 }
 
 type Handler struct {
-	tb template.Builder
+	tb template.Builder[*web.Context]
 }
 
-func RegisterHandler(r *gin.Engine, tm *template.Manager) {
+func RegisterHandler(r *gin.Engine, tm *template.Manager[*web.Context]) {
 	h := &Handler{
 		tb: tm.MustRegisterViews("auth/*").WithLayout("main"),
 	}
@@ -31,15 +32,15 @@ func RegisterHandler(r *gin.Engine, tm *template.Manager) {
 }
 
 func (s *Handler) login(c *gin.Context) {
-	s.tb.Build("auth/login").HTML(http.StatusOK, c, LoginData{})
+	s.tb.Build("auth/login").HTML(http.StatusOK, web.NewContext(c).WithData(LoginData{}))
 }
 
 func (s *Handler) logout(c *gin.Context) {
-	s.tb.Build("auth/logout").HTML(http.StatusOK, c, LogoutData{})
+	s.tb.Build("auth/logout").HTML(http.StatusOK, web.NewContext(c).WithData(LogoutData{}))
 }
 
 func (s *Handler) verify(c *gin.Context) {
-	s.tb.Build("auth/verify").HTML(http.StatusOK, c, &VerifyData{
+	s.tb.Build("auth/verify").HTML(http.StatusOK, web.NewContext(c).WithData(&VerifyData{
 		PreAuthSessionId: c.Query("preAuthSessionId"),
-	})
+	}))
 }

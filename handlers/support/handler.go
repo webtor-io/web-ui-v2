@@ -7,6 +7,7 @@ import (
 	proto "github.com/webtor-io/abuse-store/proto"
 	"github.com/webtor-io/web-ui/services/abuse_store"
 	"github.com/webtor-io/web-ui/services/template"
+	"github.com/webtor-io/web-ui/services/web"
 	"google.golang.org/grpc/status"
 	"net/http"
 	"regexp"
@@ -16,11 +17,11 @@ import (
 )
 
 type Handler struct {
-	tb  template.Builder
+	tb  template.Builder[*web.Context]
 	asc *abuse_store.Client
 }
 
-func RegisterHandler(r *gin.Engine, tm *template.Manager, asc *abuse_store.Client) {
+func RegisterHandler(r *gin.Engine, tm *template.Manager[*web.Context], asc *abuse_store.Client) {
 	h := &Handler{
 		tb:  tm.MustRegisterViews("support/*").WithLayout("main"),
 		asc: asc,
@@ -117,17 +118,17 @@ func (s *Handler) process(c *gin.Context) {
 		CauseTypes: CauseTypes,
 	}
 	if err != nil {
-		tpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, data)
+		tpl.HTML(http.StatusBadRequest, web.NewContext(c).WithData(data).WithErr(errors.Wrap(err, "wrong args provided")))
 		return
 	}
 	if c.Request.Method == "POST" {
 		err = s.sendForm(c, form)
 		if err != nil {
-			tpl.HTMLWithErr(err, http.StatusInternalServerError, c, data)
+			tpl.HTML(http.StatusInternalServerError, web.NewContext(c).WithData(data).WithErr(errors.Wrap(err, "failed to send form")))
 			return
 		}
-		s.tb.Build("support/success").HTML(http.StatusOK, c, data)
+		s.tb.Build("support/success").HTML(http.StatusOK, web.NewContext(c).WithData(data))
 		return
 	}
-	tpl.HTML(http.StatusOK, c, data)
+	tpl.HTML(http.StatusOK, web.NewContext(c).WithData(data))
 }

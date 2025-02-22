@@ -4,6 +4,7 @@ import (
 	wj "github.com/webtor-io/web-ui/handlers/job"
 	"github.com/webtor-io/web-ui/services/claims"
 	m "github.com/webtor-io/web-ui/services/models"
+	"github.com/webtor-io/web-ui/services/web"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -14,11 +15,12 @@ import (
 )
 
 type PostArgs struct {
-	ResourceID string
-	ItemID     string
-	ApiClaims  *api.Claims
-	UserClaims *claims.Data
-	Purge      bool
+	ResourceID          string
+	ItemID              string
+	ApiClaims           *api.Claims
+	UserClaims          *claims.Data
+	Purge               bool
+	VideoStreamUserData *m.VideoStreamUserData
 }
 
 type TrackPutArgs struct {
@@ -34,10 +36,10 @@ type PostData struct {
 
 type Handler struct {
 	jobs *wj.Handler
-	tb   template.Builder
+	tb   template.Builder[*web.Context]
 }
 
-func RegisterHandler(r *gin.Engine, tm *template.Manager, jobs *wj.Handler) {
+func RegisterHandler(r *gin.Engine, tm *template.Manager[*web.Context], jobs *wj.Handler) {
 	h := &Handler{
 		tb:   tm.MustRegisterViews("action/*").WithHelper(NewHelper()),
 		jobs: jobs,
@@ -101,12 +103,14 @@ func (s *Handler) bindPostArgs(c *gin.Context) (*PostArgs, error) {
 		purge = true
 	}
 
+	vsud := m.NewVideoStreamUserData(rID[0], iID[0], &m.StreamSettings{})
+	vsud.FetchSessionData(c)
+
 	return &PostArgs{
-		ResourceID: rID[0],
-		ItemID:     iID[0],
-		Purge:      purge,
-		ApiClaims:  api.GetClaimsFromContext(c),
-		UserClaims: claims.GetFromContext(c),
+		ResourceID:          rID[0],
+		ItemID:              iID[0],
+		VideoStreamUserData: vsud,
+		Purge:               purge,
 	}, nil
 }
 
@@ -120,15 +124,29 @@ func (s *Handler) post(c *gin.Context, action string) {
 	postTpl := s.tb.Build("action/post")
 	args, err = s.bindPostArgs(c)
 	if err != nil {
-		postTpl.HTMLWithErr(errors.Wrap(err, "wrong args provided"), http.StatusBadRequest, c, d)
+		postTpl.HTML(
+			http.StatusBadRequest,
+			web.NewContext(c).WithData(d).WithErr(errors.Wrap(err, "wrong args provided")),
+		)
 		return
 	}
 	d.Args = args
-	actionJob, err = s.jobs.Action(c, args.ApiClaims, args.UserClaims, args.ResourceID, args.ItemID, action, &m.StreamSettings{}, args.Purge)
+	actionJob, err = s.jobs.Action(
+		web.NewContext(c),
+		args.ResourceID,
+		args.ItemID,
+		action,
+		&m.StreamSettings{},
+		args.Purge,
+		args.VideoStreamUserData,
+	)
 	if err != nil {
-		postTpl.HTMLWithErr(errors.Wrap(err, "failed to start downloading"), http.StatusBadRequest, c, d)
+		postTpl.HTML(
+			http.StatusBadRequest,
+			web.NewContext(c).WithData(d).WithErr(errors.Wrap(err, "failed to start downloading")),
+		)
 		return
 	}
 	d.Job = actionJob
-	postTpl.HTML(http.StatusOK, c, d)
+	postTpl.HTML(http.StatusOK, web.NewContext(c).WithData(d))
 }

@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"github.com/webtor-io/web-ui/services/web"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +27,7 @@ func (s *Handler) get(c *gin.Context) {
 		CheckScript: s.generateCheckScript(code, id),
 		ID:          id,
 	}
-	s.tb.Build("embed/get").HTML(http.StatusOK, c, gd)
+	s.tb.Build("embed/get").HTML(http.StatusOK, web.NewContext(c).WithData(gd))
 }
 
 func (s *Handler) generateCheckScript(code string, id string) string {

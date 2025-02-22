@@ -4,15 +4,16 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"github.com/webtor-io/web-ui/services/template"
+	"github.com/webtor-io/web-ui/services/web"
 	"net/http"
 	"strconv"
 )
 
 type Handler struct {
-	tb template.Builder
+	tb template.Builder[*web.Context]
 }
 
-func RegisterHandler(r *gin.Engine, tm *template.Manager) {
+func RegisterHandler(r *gin.Engine, tm *template.Manager[*web.Context]) {
 	h := &Handler{
 		tb: tm.MustRegisterViews("ext/*"),
 	}
@@ -35,7 +36,7 @@ func (s *Handler) download(c *gin.Context) {
 	d := DownloadData{
 		DownloadID: i,
 	}
-	s.tb.Build("ext/download").HTML(http.StatusOK, c, d)
+	s.tb.Build("ext/download").HTML(http.StatusOK, web.NewContext(c).WithData(d))
 }
 
 type MagnetData struct {
@@ -48,5 +49,5 @@ func (s *Handler) magnet(c *gin.Context) {
 	d := MagnetData{
 		Magnet: magnet,
 	}
-	s.tb.Build("ext/magnet").HTML(http.StatusOK, c, d)
+	s.tb.Build("ext/magnet").HTML(http.StatusOK, web.NewContext(c).WithData(d))
 }

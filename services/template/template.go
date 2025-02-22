@@ -102,23 +102,21 @@ func NewContext(_ *gin.Context, obj any, err error) any {
 	}
 }
 
-type Manager struct {
-	re             multitemplate.Renderer
-	funcs          FuncMap
-	contextWrapper func(c *gin.Context, obj any, err error) any
-	layouts        []string
-	partials       []string
-	views          []*View
-	mux            sync.Mutex
-	base           string
+type Manager[K GinContext] struct {
+	re       multitemplate.Renderer
+	funcs    FuncMap
+	layouts  []string
+	partials []string
+	views    []*View
+	mux      sync.Mutex
+	base     string
 }
 
-func NewManager(re multitemplate.Renderer) *Manager {
-	return &Manager{
-		re:             re,
-		funcs:          FuncMap{},
-		contextWrapper: NewContext,
-		base:           "templates/",
+func NewManager[K GinContext](re multitemplate.Renderer) *Manager[K] {
+	return &Manager[K]{
+		re:    re,
+		funcs: FuncMap{},
+		base:  "templates/",
 	}
 }
 
@@ -126,11 +124,11 @@ func fileNameWithoutExt(fileName string) string {
 	return strings.TrimSuffix(fileName, filepath.Ext(fileName))
 }
 
-func (s *Manager) MustRegisterViews(pattern string) *Manager {
+func (s *Manager[K]) MustRegisterViews(pattern string) *Manager[K] {
 	return Must(s.RegisterViews(pattern))
 }
 
-func (s *Manager) RegisterViews(pattern string) (m *Manager, err error) {
+func (s *Manager[K]) RegisterViews(pattern string) (m *Manager[K], err error) {
 	m = s
 	views, err := s.getFiles("views/" + pattern)
 	if err != nil {
@@ -154,7 +152,7 @@ func (s *Manager) RegisterViews(pattern string) (m *Manager, err error) {
 	return
 }
 
-func (s *Manager) getFiles(pattern string) ([]string, error) {
+func (s *Manager[K]) getFiles(pattern string) ([]string, error) {
 	g, err := filepathx.Glob(s.base + pattern)
 	if err != nil {
 		return nil, err
@@ -170,7 +168,7 @@ func (s *Manager) getFiles(pattern string) ([]string, error) {
 	return res, nil
 }
 
-func (s *Manager) GetLayouts() ([]string, error) {
+func (s *Manager[K]) GetLayouts() ([]string, error) {
 	if s.layouts != nil {
 		return s.layouts, nil
 	}
@@ -183,7 +181,7 @@ func (s *Manager) GetLayouts() ([]string, error) {
 	return layouts, nil
 }
 
-func (s *Manager) GetPartials() ([]string, error) {
+func (s *Manager[K]) GetPartials() ([]string, error) {
 	if s.partials != nil {
 		return s.partials, nil
 	}
@@ -195,7 +193,7 @@ func (s *Manager) GetPartials() ([]string, error) {
 	return partials, nil
 }
 
-func (s *Manager) makeView(view string, layout string, partials []string, funcs FuncMap) *View {
+func (s *Manager[K]) makeView(view string, layout string, partials []string, funcs FuncMap) *View {
 	lName := fileNameWithoutExt(strings.TrimPrefix(layout, s.base+"layouts/"))
 	vName := fileNameWithoutExt(strings.TrimPrefix(view, s.base+"views/"))
 	return &View{
@@ -209,20 +207,20 @@ func (s *Manager) makeView(view string, layout string, partials []string, funcs 
 	}
 }
 
-func (s *Manager) makeViewWithLayoutBody(mv *View, layout string) *View {
+func (s *Manager[K]) makeViewWithLayoutBody(mv *View, layout string) *View {
 	cv := s.makeView(mv.Path, mv.LayoutPath, mv.Partials, mv.Funcs)
 	cv.LayoutBody = layout
 	return cv
 }
 
-func (s *Manager) WithFuncs(f FuncMap) *Manager {
+func (s *Manager[K]) WithFuncs(f FuncMap) *Manager[K] {
 	for k, v := range f {
 		s.funcs[k] = v
 	}
 	return s
 }
 
-func (s *Manager) firstToLower(in string) string {
+func (s *Manager[K]) firstToLower(in string) string {
 	r, size := utf8.DecodeRuneInString(in)
 	if r == utf8.RuneError && size <= 1 {
 		return in
@@ -234,12 +232,7 @@ func (s *Manager) firstToLower(in string) string {
 	return string(lc) + in[size:]
 }
 
-func (s *Manager) WithContextWrapper(cw func(c *gin.Context, obj any, err error) any) *Manager {
-	s.contextWrapper = cw
-	return s
-}
-
-func (s *Manager) WithHelper(h any) *Manager {
+func (s *Manager[K]) WithHelper(h any) *Manager[K] {
 	fooType := reflect.TypeOf(h)
 	for i := 0; i < fooType.NumMethod(); i++ {
 		method := fooType.Method(i)
@@ -255,7 +248,7 @@ func (s *Manager) WithHelper(h any) *Manager {
 	return s
 }
 
-func (s *Manager) Init() error {
+func (s *Manager[K]) Init() error {
 	for _, v := range s.views {
 		_, err := s.renderView(v)
 		if err != nil {
@@ -265,7 +258,7 @@ func (s *Manager) Init() error {
 	return nil
 }
 
-func (s *Manager) RenderViewByNameAndLayout(name string, layout string) (string, error) {
+func (s *Manager[K]) RenderViewByNameAndLayout(name string, layout string) (string, error) {
 	for _, v := range s.views {
 		if v.Name == name && v.Layout == layout {
 			return s.renderView(v)
@@ -274,7 +267,7 @@ func (s *Manager) RenderViewByNameAndLayout(name string, layout string) (string,
 	return "", errors.New("view not found")
 }
 
-func (s *Manager) RenderViewByNameAndLayoutBody(name string, layout string) (string, error) {
+func (s *Manager[K]) RenderViewByNameAndLayoutBody(name string, layout string) (string, error) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	var cv, mv *View
@@ -297,7 +290,7 @@ func (s *Manager) RenderViewByNameAndLayoutBody(name string, layout string) (str
 	return "", errors.New("view not found")
 }
 
-func (s *Manager) renderView(v *View) (string, error) {
+func (s *Manager[K]) renderView(v *View) (string, error) {
 	name, err := v.Render()
 	if err != nil {
 		return "", err
@@ -305,20 +298,21 @@ func (s *Manager) renderView(v *View) (string, error) {
 	return name, nil
 }
 
-type Template struct {
+type Template[K GinContext] struct {
 	name       string
 	layoutBody string
 	layout     string
-	tm         *Manager
+	tm         *Manager[K]
 }
 
-func (s *Template) HTML(code int, context *gin.Context, obj any) {
-	s.HTMLWithErr(nil, code, context, obj)
+type GinContext interface {
+	GetGinContext() *gin.Context
 }
 
-func (s *Template) HTMLWithErr(err error, code int, c *gin.Context, obj any) {
+func (s *Template[K]) HTML(code int, ctx K) {
 	var name string
 	var rerr error
+	c := ctx.GetGinContext()
 	if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
 		if c.GetHeader("X-Layout") != "" {
 			name, rerr = s.tm.RenderViewByNameAndLayoutBody(s.name, c.GetHeader("X-Layout"))
@@ -331,7 +325,7 @@ func (s *Template) HTMLWithErr(err error, code int, c *gin.Context, obj any) {
 				continue
 			}
 			tpl := s.tm.Build(s.name).WithLayoutBody(vals[0])
-			str, rerr := tpl.ToString(c, obj)
+			str, rerr := tpl.ToString(ctx)
 			if rerr != nil {
 				panic(rerr)
 			}
@@ -344,10 +338,10 @@ func (s *Template) HTMLWithErr(err error, code int, c *gin.Context, obj any) {
 			panic(rerr)
 		}
 	}
-	c.HTML(code, name, s.tm.contextWrapper(c, obj, err))
+	c.HTML(code, name, ctx)
 }
 
-func (s *Template) ToString(c *gin.Context, obj any) (res string, err error) {
+func (s *Template[K]) ToString(obj K) (res string, err error) {
 	var b bytes.Buffer
 	var v string
 	if s.layoutBody == "" {
@@ -361,9 +355,8 @@ func (s *Template) ToString(c *gin.Context, obj any) (res string, err error) {
 			return
 		}
 	}
-	data := s.tm.contextWrapper(c, obj, nil)
 	//log.Infof("action template %v data: %+v", s.name, data)
-	re, _ := s.tm.re.Instance(v, data).(render.HTML)
+	re, _ := s.tm.re.Instance(v, obj).(render.HTML)
 	err = re.Template.Execute(&b, re.Data)
 	if err != nil {
 		return
@@ -373,45 +366,45 @@ func (s *Template) ToString(c *gin.Context, obj any) (res string, err error) {
 
 }
 
-func (s *Manager) Build(name string) *Template {
-	return &Template{
+func (s *Manager[K]) Build(name string) *Template[K] {
+	return &Template[K]{
 		name: name,
 		tm:   s,
 	}
 }
 
-func (s *Template) WithLayout(name string) *Template {
+func (s *Template[K]) WithLayout(name string) *Template[K] {
 	s.layout = name
 	return s
 }
 
-func (s *Template) WithLayoutBody(body string) *Template {
+func (s *Template[K]) WithLayoutBody(body string) *Template[K] {
 	s.layoutBody = body
 	return s
 }
 
-func Must(m *Manager, err error) *Manager {
+func Must[K GinContext](m *Manager[K], err error) *Manager[K] {
 	if err != nil {
 		panic(err)
 	}
 	return m
 }
 
-type BuilderWithLayout struct {
-	tm     *Manager
+type BuilderWithLayout[K GinContext] struct {
+	tm     *Manager[K]
 	layout string
 }
 
-func (s *BuilderWithLayout) Build(name string) *Template {
+func (s *BuilderWithLayout[K]) Build(name string) *Template[K] {
 	return s.tm.Build(name).WithLayout(s.layout)
 }
 
-type Builder interface {
-	Build(name string) *Template
+type Builder[K GinContext] interface {
+	Build(name string) *Template[K]
 }
 
-func (s *Manager) WithLayout(name string) *BuilderWithLayout {
-	return &BuilderWithLayout{
+func (s *Manager[K]) WithLayout(name string) *BuilderWithLayout[K] {
+	return &BuilderWithLayout[K]{
 		tm:     s,
 		layout: name,
 	}
